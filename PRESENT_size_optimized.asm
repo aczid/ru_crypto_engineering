@@ -1,0 +1,247 @@
+; Key registers
+.def KEY0 = r0
+.def KEY1 = r1
+.def KEY2 = r2
+.def KEY3 = r3
+.def KEY4 = r4
+.def KEY5 = r5
+.def KEY6 = r6
+.def KEY7 = r7
+.def KEY8 = r8
+.def KEY9 = r9
+
+; scratch space
+.def TEMP0 = r10
+.def TEMP1 = r11
+.def TEMP2 = r12
+.def TEMP3 = r13
+.def TEMP4 = r14
+.def TEMP5 = r15
+
+; State (input/output)
+.def STATE0 = r16
+.def STATE1 = r17
+.def STATE2 = r18
+.def STATE3 = r19
+.def STATE4 = r20
+.def STATE5 = r21
+.def STATE6 = r22
+.def STATE7 = r23
+
+.def ROUND_COUNTER = r24
+.def ITEMP = r25
+
+; registers r26 and up are X, Y and Z
+
+.org 256
+SBOX: .db 0xc, 0x5, 0x6, 0xB, 0x9, 0x0, 0xA, 0xD, 0x3, 0xE, 0xF, 0x8, 0x4, 0x7, 0x1, 0x2
+
+addRoundKey:
+	; state ^= roundkey (first 8 bytes of key register)
+	eor STATE0, KEY0
+	eor STATE1, KEY1
+	eor STATE2, KEY2
+	eor STATE3, KEY3
+	eor STATE4, KEY4
+	eor STATE5, KEY5
+	eor STATE6, KEY6
+	eor STATE7, KEY7
+	ret
+
+; idea stolen from KULeuven implementation
+; uses T (transfer) flag to re-do this block twice
+setup_redo_pLayerByte:
+	clt ; clear T flag
+	rjmp redo_pLayerByte ; do the second part
+pLayerByte:
+	set ; set T flag
+redo_pLayerByte:
+	// Fill even bytes using first four bytes
+	/* R20:R23 are even states after permutation*/
+	ror ITEMP // move R0:0 into carry
+	ror TEMP0 // move bit into future KEY0:0
+	ror ITEMP // move R0:1 into carry
+	ror TEMP1 // move bit into future KEY2:0
+	ror ITEMP // move R0:2 into carry
+	ror TEMP2 // move bit into future KEY3:0
+	ror ITEMP // move R0:3 into carry
+	ror TEMP3 // move bit into future KEY4:0
+	brts setup_redo_pLayerByte ; branch if T flag set
+	ret
+
+sBoxByte:
+	; get low nibble as S-box input
+	mov ZL, ITEMP   ; load input
+	cbr ZL, 0xf0    ; clear high nibble in input
+
+	; move s-box output value to output
+	lpm TEMP0, Z    ; load s-box output into temp register
+	cbr ITEMP, 0xf  ; clear low nibble in output register
+	or ITEMP, TEMP0 ; save low nibble to output register
+
+sBoxHighNibble:
+	; get high nibble as S-box input
+	mov  ZL, ITEMP  ; load input
+	cbr  ZL, 0xf    ; clear low nibble in input
+	swap ZL         ; move high nibble to low nibble in input
+
+	; save it back into the state
+	lpm TEMP0, Z    ; load s-box output into temp register
+	swap TEMP0      ; move low nibble of s-box output to high nibble
+	cbr ITEMP, 0xf0 ; clear high nibble in output
+	or ITEMP, TEMP0 ; save high nibble to output
+
+	ret
+
+encrypt:
+	init:
+		; load plaintext from SRAM
+		ld STATE0, X+
+		ld STATE1, X+
+		ld STATE2, X+
+		ld STATE3, X+
+		ld STATE4, X+
+		ld STATE5, X+
+		ld STATE6, X+
+		ld STATE7, X+
+
+		; load key from SRAM
+		ld KEY0, X+
+		ld KEY1, X+
+		ld KEY2, X+
+		ld KEY3, X+
+		ld KEY4, X+
+		ld KEY5, X+
+		ld KEY6, X+
+		ld KEY7, X+
+		ld KEY8, X+
+		ld KEY9, X+
+
+		; initialize s-box
+		ldi ZH, high(SBOX<<1)
+	    ; according to Atmel documentation we can count on registers being initialized to 0 on reset
+		;clr ROUND_COUNTER
+		
+	update:
+		inc ROUND_COUNTER
+		rcall addRoundKey
+		sBoxLayer:
+			; move each byte into a temporary register and apply the s-box procedure for bytes
+			mov ITEMP, STATE0
+			rcall sBoxByte
+			mov STATE0, ITEMP
+
+			mov ITEMP, STATE1
+			rcall sBoxByte
+			mov STATE1, ITEMP
+
+			mov ITEMP, STATE2
+			rcall sBoxByte
+			mov STATE2, ITEMP
+
+			mov ITEMP, STATE3
+			rcall sBoxByte
+			mov STATE3, ITEMP
+
+			mov ITEMP, STATE4
+			rcall sBoxByte
+			mov STATE4, ITEMP
+
+			mov ITEMP, STATE5
+			rcall sBoxByte
+			mov STATE5, ITEMP
+
+			mov ITEMP, STATE6
+			rcall sBoxByte
+			mov STATE6, ITEMP
+
+			mov ITEMP, STATE7
+			rcall sBoxByte
+			mov STATE7, ITEMP
+
+		pLayer:	; stolen from KULeuven implementation
+			// map first 4 bytes on even bytes
+			mov ITEMP,STATE7
+			rcall pLayerByte
+			mov ITEMP,STATE6
+			rcall pLayerByte
+			mov ITEMP,STATE5
+			rcall pLayerByte
+			mov ITEMP,STATE4
+			rcall pLayerByte
+
+			// copy even bytes into position
+			mov STATE7,TEMP0
+			mov STATE5,TEMP1
+			mov ITEMP,STATE3 ; prepare input for next bytes
+			mov STATE3,TEMP2
+			mov STATE4,TEMP3 ; save last byte
+			
+			// map last 4 bytes on odd bytes
+			rcall pLayerByte
+			mov ITEMP,STATE2
+			rcall pLayerByte
+			mov ITEMP,STATE1
+			rcall pLayerByte
+			mov ITEMP,STATE0
+			rcall pLayerByte
+
+			mov STATE1,STATE4 ; apply last byte
+
+			// copy odd bytes into position
+			mov STATE6,TEMP0
+			mov STATE4,TEMP1
+			mov STATE2,TEMP2
+			mov STATE0,TEMP3
+
+		schedule_key:
+			; 1: rotate key register left by 61	positions
+			clr ITEMP
+			rotate_left_61:
+				lsl KEY9
+				rol KEY8
+				rol KEY7
+				rol KEY6
+				rol KEY5
+				rol KEY4
+				rol KEY3
+				rol KEY2
+				rol KEY1
+				rol KEY0
+				clr TEMP0
+				adc KEY9, TEMP0
+				inc ITEMP
+				; 3: xor highest nibble of key register with round counter
+				cpi ITEMP, 6             ; after 6 shifts
+				brne continue_rotate_left_61
+				eor KEY4, ROUND_COUNTER  ; XOR key[4] with round counter - the bits line up at this point - after 55 more rounds these bits will be the bits in places 19..15
+			; fallthrough
+			continue_rotate_left_61:
+				cpi ITEMP, 61
+				brne rotate_left_61
+			; 2: sbox high nibble of key
+			mov ITEMP, KEY0
+			rcall sBoxHighNibble
+			mov KEY0, ITEMP
+
+		cpi ROUND_COUNTER, 31
+		brne trampoline
+		rjmp final
+    trampoline: ; conditional branch instructions can only handle relative jumps and we are out of reach for a relative jump to update at this point
+		rjmp update
+
+	final:
+		; apply final round key
+		rcall addRoundKey
+
+		; copy output to SRAM
+		subi XL, 18
+		st X+, STATE0
+		st X+, STATE1
+		st X+, STATE2
+		st X+, STATE3
+		st X+, STATE4
+		st X+, STATE5
+		st X+, STATE6
+		st X+, STATE7
+	ret
