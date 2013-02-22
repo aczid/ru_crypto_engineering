@@ -236,7 +236,7 @@ encrypt:
 				; to the lowest bit (which was zeroed by that instruction)
 				adc KEY9, TEMP4
 				inc ITEMP
-				; 3: xor highest nibble of key register with round counter
+				; 3: xor bits 19..15 of key register with round counter
 				cpi ITEMP, 6
 				; after 6 shifts
 				brne continue_rotate_left_61
