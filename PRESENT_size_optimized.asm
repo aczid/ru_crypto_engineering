@@ -139,6 +139,7 @@ encrypt:
 		
 	update:
 		inc ROUND_COUNTER
+		; apply round key
 		rcall addRoundKey
 		; apply s-box to every state byte
 		sBoxLayer:
@@ -233,7 +234,7 @@ encrypt:
 				rol KEY0
 				; this register is never changed from its initial value of 0
 				; so we only add the carry bit that fell out at the last rol
-				; to the lowest bit (which was zeroed by that instruction)
+				; to the lowest bit (which was zeroed by the lsl instruction)
 				adc KEY9, TEMP4
 				inc ITEMP
 				; 3: xor bits 19..15 of key register with round counter
