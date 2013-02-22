@@ -49,43 +49,45 @@ addRoundKey:
 	ret
 
 ; idea stolen from KULeuven implementation
+; splices 1 input byte over 4 output bytes, which will then each hold 2 bits following a 4-bit period in the byte
 ; uses T (transfer) flag to re-do this block twice
 setup_redo_pLayerByte:
 	clt ; clear T flag
 	rjmp redo_pLayerByte ; do the second part
 pLayerByte:
 	set ; set T flag
+	; fall through
 redo_pLayerByte:
-	// Fill even bytes using first four bytes
-	/* R20:R23 are even states after permutation*/
-	ror ITEMP // move R0:0 into carry
-	ror TEMP0 // move bit into future KEY0:0
-	ror ITEMP // move R0:1 into carry
-	ror TEMP1 // move bit into future KEY2:0
-	ror ITEMP // move R0:2 into carry
-	ror TEMP2 // move bit into future KEY3:0
-	ror ITEMP // move R0:3 into carry
-	ror TEMP3 // move bit into future KEY4:0
-	brts setup_redo_pLayerByte ; branch if T flag set
+	ror ITEMP ; move bit into carry
+	ror TEMP0 ; move bit into output register
+	ror ITEMP ; etc
+	ror TEMP1
+	ror ITEMP
+	ror TEMP2
+	ror ITEMP
+	ror TEMP3
+	brts setup_redo_pLayerByte ; redo this block? (if T flag set)
+	; would have another ror to ITEMP here for invpLayer
 	ret
 
 sBoxByte:
-	; get low nibble as S-box input
+	; input (low nibble)
 	mov ZL, ITEMP   ; load input
 	cbr ZL, 0xf0    ; clear high nibble in input
 
-	; move s-box output value to output
+	; output (low nibble)
 	lpm TEMP0, Z    ; load s-box output into temp register
 	cbr ITEMP, 0xf  ; clear low nibble in output register
 	or ITEMP, TEMP0 ; save low nibble to output register
 
+	; fall through
 sBoxHighNibble:
-	; get high nibble as S-box input
+	; input (high nibble)
 	mov  ZL, ITEMP  ; load input
 	cbr  ZL, 0xf    ; clear low nibble in input
 	swap ZL         ; move high nibble to low nibble in input
 
-	; save it back into the state
+	; output (high nibble)
 	lpm TEMP0, Z    ; load s-box output into temp register
 	swap TEMP0      ; move low nibble of s-box output to high nibble
 	cbr ITEMP, 0xf0 ; clear high nibble in output
@@ -160,7 +162,7 @@ encrypt:
 			mov STATE7, ITEMP
 
 		pLayer:	; stolen from KULeuven implementation
-			// map first 4 bytes on even bytes
+			; map first 4 bytes on even bytes
 			mov ITEMP,STATE7
 			rcall pLayerByte
 			mov ITEMP,STATE6
@@ -170,14 +172,14 @@ encrypt:
 			mov ITEMP,STATE4
 			rcall pLayerByte
 
-			// copy even bytes into position
+			; copy even bytes into position
 			mov STATE7,TEMP0
 			mov STATE5,TEMP1
 			mov ITEMP,STATE3 ; prepare input for next bytes
 			mov STATE3,TEMP2
 			mov STATE4,TEMP3 ; save last byte
 			
-			// map last 4 bytes on odd bytes
+			; map last 4 bytes on odd bytes
 			rcall pLayerByte
 			mov ITEMP,STATE2
 			rcall pLayerByte
@@ -188,7 +190,7 @@ encrypt:
 
 			mov STATE1,STATE4 ; apply last byte
 
-			// copy odd bytes into position
+			; copy odd bytes into position
 			mov STATE6,TEMP0
 			mov STATE4,TEMP1
 			mov STATE2,TEMP2
@@ -198,6 +200,7 @@ encrypt:
 			; 1: rotate key register left by 61	positions
 			clr ITEMP
 			rotate_left_61:
+				; rotates every bit to the left - takes carry bit using lsl then moves it through the registers, and finally adds it to the first zeroed bit of the lsl'd register
 				lsl KEY9
 				rol KEY8
 				rol KEY7
@@ -208,8 +211,7 @@ encrypt:
 				rol KEY2
 				rol KEY1
 				rol KEY0
-				clr TEMP0
-				adc KEY9, TEMP0
+				adc KEY9, TEMP4 ; this register is never changed from its initial value of 0 - so we only add the carry bit that fell out at the last rol to the lowest bit (which was zeroed by that instruction)
 				inc ITEMP
 				; 3: xor highest nibble of key register with round counter
 				cpi ITEMP, 6             ; after 6 shifts
@@ -224,10 +226,11 @@ encrypt:
 			rcall sBoxHighNibble
 			mov KEY0, ITEMP
 
+		; check round counter, break after 31 iterations
 		cpi ROUND_COUNTER, 31
 		brne trampoline
 		rjmp final
-    trampoline: ; conditional branch instructions can only handle relative jumps and we are out of reach for a relative jump to update at this point
+	trampoline: ; conditional branch instructions can only handle relative jumps and we are out of reach for a relative jump to update at this point
 		rjmp update
 
 	final:
