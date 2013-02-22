@@ -176,7 +176,7 @@ encrypt:
 			rcall sBoxByte
 			mov STATE7, ITEMP
 
-		; parmutes bit positions
+		; permutes bit positions
 		; stolen from KULeuven implementation and slightly optimized
 		pLayer:
 			; map first 4 bytes on even bytes
@@ -241,7 +241,7 @@ encrypt:
 				; after 6 shifts
 				brne continue_rotate_left_61
 				; XOR key[4] with round counter as the bits line up here
-				; after 55 more rounds these bits will be in places 19..15
+				; after 55 more rotations these bits will be in places 19..15
 				eor KEY4, ROUND_COUNTER 
 			; fallthrough
 			continue_rotate_left_61:
