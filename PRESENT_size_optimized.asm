@@ -34,7 +34,7 @@
 ; registers r26 and up are X, Y and Z
 
 .org 256
-SBOX: .db 0xc, 0x5, 0x6, 0xB, 0x9, 0x0, 0xA, 0xD, 0x3, 0xE, 0xF, 0x8, 0x4, 0x7, 0x1, 0x2
+SBOX:.db 0xc,0x5,0x6,0xB,0x9,0x0,0xA,0xD,0x3,0xE,0xF,0x8,0x4,0x7,0x1,0x2
 
 addRoundKey:
 	; state ^= roundkey (first 8 bytes of key register)
@@ -48,8 +48,15 @@ addRoundKey:
 	eor STATE7, KEY7
 	ret
 
-; idea stolen from KULeuven implementation
-; splices 1 input byte over 4 output bytes, which will then each hold 2 bits following a 4-bit period in the byte
+; pLayerByte
+; approach stolen from KULeuven implementation
+
+; splices 1 input byte over 4 output bytes, which will then each hold 2 bits
+; following a 4-bit period in the byte
+
+; after 4 calls from different input registers we will have collected 4
+; completed output bytes following this 4-bit period
+
 ; uses T (transfer) flag to re-do this block twice
 setup_redo_pLayerByte:
 	clt ; clear T flag
@@ -70,6 +77,9 @@ redo_pLayerByte:
 	; would have another ror to ITEMP here for invpLayer
 	ret
 
+; sBoxByte
+; applying the s-box nibble-wise allows us to reuse the second half of the
+; procedure as its own procedure when key scheduling
 sBoxByte:
 	; input (low nibble)
 	mov ZL, ITEMP   ; load input
@@ -95,6 +105,7 @@ sBoxHighNibble:
 
 	ret
 
+; the main function called by the wrapper provided by the instructors
 encrypt:
 	init:
 		; load plaintext from SRAM
@@ -121,14 +132,18 @@ encrypt:
 
 		; initialize s-box
 		ldi ZH, high(SBOX<<1)
-	    ; according to Atmel documentation we can count on registers being initialized to 0 on reset
+		; silliest optimization:
+		; according to Atmel documentation we can count on registers being
+		; initialized to 0 on reset
 		;clr ROUND_COUNTER
 		
 	update:
 		inc ROUND_COUNTER
 		rcall addRoundKey
+		; apply s-box to every state byte
 		sBoxLayer:
-			; move each byte into a temporary register and apply the s-box procedure for bytes
+			; move each byte into a temporary register and apply the s-box
+			; procedure for bytes
 			mov ITEMP, STATE0
 			rcall sBoxByte
 			mov STATE0, ITEMP
@@ -161,7 +176,9 @@ encrypt:
 			rcall sBoxByte
 			mov STATE7, ITEMP
 
-		pLayer:	; stolen from KULeuven implementation
+		; parmutes bit positions
+		; stolen from KULeuven implementation and slightly optimized
+		pLayer:
 			; map first 4 bytes on even bytes
 			mov ITEMP,STATE7
 			rcall pLayerByte
@@ -196,11 +213,14 @@ encrypt:
 			mov STATE2,TEMP2
 			mov STATE0,TEMP3
 
+		; schedule key for next round - explained inside
 		schedule_key:
-			; 1: rotate key register left by 61	positions
+			; 1: rotate key register left by 61 positions
 			clr ITEMP
 			rotate_left_61:
-				; rotates every bit to the left - takes carry bit using lsl then moves it through the registers, and finally adds it to the first zeroed bit of the lsl'd register
+				; rotates every bit to the left
+				; takes carry bit using lsl then moves it through the registers
+				; finally adds it to the first zeroed bit of the lsl'd register
 				lsl KEY9
 				rol KEY8
 				rol KEY7
@@ -211,12 +231,18 @@ encrypt:
 				rol KEY2
 				rol KEY1
 				rol KEY0
-				adc KEY9, TEMP4 ; this register is never changed from its initial value of 0 - so we only add the carry bit that fell out at the last rol to the lowest bit (which was zeroed by that instruction)
+				; this register is never changed from its initial value of 0
+				; so we only add the carry bit that fell out at the last rol
+				; to the lowest bit (which was zeroed by that instruction)
+				adc KEY9, TEMP4
 				inc ITEMP
 				; 3: xor highest nibble of key register with round counter
-				cpi ITEMP, 6             ; after 6 shifts
+				cpi ITEMP, 6
+				; after 6 shifts
 				brne continue_rotate_left_61
-				eor KEY4, ROUND_COUNTER  ; XOR key[4] with round counter - the bits line up at this point - after 55 more rounds these bits will be the bits in places 19..15
+				; XOR key[4] with round counter as the bits line up here
+				; after 55 more rounds these bits will be in places 19..15
+				eor KEY4, ROUND_COUNTER 
 			; fallthrough
 			continue_rotate_left_61:
 				cpi ITEMP, 61
@@ -228,9 +254,11 @@ encrypt:
 
 		; check round counter, break after 31 iterations
 		cpi ROUND_COUNTER, 31
-		brne trampoline
-		rjmp final
-	trampoline: ; conditional branch instructions can only handle relative jumps and we are out of reach for a relative jump to update at this point
+		brne trampoline ; continue
+		rjmp final      ; break
+	trampoline:
+		; conditional branch instructions can only handle relative jumps and we
+		; are out of reach for a relative jump to update at this point
 		rjmp update
 
 	final:
