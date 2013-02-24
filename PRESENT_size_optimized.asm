@@ -82,7 +82,7 @@ redo_pLayerByte:
 ; sBoxByte
 ; applying the s-box nibble-wise allows us to reuse the second half of the
 ; procedure as its own procedure when key scheduling
-; read from and writes to ITEMP
+; reads from and writes to ITEMP
 sBoxByte:
 	; input (low nibble)
 	mov ZL, ITEMP   ; load input
