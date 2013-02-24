@@ -64,7 +64,7 @@ setup_redo_pLayerByte:
 	rjmp redo_pLayerByte ; do the second part
 pLayerByte:
 	seh ; set H flag
-;	; fall through
+	; fall through
 redo_pLayerByte:
 	ror ITEMP ; move bit into carry
 	ror OUTPUT0 ; move bit into output register
@@ -153,7 +153,7 @@ interleaved_output:
 ; uses the T flag to transfer control to even and odd output procedures which
 ; do the final interleaved placement of the pLayer output in SRAM
 encrypt:
-	init:
+	encrypt_init:
 		; initialize round counter
 		ldi ROUND_COUNTER, 1
 		; initialize s-box
@@ -238,7 +238,7 @@ encrypt:
 			rcall interleaved_output
 			dec XL
 
-			; load next 4 left/high input bytes
+			; load next 4 high/left input bytes
 			rcall load_input
 
 			; rotate back key register
@@ -273,7 +273,7 @@ encrypt:
 		cpi ROUND_COUNTER, 32
 		brne encrypt_update ; do next round
 		; fall through
-	final:
+	encrypt_final:
 		; apply final round key (high/left)
 		rcall final_part
 
@@ -284,7 +284,6 @@ encrypt:
 		rcall rotate_left_i
 		; apply final round key (low/right)
 		rcall final_part
-
 	ret
 
 ; do the last update and save
