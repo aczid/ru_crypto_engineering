@@ -229,8 +229,8 @@ encrypt:
 			mov ITEMP,STATE0
 			rcall pLayerByte
 
-		; check the T bit, if it's not set we are working on the
-		; high/left block
+		; check the T bit
+		; if it's not set we are working on the high/left block
 		brtc odd_output
 
 		; otherwise, we are working on the low/right block
