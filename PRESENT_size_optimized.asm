@@ -10,42 +10,43 @@
 .def KEY8 = r8
 .def KEY9 = r9
 
-; scratch space
-.def TEMP0 = r10
-.def TEMP1 = r11
-.def TEMP2 = r12
-.def TEMP3 = r13
-.def TEMP4 = r14
-.def TEMP5 = r15
+; pLayer output
+.def OUTPUT0 = r10
+.def OUTPUT1 = r11
+.def OUTPUT2 = r12
+.def OUTPUT3 = r13
+
+; Never used but needed for its 0 value to add carry bits with adc
+.def ZERO = r14
+
+; Shared register for SBOX output and to count key register rotations
+.def SBOX_OUTPUT = r15
+.def ROTATION_COUNTER = r15
 
 ; State (input/output)
 .def STATE0 = r16
 .def STATE1 = r17
 .def STATE2 = r18
 .def STATE3 = r19
-.def STATE4 = r20
-.def STATE5 = r21
-.def STATE6 = r22
-.def STATE7 = r23
 
-.def ROUND_COUNTER = r24
-.def ITEMP = r25
+; The round counter
+.def ROUND_COUNTER = r20
 
+; Register we can use for immediate values
+.def ITEMP = r21
+
+; registers 22..25 are unused
 ; registers r26 and up are X, Y and Z
 
-.org 256
+.org 1024
 SBOX:.db 0xc,0x5,0x6,0xB,0x9,0x0,0xA,0xD,0x3,0xE,0xF,0x8,0x4,0x7,0x1,0x2
 
 addRoundKey:
-	; state ^= roundkey (first 8 bytes of key register)
+	; state ^= roundkey (top 8 bytes of key register)
 	eor STATE0, KEY0
 	eor STATE1, KEY1
 	eor STATE2, KEY2
 	eor STATE3, KEY3
-	eor STATE4, KEY4
-	eor STATE5, KEY5
-	eor STATE6, KEY6
-	eor STATE7, KEY7
 	ret
 
 ; pLayerByte
@@ -57,38 +58,41 @@ addRoundKey:
 ; after 4 calls from different input registers we will have collected 4
 ; completed output bytes following this 4-bit period
 
-; uses T (transfer) flag to re-do this block twice
+; uses H (half-carry) flag to re-do this block twice
 setup_redo_pLayerByte:
-	clt ; clear T flag
+	clh ; clear H flag
 	rjmp redo_pLayerByte ; do the second part
 pLayerByte:
-	set ; set T flag
-	; fall through
+	seh ; set H flag
+;	; fall through
 redo_pLayerByte:
 	ror ITEMP ; move bit into carry
-	ror TEMP0 ; move bit into output register
+	ror OUTPUT0 ; move bit into output register
 	ror ITEMP ; etc
-	ror TEMP1
+	ror OUTPUT1
 	ror ITEMP
-	ror TEMP2
+	ror OUTPUT2
 	ror ITEMP
-	ror TEMP3
-	brts setup_redo_pLayerByte ; redo this block? (if T flag set)
-	; would have another ror to ITEMP here for invpLayer
+	ror OUTPUT3
+	brhs setup_redo_pLayerByte ; redo this block? (if H flag set)
+	; for invpLayer
+	;ror ITEMP
 	ret
 
 ; sBoxByte
 ; applying the s-box nibble-wise allows us to reuse the second half of the
 ; procedure as its own procedure when key scheduling
+; read from and writes to ITEMP
 sBoxByte:
+	;ror ITEMP
 	; input (low nibble)
 	mov ZL, ITEMP   ; load input
 	cbr ZL, 0xf0    ; clear high nibble in input
 
 	; output (low nibble)
-	lpm TEMP0, Z    ; load s-box output into temp register
+	lpm SBOX_OUTPUT, Z    ; load s-box output into temp register
 	cbr ITEMP, 0xf  ; clear low nibble in output register
-	or ITEMP, TEMP0 ; save low nibble to output register
+	or ITEMP, SBOX_OUTPUT ; save low nibble to output register
 
 	; fall through
 sBoxHighNibble:
@@ -98,53 +102,106 @@ sBoxHighNibble:
 	swap ZL         ; move high nibble to low nibble in input
 
 	; output (high nibble)
-	lpm TEMP0, Z    ; load s-box output into temp register
-	swap TEMP0      ; move low nibble of s-box output to high nibble
+	lpm SBOX_OUTPUT, Z    ; load s-box output into temp register
+	swap SBOX_OUTPUT      ; move low nibble of s-box output to high nibble
 	cbr ITEMP, 0xf0 ; clear high nibble in output
-	or ITEMP, TEMP0 ; save high nibble to output
+	or ITEMP, SBOX_OUTPUT ; save high nibble to output
 
 	ret
 
+; load 4 consequtive input bytes into state
+load_input:
+	ld STATE0, X+
+	ld STATE1, X+
+	ld STATE2, X+
+	ld STATE3, X+
+	ret
+
+; rotates key register left by the number in ITEMP
+rotate_left_i:
+	clr ROTATION_COUNTER
+continue_rotate_left_i:
+	lsl KEY9
+	rol KEY8
+	rol KEY7
+	rol KEY6
+	rol KEY5
+	rol KEY4
+	rol KEY3
+	rol KEY2
+	rol KEY1
+	rol KEY0
+	adc KEY9, ZERO
+	inc ROTATION_COUNTER
+	cp ROTATION_COUNTER, ITEMP
+	brne continue_rotate_left_i
+	ret
+
+; saves state bytes back to front
+; leaves 1 byte untouched in between each saved byte
+interleaved_output:
+	dec XL
+	st -X, OUTPUT0
+	dec XL
+	st -X, OUTPUT1
+	dec XL
+	st -X, OUTPUT2
+	dec XL
+	st -X, OUTPUT3
+	ret
+
+; saves 4 consecutive bytes to RAM
+consecutive_output:
+	st X+, STATE0
+	st X+, STATE1
+	st X+, STATE2
+	st X+, STATE3
+	ret
+
 ; the main function called by the wrapper provided by the instructors
+; uses the T flag to transfer control to even and odd output procedures which do the final positioning of the pLayer output
 encrypt:
 	init:
-		; load plaintext from SRAM
-		ld STATE0, X+
-		ld STATE1, X+
-		ld STATE2, X+
-		ld STATE3, X+
-		ld STATE4, X+
-		ld STATE5, X+
-		ld STATE6, X+
-		ld STATE7, X+
-
-		; load key from SRAM
-		ld KEY0, X+
-		ld KEY1, X+
-		ld KEY2, X+
-		ld KEY3, X+
-		ld KEY4, X+
-		ld KEY5, X+
-		ld KEY6, X+
-		ld KEY7, X+
-		ld KEY8, X+
-		ld KEY9, X+
-
+		ldi ROUND_COUNTER, 1
 		; initialize s-box
 		ldi ZH, high(SBOX<<1)
-		; silliest optimization:
-		; according to Atmel documentation we can count on registers being
-		; initialized to 0 on reset
-		;clr ROUND_COUNTER
-		
-	update:
-		inc ROUND_COUNTER
+		; load first 4 bytes (high/left part)
+		rcall load_input
+		adiw XL, 14
+		load_key:
+			; loads key from SRAM, back to front
+			ld KEY9, -X
+			ld KEY8, -X
+			ld KEY7, -X
+			ld KEY6, -X
+			ld KEY5, -X
+			ld KEY4, -X
+			ld KEY3, -X
+			ld KEY2, -X
+			ld KEY1, -X
+			ld KEY0, -X
+		subi XL, 4
+		; start round
+		rjmp encrypt_update
+	; copy odd bytes into position and set up for the second part of the round
+	odd_output:
+		; load next state bytes (low/right part)
+		rcall load_input
+		; copy odd bytes into position
+		rcall interleaved_output
+		; rotate key register by 4 bytes to align with the low/right part
+		ldi ITEMP, 32
+		rcall rotate_left_i
+		set ; set T flag
+		; do next 4 bytes (fall through)
+
+	encrypt_update:
 		; apply round key
 		rcall addRoundKey
 		; apply s-box to every state byte
 		sBoxLayer:
 			; move each byte into a temporary register and apply the s-box
-			; procedure for bytes
+			; procedure for bytes, then move it back
 			mov ITEMP, STATE0
 			rcall sBoxByte
 			mov STATE0, ITEMP
@@ -161,43 +218,11 @@ encrypt:
 			rcall sBoxByte
 			mov STATE3, ITEMP
 
-			mov ITEMP, STATE4
-			rcall sBoxByte
-			mov STATE4, ITEMP
-
-			mov ITEMP, STATE5
-			rcall sBoxByte
-			mov STATE5, ITEMP
-
-			mov ITEMP, STATE6
-			rcall sBoxByte
-			mov STATE6, ITEMP
-
-			mov ITEMP, STATE7
-			rcall sBoxByte
-			mov STATE7, ITEMP
-
-		; permutes bit positions
-		; stolen from KULeuven implementation and slightly optimized
+		; permutes bit positions following a 4-bit period
+		; stolen from KULeuven implementation and optimized
 		pLayer:
-			; map first 4 bytes on even bytes
-			mov ITEMP,STATE7
-			rcall pLayerByte
-			mov ITEMP,STATE6
-			rcall pLayerByte
-			mov ITEMP,STATE5
-			rcall pLayerByte
-			mov ITEMP,STATE4
-			rcall pLayerByte
-
-			; copy even bytes into position
-			mov STATE7,TEMP0
-			mov STATE5,TEMP1
-			mov ITEMP,STATE3 ; prepare input for next bytes
-			mov STATE3,TEMP2
-			mov STATE4,TEMP3 ; save last byte
-			
-			; map last 4 bytes on odd bytes
+			; map output bytes
+			mov ITEMP,STATE3
 			rcall pLayerByte
 			mov ITEMP,STATE2
 			rcall pLayerByte
@@ -206,74 +231,59 @@ encrypt:
 			mov ITEMP,STATE0
 			rcall pLayerByte
 
-			mov STATE1,STATE4 ; apply last byte
+		; check if we are doing the high/left block, if so output odd state bytes and prepare for the low/right block
+		brtc odd_output
 
-			; copy odd bytes into position
-			mov STATE6,TEMP0
-			mov STATE4,TEMP1
-			mov STATE2,TEMP2
-			mov STATE0,TEMP3
+		; this is the end of the round
+		; copy even state bytes into position
+		even_output:
+			adiw XL, 9
+			rcall interleaved_output
+			dec XL
+			; load next 4 left/high bytes
+			rcall load_input
+			; rotate back key register
+			ldi ITEMP, 48
+			rcall rotate_left_i
+			clt ; clear T flag
 
-		; schedule key for next round - explained inside
+		; schedule key for next round
 		schedule_key:
 			; 1: rotate key register left by 61 positions
-			clr ITEMP
-			rotate_left_61:
-				; rotates every bit to the left
-				; takes carry bit using lsl then moves it through the registers
-				; finally adds it to the first zeroed bit of the lsl'd register
-				lsl KEY9
-				rol KEY8
-				rol KEY7
-				rol KEY6
-				rol KEY5
-				rol KEY4
-				rol KEY3
-				rol KEY2
-				rol KEY1
-				rol KEY0
-				; this register is never changed from its initial value of 0
-				; so we only add the carry bit that fell out at the last rol
-				; to the lowest bit (which was zeroed by the lsl instruction)
-				adc KEY9, TEMP4
-				inc ITEMP
-				; 3: xor bits 19..15 of key register with round counter
-				cpi ITEMP, 6
-				; after 6 shifts
-				brne continue_rotate_left_61
-				; XOR key[4] with round counter as the bits line up here
-				; after 55 more rotations these bits will be in places 19..15
-				eor KEY4, ROUND_COUNTER 
-			; fallthrough
-			continue_rotate_left_61:
-				cpi ITEMP, 61
-				brne rotate_left_61
+			ldi ITEMP, 6
+			rcall rotate_left_i
+
+			; 3: xor key bits with round counter
+			eor KEY4, ROUND_COUNTER
+			ldi ITEMP, 55
+			rcall rotate_left_i
+
 			; 2: sbox high nibble of key
 			mov ITEMP, KEY0
 			rcall sBoxHighNibble
 			mov KEY0, ITEMP
 
-		; check round counter, break after 31 iterations
-		cpi ROUND_COUNTER, 31
-		brne trampoline ; continue
-		rjmp final      ; break
-	trampoline:
-		; conditional branch instructions can only handle relative jumps and we
-		; are out of reach for a relative jump to update at this point
-		rjmp update
+			inc ROUND_COUNTER	
 
+		; check round counter, break when it reaches 32 (meaning the key scheduled is k_32)
+		cpi ROUND_COUNTER, 32
+		brne encrypt_update ; continue
+		; fall through
 	final:
-		; apply final round key
-		rcall addRoundKey
+		; apply final round key (left)
+		rcall final_part
 
-		; copy output to SRAM
-		subi XL, 18
-		st X+, STATE0
-		st X+, STATE1
-		st X+, STATE2
-		st X+, STATE3
-		st X+, STATE4
-		st X+, STATE5
-		st X+, STATE6
-		st X+, STATE7
+		; apply final round key (right)
+		rcall load_input
+		ldi ITEMP, 32
+		rcall rotate_left_i
+		rcall final_part
+
+	ret
+
+; do the last update and save
+final_part:
+	rcall addRoundKey
+	subi XL, 4
+	rcall consecutive_output
 	ret
