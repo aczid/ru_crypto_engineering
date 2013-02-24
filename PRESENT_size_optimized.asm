@@ -66,9 +66,9 @@ pLayerByte:
 	seh ; set H flag
 	; fall through
 redo_pLayerByte:
-	ror ITEMP ; move bit into carry
+	ror ITEMP   ; move bit into carry
 	ror OUTPUT0 ; move bit into output register
-	ror ITEMP ; etc
+	ror ITEMP   ; etc
 	ror OUTPUT1
 	ror ITEMP
 	ror OUTPUT2
@@ -184,10 +184,12 @@ encrypt:
 		rcall load_input
 		; copy odd bytes into position
 		rcall interleaved_output
-		; rotate key register by 4 bytes to align its first 4 bytes with the next 4 bytes of input
+		; rotate key register by 4 bytes to align its first 4 bytes with
+		; the next 4 bytes of input
 		ldi ITEMP, 32
 		rcall rotate_left_i
-		set ; set T flag to transfer control to even_output after this round
+		; set T flag to transfer control to even_output after this round
+		set
 		; do next 4 bytes
 		; fall through
 	; main round procedure
@@ -196,8 +198,8 @@ encrypt:
 		rcall addRoundKey
 		; apply s-box to every state byte
 		sBoxLayer:
-			; move each byte into a temporary register and apply the s-box
-			; procedure for bytes, then move it back
+			; move each byte into a temporary register and apply
+			; the s-box procedure for bytes, then move it back
 			mov ITEMP, STATE0
 			rcall sBoxByte
 			mov STATE0, ITEMP
@@ -237,14 +239,11 @@ encrypt:
 			adiw XL, 9
 			rcall interleaved_output
 			dec XL
-
 			; load next 4 high/left input bytes
 			rcall load_input
-
 			; rotate back key register
 			ldi ITEMP, 48
 			rcall rotate_left_i
-
 			; clear T flag to send the next round through the
 			; odd_output procedure first
 			clt
@@ -255,26 +254,24 @@ encrypt:
 			; 1: rotate key register left by 61 positions
 			ldi ITEMP, 6
 			rcall rotate_left_i
-
 			; 3: xor key bits with round counter
 			eor KEY4, ROUND_COUNTER
 			ldi ITEMP, 55
 			rcall rotate_left_i
-
 			; 2: s-box high nibble of key
 			mov ITEMP, KEY0
 			rcall sBoxHighNibble
 			mov KEY0, ITEMP
-
-			; round++
+			; increment round counter
 			inc ROUND_COUNTER	
 
-		; check round counter, break when it reaches 32 (meaning the key scheduled is k_32)
+		; check round counter, break when it reaches 32
+		; (meaning the key scheduled is k_32)
 		cpi ROUND_COUNTER, 32
 		brne encrypt_update ; do next round
 		; fall through
 	encrypt_final:
-		; apply final round key (high/left)
+		; apply final round key and output (high/left)
 		rcall final_part
 
 		; load low/right bytes
@@ -282,11 +279,11 @@ encrypt:
 		; adjust key register
 		ldi ITEMP, 32
 		rcall rotate_left_i
-		; apply final round key (low/right)
+		; apply final round key and output (low/right)
 		rcall final_part
 	ret
 
-; do the last update and save
+; do the last round key and save output
 final_part:
 	rcall addRoundKey
 	subi XL, 4
