@@ -1,3 +1,28 @@
+; PRESENT cipher for AVR devices
+
+; AUTHORS
+; implemented by Aram Verstegen
+; in collaboration with Kostas Papagiannopoulos
+; based on work by:
+;    Andrey Bogdanov et al (PRESENT authors)
+;    Bo Zhu and Zheng Gong (efficient C version)
+;    Thomas Eisenbarth     (Existing AVR implementation)
+
+; INSTITUTE
+; developed at Radboud Universiteit Nijmegen
+; for the Cryptography Engineering course, 2012-2013
+; part of the Kerckhoffs Institute master's program
+
+; SPECS
+; Size optimized version 1 - February 2013
+; Code size:                456 bytes
+; RAM words:                18
+; Cycle count (encryption): 85743
+; Cycle count (decryption): 99884
+
+; USE
+; Point XL at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
+
 ; Key registers
 .def KEY0 = r0
 .def KEY1 = r1
@@ -40,12 +65,11 @@
 
 .org 256
 SBOX:   .db 0xc,0x5,0x6,0xb,0x9,0x0,0xa,0xd,0x3,0xe,0xF,0x8,0x4,0x7,0x1,0x2
-;           0   1   2   3   4   5   6   7   8   9   a   b   c   d   e   f
 .org 512
 INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
 
+; state ^= roundkey (top 4 bytes of key register)
 addRoundKey:
-	; state ^= roundkey (top 4 bytes of key register)
 	eor STATE0, KEY0
 	eor STATE1, KEY1
 	eor STATE2, KEY2
@@ -206,9 +230,10 @@ load_key:
 	ld KEY0, -X
 	ret
 
-; the main function called by the wrapper provided by the instructors
+; encryption routine: point XL at 8 plaintext input bytes followed by 10 key input bytes
+
 ; uses the T flag to transfer control to even and odd output procedures which
-; do the final interleaved placement of the pLayer output in SRAM
+; do the final interleaved placement of the p-layer output in SRAM
 encrypt:
 	encrypt_init:
 		; initialize round counter
@@ -361,6 +386,7 @@ invSPnet:
 	rcall state_to_output
 	ret
 
+; decryption routine: point XL at 8 ciphertext input bytes followed by 10 key input bytes
 decrypt:
 	; initialize round_counter
 	ldi ROUND_COUNTER, 1
@@ -427,4 +453,3 @@ decrypt:
 		cpi ROUND_COUNTER, 1
 		brne decrypt_update
 	ret
- 
