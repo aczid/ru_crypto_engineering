@@ -25,7 +25,7 @@
 .def STATE2 = r17
 .def STATE3 = r18
 
-; Shared register for SBOX output and to count key register rotations
+; Shared register for s-box output and to count key register rotations
 .def SBOX_OUTPUT = r19
 .def ROTATION_COUNTER = r19
 
@@ -40,8 +40,8 @@
 
 .org 256
 SBOX:   .db 0xc,0x5,0x6,0xb,0x9,0x0,0xa,0xd,0x3,0xe,0xF,0x8,0x4,0x7,0x1,0x2
+;           0   1   2   3   4   5   6   7   8   9   a   b   c   d   e   f
 .org 512
-          ; 0   1   2   3   4   5   6   7   8   9   a   b   c   d   e   f
 INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
 
 addRoundKey:
@@ -82,7 +82,6 @@ redo_pLayerByte:
 	ror OUTPUT3
 	ror ITEMP
 	brhs setup_redo_pLayerByte ; redo this block? (if H flag set)
-	; for invpLayer
 	ret
 
 ; sBoxByte
@@ -114,7 +113,7 @@ sBoxHighNibble:
 
 	ret
 
-; load 4 consecutive input bytes into state
+; loads 4 consecutive input bytes into state
 consecutive_input:
 	ld STATE0, X+
 	ld STATE1, X+
@@ -172,23 +171,7 @@ schedule_key:
 	inc ROUND_COUNTER
 	ret
 
-inv_schedule_key:
-	dec ROUND_COUNTER
-	; 2: inv s-box high nibble of key
-	mov ITEMP, KEY0
-	rcall sBoxHighNibble
-	mov KEY0, ITEMP
-	; 1: rotate key register left by 61 positions
-	ldi ITEMP, 25
-	rcall rotate_left_i
-	; 3: xor key bits with round counter
-	eor KEY4, ROUND_COUNTER
-	ldi ITEMP, 74
-	rcall rotate_left_i
-	; increment round counter
-	ret
-
-; apply s-box to every state byte
+; applies loaded s-box to every state byte
 sBoxLayer:
 	; move each byte into a temporary register and apply
 	; the s-box procedure for bytes, then move it back
@@ -209,7 +192,7 @@ sBoxLayer:
 	mov STATE3, ITEMP
 	ret
 
-; load key from SRAM, back to front
+; loads key from SRAM, back to front
 load_key:
 	ld KEY9, -X
 	ld KEY8, -X
@@ -316,6 +299,7 @@ encrypt:
 		rcall final_part
 	ret
 
+; save 4 consecutive output bytes to ram
 consecutive_output:
 	st X+, OUTPUT0
 	st X+, OUTPUT1
@@ -333,6 +317,7 @@ final_part:
 	rcall consecutive_output
 	ret
 
+; move current state to output registers
 state_to_output:
 	mov OUTPUT0, STATE0
 	mov OUTPUT1, STATE1
@@ -352,12 +337,16 @@ interleaved_input:
 	ld STATE3, -X
 	ret
 
+; load input and apply current round key in ram consecutively
 roundkey_ram:
+	rcall consecutive_input
+	subi XL, 4
 	rcall addRoundkey
 	rcall state_to_output
 	rcall consecutive_output
 	ret
 
+; invert the S-P network from state to output registers
 invSPnet:
 	rcall state_to_output
 	rcall ipLayerByte
@@ -393,38 +382,49 @@ decrypt:
 	
 	; start round
 	decrypt_update:
+		; point at high/left 4 bytes, apply round key to this block
 		subi XL, 8
-		rcall consecutive_input
-		subi XL, 4
 		rcall roundkey_ram
 
-		rcall consecutive_input
-		subi XL, 4
+		; rotate key and apply round key to low/right bytes
 		ldi ITEMP, 32
 		rcall rotate_left_i
 		rcall roundkey_ram
 
+		; get next invSPnet input
 		rcall interleaved_input
-		
 		rcall invSPnet
 
-		; split around here if at all possible
-
+		; get next invSPnet input (low/right bytes)
 		adiw XL, 9
 		rcall interleaved_input
 		dec XL
+
+		; write 4 decrypted high/left bytes
 		rcall consecutive_output
 
+		; decode low/right bytes
 		rcall invSPnet
 
+		; write 4 decrypted low/right bytes
 		rcall consecutive_output
 
-		ldi ITEMP, 48
-		rcall rotate_left_i
-		rcall inv_schedule_key
+		; rotate key register to align with next input and schedule next key
+		inv_schedule_key:
+			dec ROUND_COUNTER
+			; 2: inv s-box high nibble of key
+			mov ITEMP, KEY6
+			rcall sBoxHighNibble
+			mov KEY6, ITEMP
+			; 1: rotate key register left by 48+19=67 positions
+			ldi ITEMP, 1
+			rcall rotate_left_i
+			; 3: xor key bits with round counter
+			eor KEY3, ROUND_COUNTER
+			ldi ITEMP, 66
+			rcall rotate_left_i
 
 		cpi ROUND_COUNTER, 1
 		brne decrypt_update
 	ret
  
-	
