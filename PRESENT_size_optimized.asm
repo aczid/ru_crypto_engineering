@@ -19,15 +19,15 @@
 ; Never used but needed for its 0 value to add carry bits with adc
 .def ZERO = r14
 
-; Shared register for SBOX output and to count key register rotations
-.def SBOX_OUTPUT = r15
-.def ROTATION_COUNTER = r15
-
 ; State (input/output)
-.def STATE0 = r16
-.def STATE1 = r17
-.def STATE2 = r18
-.def STATE3 = r19
+.def STATE0 = r15
+.def STATE1 = r16
+.def STATE2 = r17
+.def STATE3 = r18
+
+; Shared register for SBOX output and to count key register rotations
+.def SBOX_OUTPUT = r19
+.def ROTATION_COUNTER = r19
 
 ; The round counter
 .def ROUND_COUNTER = r20
@@ -38,8 +38,11 @@
 ; registers 22..25 are unused
 ; registers r26 and up are X, Y and Z
 
-.org 1024
-SBOX:.db 0xc,0x5,0x6,0xB,0x9,0x0,0xA,0xD,0x3,0xE,0xF,0x8,0x4,0x7,0x1,0x2
+.org 256
+SBOX:   .db 0xc,0x5,0x6,0xb,0x9,0x0,0xa,0xd,0x3,0xe,0xF,0x8,0x4,0x7,0x1,0x2
+.org 512
+          ; 0   1   2   3   4   5   6   7   8   9   a   b   c   d   e   f
+INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
 
 addRoundKey:
 	; state ^= roundkey (top 4 bytes of key register)
@@ -62,11 +65,14 @@ addRoundKey:
 setup_redo_pLayerByte:
 	clh ; clear H flag
 	rjmp redo_pLayerByte ; do the second part
+ipLayerByte:
+	seh ; set H flag
+	rjmp redo_pLayerByte
 pLayerByte:
 	seh ; set H flag
+	ror ITEMP   ; move bit into carry
 	; fall through
 redo_pLayerByte:
-	ror ITEMP   ; move bit into carry
 	ror OUTPUT0 ; move bit into output register
 	ror ITEMP   ; etc
 	ror OUTPUT1
@@ -74,9 +80,9 @@ redo_pLayerByte:
 	ror OUTPUT2
 	ror ITEMP
 	ror OUTPUT3
+	ror ITEMP
 	brhs setup_redo_pLayerByte ; redo this block? (if H flag set)
 	; for invpLayer
-	;ror ITEMP
 	ret
 
 ; sBoxByte
@@ -109,7 +115,7 @@ sBoxHighNibble:
 	ret
 
 ; load 4 consecutive input bytes into state
-load_input:
+consecutive_input:
 	ld STATE0, X+
 	ld STATE1, X+
 	ld STATE2, X+
@@ -149,6 +155,74 @@ interleaved_output:
 	st -X, OUTPUT3
 	ret
 
+; key scheduling
+schedule_key:
+	; 1: rotate key register left by 61 positions
+	ldi ITEMP, 6
+	rcall rotate_left_i
+	; 3: xor key bits with round counter
+	eor KEY4, ROUND_COUNTER
+	ldi ITEMP, 55
+	rcall rotate_left_i
+	; 2: s-box high nibble of key
+	mov ITEMP, KEY0
+	rcall sBoxHighNibble
+	mov KEY0, ITEMP
+	; increment round counter
+	inc ROUND_COUNTER
+	ret
+
+inv_schedule_key:
+	dec ROUND_COUNTER
+	; 2: inv s-box high nibble of key
+	mov ITEMP, KEY0
+	rcall sBoxHighNibble
+	mov KEY0, ITEMP
+	; 1: rotate key register left by 61 positions
+	ldi ITEMP, 25
+	rcall rotate_left_i
+	; 3: xor key bits with round counter
+	eor KEY4, ROUND_COUNTER
+	ldi ITEMP, 74
+	rcall rotate_left_i
+	; increment round counter
+	ret
+
+; apply s-box to every state byte
+sBoxLayer:
+	; move each byte into a temporary register and apply
+	; the s-box procedure for bytes, then move it back
+	mov ITEMP, STATE0
+	rcall sBoxByte
+	mov STATE0, ITEMP
+
+	mov ITEMP, STATE1
+	rcall sBoxByte
+	mov STATE1, ITEMP
+
+	mov ITEMP, STATE2
+	rcall sBoxByte
+	mov STATE2, ITEMP
+
+	mov ITEMP, STATE3
+	rcall sBoxByte
+	mov STATE3, ITEMP
+	ret
+
+; load key from SRAM, back to front
+load_key:
+	ld KEY9, -X
+	ld KEY8, -X
+	ld KEY7, -X
+	ld KEY6, -X
+	ld KEY5, -X
+	ld KEY4, -X
+	ld KEY3, -X
+	ld KEY2, -X
+	ld KEY1, -X
+	ld KEY0, -X
+	ret
+
 ; the main function called by the wrapper provided by the instructors
 ; uses the T flag to transfer control to even and odd output procedures which
 ; do the final interleaved placement of the pLayer output in SRAM
@@ -159,21 +233,11 @@ encrypt:
 		; initialize s-box
 		ldi ZH, high(SBOX<<1)
 		; load first 4 input bytes (high/left part)
-		rcall load_input
+		rcall consecutive_input
 		; point at the end of the key bytes
 		adiw XL, 14
 		; load key from SRAM, back to front
-		load_key:
-			ld KEY9, -X
-			ld KEY8, -X
-			ld KEY7, -X
-			ld KEY6, -X
-			ld KEY5, -X
-			ld KEY4, -X
-			ld KEY3, -X
-			ld KEY2, -X
-			ld KEY1, -X
-			ld KEY0, -X
+		rcall load_key
 		; point at the second 4 input bytes (low/right part)
 		subi XL, 4
 		; start round
@@ -181,7 +245,7 @@ encrypt:
 	; copy odd bytes into position and set up for the second part of the round
 	odd_output:
 		; load next state bytes (low/right part)
-		rcall load_input
+		rcall consecutive_input
 		; copy odd bytes into position
 		rcall interleaved_output
 		; rotate key register by 4 bytes to align its first 4 bytes with
@@ -194,27 +258,9 @@ encrypt:
 		; fall through
 	; main round procedure
 	encrypt_update:
-		; apply round key
+		; apply round key and s-box
 		rcall addRoundKey
-		; apply s-box to every state byte
-		sBoxLayer:
-			; move each byte into a temporary register and apply
-			; the s-box procedure for bytes, then move it back
-			mov ITEMP, STATE0
-			rcall sBoxByte
-			mov STATE0, ITEMP
-
-			mov ITEMP, STATE1
-			rcall sBoxByte
-			mov STATE1, ITEMP
-
-			mov ITEMP, STATE2
-			rcall sBoxByte
-			mov STATE2, ITEMP
-
-			mov ITEMP, STATE3
-			rcall sBoxByte
-			mov STATE3, ITEMP
+		rcall sBoxLayer
 
 		; permutes bit positions in the state following a 4-bit period
 		; stolen from KULeuven implementation and optimized for size
@@ -229,7 +275,7 @@ encrypt:
 			mov ITEMP,STATE0
 			rcall pLayerByte
 
-		; check the T bit
+		; check the T flag
 		; if it's not set we are working on the high/left block
 		brtc odd_output
 
@@ -240,7 +286,7 @@ encrypt:
 			rcall interleaved_output
 			dec XL
 			; load next 4 high/left input bytes
-			rcall load_input
+			rcall consecutive_input
 			; rotate back key register
 			ldi ITEMP, 48
 			rcall rotate_left_i
@@ -250,20 +296,7 @@ encrypt:
 		; fall through
 
 		; schedule key for next round
-		schedule_key:
-			; 1: rotate key register left by 61 positions
-			ldi ITEMP, 6
-			rcall rotate_left_i
-			; 3: xor key bits with round counter
-			eor KEY4, ROUND_COUNTER
-			ldi ITEMP, 55
-			rcall rotate_left_i
-			; 2: s-box high nibble of key
-			mov ITEMP, KEY0
-			rcall sBoxHighNibble
-			mov KEY0, ITEMP
-			; increment round counter
-			inc ROUND_COUNTER	
+		rcall schedule_key
 
 		; check round counter, break when it reaches 32
 		; (meaning the key scheduled is k_32)
@@ -275,12 +308,19 @@ encrypt:
 		rcall final_part
 
 		; load low/right bytes
-		rcall load_input
+		rcall consecutive_input
 		; adjust key register
 		ldi ITEMP, 32
 		rcall rotate_left_i
 		; apply final round key and output (low/right)
 		rcall final_part
+	ret
+
+consecutive_output:
+	st X+, OUTPUT0
+	st X+, OUTPUT1
+	st X+, OUTPUT2
+	st X+, OUTPUT3
 	ret
 
 ; do the last round key and save output
@@ -289,9 +329,102 @@ final_part:
 	subi XL, 4
 
 	; saves 4 consecutive bytes to RAM
-	st X+, STATE0
-	st X+, STATE1
-	st X+, STATE2
-	st X+, STATE3
+	rcall state_to_output
+	rcall consecutive_output
 	ret
 
+state_to_output:
+	mov OUTPUT0, STATE0
+	mov OUTPUT1, STATE1
+	mov OUTPUT2, STATE2
+	mov OUTPUT3, STATE3
+	ret
+
+; load 4 consecutive input bytes into state
+interleaved_input:
+	dec XL
+	ld STATE0, -X
+	dec XL
+	ld STATE1, -X
+	dec XL
+	ld STATE2, -X
+	dec XL
+	ld STATE3, -X
+	ret
+
+roundkey_ram:
+	rcall addRoundkey
+	rcall state_to_output
+	rcall consecutive_output
+	ret
+
+invSPnet:
+	rcall state_to_output
+	rcall ipLayerByte
+	mov STATE3, ITEMP
+	rcall ipLayerByte
+	mov STATE2, ITEMP
+	rcall ipLayerByte
+	mov STATE1, ITEMP
+	rcall ipLayerByte
+	mov STATE0, ITEMP
+	rcall sBoxLayer
+	rcall state_to_output
+	ret
+
+decrypt:
+	; initialize round_counter
+	ldi ROUND_COUNTER, 1
+	; initialize s-box
+	ldi ZH, high(SBOX<<1)
+	; point at the end of the key bytes
+	adiw XL, 18
+	; load key from SRAM, back to front
+	rcall load_key
+
+	; schedule key for last round
+	schedule_last_key:
+		rcall schedule_key
+		cpi ROUND_COUNTER, 32
+		brne schedule_last_key
+
+	; initialize inv s-box
+	ldi ZH, high(INVSBOX<<1)
+	
+	; start round
+	decrypt_update:
+		subi XL, 8
+		rcall consecutive_input
+		subi XL, 4
+		rcall roundkey_ram
+
+		rcall consecutive_input
+		subi XL, 4
+		ldi ITEMP, 32
+		rcall rotate_left_i
+		rcall roundkey_ram
+
+		rcall interleaved_input
+		
+		rcall invSPnet
+
+		; split around here if at all possible
+
+		adiw XL, 9
+		rcall interleaved_input
+		dec XL
+		rcall consecutive_output
+
+		rcall invSPnet
+
+		rcall consecutive_output
+
+		ldi ITEMP, 48
+		rcall rotate_left_i
+		rcall inv_schedule_key
+
+		cpi ROUND_COUNTER, 1
+		brne decrypt_update
+	ret
+ 
+	
