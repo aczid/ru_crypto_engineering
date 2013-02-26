@@ -15,10 +15,10 @@
 
 ; SPECS
 ; Size optimized version 1 - February 2013
-; Code size:                 434 bytes
+; Code size:                 432 bytes
 ; RAM words:                 18
-; Cycle count (encryption):  93219
-; Cycle count (decryption): 106859
+; Cycle count (encryption):  95079
+; Cycle count (decryption): 108843
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -124,31 +124,24 @@ odd_unpack:
 ; applying the s-box nibble-wise allows us to reuse the second half of the
 ; procedure as its own procedure when key scheduling
 ; reads from and writes to ITEMP
+sBoxHighNibble:
+	clh
+	swap ITEMP; move high nibble to low nibble in input
+	rjmp sBoxLowNibble
 sBoxByte:
+	seh
+	; fall through
+sBoxLowNibble:
 	; input (low nibble)
 	mov ZL, ITEMP   ; load input
 	cbr ZL, 0xf0    ; clear high nibble in input
 
 	; output (low nibble)
-	;lpm SBOX_OUTPUT, Z    ; load s-box output into temp register
 	rcall unpack_sBox
-	cbr ITEMP, 0xf        ; clear low nibble in output register
+	cbr ITEMP, 0xf        ; clear high nibble in output
 	or ITEMP, SBOX_OUTPUT ; save low nibble to output register
-
-	; fall through
-sBoxHighNibble:
-	; input (high nibble)
-	mov  ZL, ITEMP  ; load input
-	cbr  ZL, 0xf    ; clear low nibble in input
-	swap ZL         ; move high nibble to low nibble in input
-
-	; output (high nibble)
-	;lpm SBOX_OUTPUT, Z    ; load s-box output into temp register
-	rcall unpack_sBox
-	swap SBOX_OUTPUT      ; move low nibble of s-box output to high nibble
-	cbr ITEMP, 0xf0       ; clear high nibble in output
-	or ITEMP, SBOX_OUTPUT ; save high nibble to output
-
+	brhs sBoxHighNibble
+	swap ITEMP
 	ret
 
 ; rotates key register left by the number in ITEMP
@@ -217,7 +210,7 @@ state_to_output:
 	mov OUTPUT3, STATE3
 	ret
 
-; apply the s-box and p-layer from output to state registers
+; apply the s-box and p-layer from state to output registers
 SPnet:
 	rcall sBoxLayer
 	mov ITEMP, STATE3
