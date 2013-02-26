@@ -15,13 +15,13 @@
 
 ; SPECS
 ; Size optimized version 1 - February 2013
-; Code size:                456 bytes
-; RAM words:                18
-; Cycle count (encryption): 85743
-; Cycle count (decryption): 99884
+; Code size:                 452 bytes
+; RAM words:                 18
+; Cycle count (encryption):  87422
+; Cycle count (decryption): 100720
 
 ; USE
-; Point XL at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
+; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
 
 ; Key registers
 .def KEY0 = r0
@@ -216,6 +216,18 @@ sBoxLayer:
 	mov STATE3, ITEMP
 	ret
 
+SPnet:
+	rcall sBoxLayer
+	mov ITEMP, STATE3
+	rcall pLayerByte
+	mov ITEMP, STATE2
+	rcall pLayerByte
+	mov ITEMP, STATE1
+	rcall pLayerByte
+	mov ITEMP, STATE0
+	rcall pLayerByte
+	ret
+
 ; loads key from SRAM, back to front
 load_key:
 	ld KEY9, -X
@@ -230,98 +242,52 @@ load_key:
 	ld KEY0, -X
 	ret
 
-; encryption routine: point XL at 8 plaintext input bytes followed by 10 key input bytes
-
-; uses the T flag to transfer control to even and odd output procedures which
-; do the final interleaved placement of the p-layer output in SRAM
+; encryption routine: point X at 8 plaintext input bytes followed by 10 key input bytes
 encrypt:
-	encrypt_init:
-		; initialize round counter
-		ldi ROUND_COUNTER, 1
-		; initialize s-box
-		ldi ZH, high(SBOX<<1)
-		; load first 4 input bytes (high/left part)
+	; initialize round counter
+	ldi ROUND_COUNTER, 1
+	; initialize s-box
+	ldi ZH, high(SBOX<<1)
+	; point at the end of the key bytes
+	;rcall consecutive_input
+	adiw XL, 18
+	; load key from SRAM, back to front
+	rcall load_key
+	; point at high/left 4 bytes
+	subi XL, 8
+	encrypt_update:
+		; apply round key, s-box layer and p-layer
+		rcall roundkey_ram
+		rcall SPnet
+		; load low/right 4 bytes
 		rcall consecutive_input
-		; point at the end of the key bytes
-		adiw XL, 14
-		; load key from SRAM, back to front
-		rcall load_key
-		; point at the second 4 input bytes (low/right part)
-		subi XL, 4
-		; start round
-		rjmp encrypt_update
-	; copy odd bytes into position and set up for the second part of the round
-	odd_output:
-		; load next state bytes (low/right part)
-		rcall consecutive_input
-		; copy odd bytes into position
+		; save output to SRAM
 		rcall interleaved_output
-		; rotate key register by 4 bytes to align its first 4 bytes with
-		; the next 4 bytes of input
+
+		; rotate key register to align with low/right part
 		ldi ITEMP, 32
 		rcall rotate_left_i
-		; set T flag to transfer control to even_output after this round
-		set
-		; do next 4 bytes
-		; fall through
-	; main round procedure
-	encrypt_update:
-		; apply round key and s-box
-		rcall addRoundKey
-		rcall sBoxLayer
 
-		; permutes bit positions in the state following a 4-bit period
-		; stolen from KULeuven implementation and optimized for size
-		pLayer:
-			; map output bytes
-			mov ITEMP,STATE3
-			rcall pLayerByte
-			mov ITEMP,STATE2
-			rcall pLayerByte
-			mov ITEMP,STATE1
-			rcall pLayerByte
-			mov ITEMP,STATE0
-			rcall pLayerByte
+		; apply round key, s-box layer and p-layer
+		rcall addRoundkey
+		rcall state_to_output
+		rcall SPnet
 
-		; check the T flag
-		; if it's not set we are working on the high/left block
-		brtc odd_output
+		; save output to SRAM
+		adiw XL, 9
+		rcall interleaved_output
+		dec XL
 
-		; otherwise, we are working on the low/right block
-		even_output:
-			; copy even state bytes into position
-			adiw XL, 9
-			rcall interleaved_output
-			dec XL
-			; load next 4 high/left input bytes
-			rcall consecutive_input
-			; rotate back key register
-			ldi ITEMP, 48
-			rcall rotate_left_i
-			; clear T flag to send the next round through the
-			; odd_output procedure first
-			clt
-		; fall through
+		; rotate key register to align with high/left part
+		ldi ITEMP, 48
+		rcall rotate_left_i
 
-		; schedule key for next round
+		; schedule next key
 		rcall schedule_key
 
-		; check round counter, break when it reaches 32
-		; (meaning the key scheduled is k_32)
 		cpi ROUND_COUNTER, 32
-		brne encrypt_update ; do next round
-		; fall through
-	encrypt_final:
-		; apply final round key and output (high/left)
-		rcall final_part
-
-		; load low/right bytes
-		rcall consecutive_input
-		; adjust key register
-		ldi ITEMP, 32
-		rcall rotate_left_i
-		; apply final round key and output (low/right)
-		rcall final_part
+		brne encrypt_update
+	rcall last_round_key
 	ret
 
 ; save 4 consecutive output bytes to ram
@@ -386,7 +352,15 @@ invSPnet:
 	rcall state_to_output
 	ret
 
-; decryption routine: point XL at 8 ciphertext input bytes followed by 10 key input bytes
+; apply round key to the final state
+last_round_key:
+	rcall roundkey_ram
+	ldi ITEMP, 32
+	rcall rotate_left_i
+	rcall roundkey_ram
+	ret
+
+; decryption routine: point X at 8 ciphertext input bytes followed by 10 key input bytes
 decrypt:
 	; initialize round_counter
 	ldi ROUND_COUNTER, 1
@@ -410,12 +384,7 @@ decrypt:
 	decrypt_update:
 		; point at high/left 4 bytes, apply round key to this block
 		subi XL, 8
-		rcall roundkey_ram
-
-		; rotate key and apply round key to low/right bytes
-		ldi ITEMP, 32
-		rcall rotate_left_i
-		rcall roundkey_ram
+		rcall last_round_key
 
 		; get next invSPnet input
 		rcall interleaved_input
@@ -452,4 +421,5 @@ decrypt:
 
 		cpi ROUND_COUNTER, 1
 		brne decrypt_update
+	rcall last_round_key
 	ret

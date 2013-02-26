@@ -11,10 +11,10 @@ We implemented the PRESENT cipher in C and AVR assembly based on the original pa
 This AVR assembly version was optimized for small code size at the expense of speed.
 The current version requires 456 code bytes for the encryption and decryption routines.
 
-* Code size:                456 bytes
-* RAM words:                18
-* Cycle count (encryption): 85743
-* Cycle count (decryption): 99884
+* Code size:                 452 bytes
+* RAM words:                 18
+* Cycle count (encryption):  87422
+* Cycle count (decryption): 100720
 
 The speed-optimized version of the algorithm can be found at my co-author's github browsable repository:
 https://github.com/kostaspap88/PRESENT_speed_implementation/
