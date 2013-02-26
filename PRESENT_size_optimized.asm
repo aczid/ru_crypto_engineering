@@ -15,7 +15,7 @@
 
 ; SPECS
 ; Size optimized version 1 - February 2013
-; Code size:                 452 bytes
+; Code size:                 442 bytes
 ; RAM words:                 18
 ; Cycle count (encryption):  87422
 ; Cycle count (decryption): 100720
@@ -296,16 +296,6 @@ consecutive_output:
 	st X+, OUTPUT1
 	st X+, OUTPUT2
 	st X+, OUTPUT3
-	ret
-
-; do the last round key and save output
-final_part:
-	rcall addRoundKey
-	subi XL, 4
-
-	; saves 4 consecutive bytes to RAM
-	rcall state_to_output
-	rcall consecutive_output
 	ret
 
 ; move current state to output registers
