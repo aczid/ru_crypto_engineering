@@ -15,10 +15,10 @@
 
 ; SPECS
 ; Size optimized version 1 - February 2013
-; Code size:                 416 bytes + 16 bytes for s-boxes
+; Code size:                 412 bytes + 16 bytes for s-boxes
 ; RAM words:                 18
-; Cycle count (encryption):  95079
-; Cycle count (decryption): 108843
+; Cycle count (encryption):  91390
+; Cycle count (decryption): 104937
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -109,18 +109,6 @@ continue_pLayerByte:
 	brhs setup_continue_pLayerByte ; redo this block? (if H flag set)
 	ret
 
-; decode packed s-box nibble
-unpack_sBox:
-	asr ZL
-	lpm SBOX_OUTPUT, Z ; get s-box output
-	brcs odd_unpack
-	; fall through
-even_unpack:
-	swap SBOX_OUTPUT
-odd_unpack:
-	cbr SBOX_OUTPUT, 0xf0
-	ret
-
 ; sBoxByte
 ; applying the s-box nibble-wise allows us to reuse the second half of the
 ; procedure as its own procedure when key scheduling
@@ -139,7 +127,15 @@ sBoxLowNibble:
 	cbr ZL, 0xf0    ; clear high nibble in s-box input
 
 	; output (low nibble)
-	rcall unpack_sBox
+unpack_sBox:
+	asr ZL
+	lpm SBOX_OUTPUT, Z ; get s-box output
+	brcs odd_unpack
+	; fall through
+even_unpack:
+	swap SBOX_OUTPUT
+odd_unpack:
+	cbr SBOX_OUTPUT, 0xf0
 	cbr ITEMP, 0xf        ; clear low nibble in output
 	or ITEMP, SBOX_OUTPUT ; save low nibble to output register
 	brhs sBoxHighNibble
