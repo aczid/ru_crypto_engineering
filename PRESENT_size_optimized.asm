@@ -82,6 +82,7 @@ addRoundKey:
 ; splices 1 input byte over 4 output bytes, which will then each hold 2 bits
 ; following a 4-bit period in the input
 
+; reads from ITEMP and saves to output registers
 ; after 4 calls from different input registers we will have collected 4
 ; completed output bytes following this 4-bit period
 
@@ -124,24 +125,25 @@ odd_unpack:
 ; applying the s-box nibble-wise allows us to reuse the second half of the
 ; procedure as its own procedure when key scheduling
 ; reads from and writes to ITEMP
+; uses H (half-carry) flag to re-do this block twice
 sBoxHighNibble:
 	clh
-	swap ITEMP; move high nibble to low nibble in input
+	swap ITEMP; swap nibbles
 	rjmp sBoxLowNibble
 sBoxByte:
 	seh
 	; fall through
 sBoxLowNibble:
 	; input (low nibble)
-	mov ZL, ITEMP   ; load input
-	cbr ZL, 0xf0    ; clear high nibble in input
+	mov ZL, ITEMP   ; load s-box input
+	cbr ZL, 0xf0    ; clear high nibble in s-box input
 
 	; output (low nibble)
 	rcall unpack_sBox
-	cbr ITEMP, 0xf        ; clear high nibble in output
+	cbr ITEMP, 0xf        ; clear low nibble in output
 	or ITEMP, SBOX_OUTPUT ; save low nibble to output register
 	brhs sBoxHighNibble
-	swap ITEMP
+	swap ITEMP ; swap nibbles
 	ret
 
 ; rotates key register left by the number in ITEMP
