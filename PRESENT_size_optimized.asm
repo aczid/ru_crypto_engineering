@@ -1,4 +1,4 @@
-; PRESENT cipher for AVR devices
+; PRESENT cipher for AVR devwices
 
 ; AUTHORS
 ; implemented by Aram Verstegen
@@ -15,7 +15,7 @@
 
 ; SPECS
 ; Size optimized version 1 - February 2013
-; Code size:                 442 bytes
+; Code size:                 436 bytes
 ; RAM words:                 18
 ; Cycle count (encryption):  87422
 ; Cycle count (decryption): 100720
@@ -137,14 +137,6 @@ sBoxHighNibble:
 
 	ret
 
-; loads 4 consecutive input bytes into state
-consecutive_input:
-	ld STATE0, X+
-	ld STATE1, X+
-	ld STATE2, X+
-	ld STATE3, X+
-	ret
-
 ; rotates key register left by the number in ITEMP
 rotate_left_i:
 	clr ROTATION_COUNTER
@@ -163,19 +155,6 @@ continue_rotate_left_i:
 	inc ROTATION_COUNTER
 	cp ROTATION_COUNTER, ITEMP
 	brne continue_rotate_left_i
-	ret
-
-; saves state bytes from back to front
-; leaves 1 byte untouched in between each saved byte
-interleaved_output:
-	dec XL
-	st -X, OUTPUT0
-	dec XL
-	st -X, OUTPUT1
-	dec XL
-	st -X, OUTPUT2
-	dec XL
-	st -X, OUTPUT3
 	ret
 
 ; key scheduling
@@ -216,6 +195,15 @@ sBoxLayer:
 	mov STATE3, ITEMP
 	ret
 
+; move current state to output registers
+state_to_output:
+	mov OUTPUT0, STATE0
+	mov OUTPUT1, STATE1
+	mov OUTPUT2, STATE2
+	mov OUTPUT3, STATE3
+	ret
+
+; apply the s-box and p-layer to output to the state registers
 SPnet:
 	rcall sBoxLayer
 	mov ITEMP, STATE3
@@ -228,8 +216,30 @@ SPnet:
 	rcall pLayerByte
 	ret
 
-; loads key from SRAM, back to front
-load_key:
+; invert s-box and p-layer from state to output registers
+invSPnet:
+	rcall state_to_output
+	rcall ipLayerByte
+	mov STATE3, ITEMP
+	rcall ipLayerByte
+	mov STATE2, ITEMP
+	rcall ipLayerByte
+	mov STATE1, ITEMP
+	rcall ipLayerByte
+	mov STATE0, ITEMP
+	rcall sBoxLayer
+	rcall state_to_output
+	ret
+
+; prepare for encryption or decryption
+setup:
+	; initialize round counter
+	ldi ROUND_COUNTER, 1
+	; initialize s-box
+	ldi ZH, high(SBOX<<1)
+	; point at the end of the key bytes
+	adiw XL, 18
+	; loads key from SRAM, back to front
 	ld KEY9, -X
 	ld KEY8, -X
 	ld KEY7, -X
@@ -242,17 +252,68 @@ load_key:
 	ld KEY0, -X
 	ret
 
+; loads state bytes from back to front
+; leaves 1 byte untouched in between each saved byte
+interleaved_input:
+	dec XL
+	ld STATE0, -X
+	dec XL
+	ld STATE1, -X
+	dec XL
+	ld STATE2, -X
+	dec XL
+	ld STATE3, -X
+	ret
+
+; saves state bytes from back to front
+; leaves 1 byte untouched in between each saved byte
+interleaved_output:
+	dec XL
+	st -X, OUTPUT0
+	dec XL
+	st -X, OUTPUT1
+	dec XL
+	st -X, OUTPUT2
+	dec XL
+	st -X, OUTPUT3
+	ret
+
+; save 4 consecutive output bytes to ram
+consecutive_output:
+	st X+, OUTPUT0
+	st X+, OUTPUT1
+	st X+, OUTPUT2
+	st X+, OUTPUT3
+	ret
+
+; loads 4 consecutive ram bytes into state
+consecutive_input:
+	ld STATE0, X+
+	ld STATE1, X+
+	ld STATE2, X+
+	ld STATE3, X+
+	ret
+
+; load input and apply current round key in ram consecutively
+roundkey_ram:
+	rcall consecutive_input
+	subi XL, 4
+	rcall addRoundkey
+	rcall state_to_output
+	rcall consecutive_output
+	ret
+
+; apply round key to the final state
+last_round_key:
+	rcall roundkey_ram
+	ldi ITEMP, 32
+	rcall rotate_left_i
+	rcall roundkey_ram
+	ret
+
 ; encryption routine: point X at 8 plaintext input bytes followed by 10 key input bytes
 encrypt:
-	; initialize round counter
-	ldi ROUND_COUNTER, 1
-	; initialize s-box
-	ldi ZH, high(SBOX<<1)
-	; point at the end of the key bytes
-	;rcall consecutive_input
-	adiw XL, 18
-	; load key from SRAM, back to front
-	rcall load_key
+	rcall setup
 	; point at high/left 4 bytes
 	subi XL, 8
 	encrypt_update:
@@ -290,76 +351,9 @@ encrypt:
 	rcall last_round_key
 	ret
 
-; save 4 consecutive output bytes to ram
-consecutive_output:
-	st X+, OUTPUT0
-	st X+, OUTPUT1
-	st X+, OUTPUT2
-	st X+, OUTPUT3
-	ret
-
-; move current state to output registers
-state_to_output:
-	mov OUTPUT0, STATE0
-	mov OUTPUT1, STATE1
-	mov OUTPUT2, STATE2
-	mov OUTPUT3, STATE3
-	ret
-
-; load 4 consecutive input bytes into state
-interleaved_input:
-	dec XL
-	ld STATE0, -X
-	dec XL
-	ld STATE1, -X
-	dec XL
-	ld STATE2, -X
-	dec XL
-	ld STATE3, -X
-	ret
-
-; load input and apply current round key in ram consecutively
-roundkey_ram:
-	rcall consecutive_input
-	subi XL, 4
-	rcall addRoundkey
-	rcall state_to_output
-	rcall consecutive_output
-	ret
-
-; invert the S-P network from state to output registers
-invSPnet:
-	rcall state_to_output
-	rcall ipLayerByte
-	mov STATE3, ITEMP
-	rcall ipLayerByte
-	mov STATE2, ITEMP
-	rcall ipLayerByte
-	mov STATE1, ITEMP
-	rcall ipLayerByte
-	mov STATE0, ITEMP
-	rcall sBoxLayer
-	rcall state_to_output
-	ret
-
-; apply round key to the final state
-last_round_key:
-	rcall roundkey_ram
-	ldi ITEMP, 32
-	rcall rotate_left_i
-	rcall roundkey_ram
-	ret
-
 ; decryption routine: point X at 8 ciphertext input bytes followed by 10 key input bytes
 decrypt:
-	; initialize round_counter
-	ldi ROUND_COUNTER, 1
-	; initialize s-box
-	ldi ZH, high(SBOX<<1)
-	; point at the end of the key bytes
-	adiw XL, 18
-	; load key from SRAM, back to front
-	rcall load_key
+	rcall setup
 
 	; schedule key for last round
 	schedule_last_key:
