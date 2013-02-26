@@ -15,10 +15,10 @@
 
 ; SPECS
 ; Size optimized version 1 - February 2013
-; Code size:                 432 bytes
+; Code size:                 434 bytes
 ; RAM words:                 18
 ; Cycle count (encryption):  93219
-; Cycle count (decryption): 106858
+; Cycle count (decryption): 106859
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -387,6 +387,7 @@ decrypt:
 
 		; get next invSPnet input
 		rcall interleaved_input
+		; decrypt input using SP-network
 		rcall invSPnet
 
 		; get next invSPnet input (low/right bytes)
@@ -397,7 +398,7 @@ decrypt:
 		; write 4 decrypted high/left bytes
 		rcall consecutive_output
 
-		; decode low/right bytes
+		; decrypt low/right bytes
 		rcall invSPnet
 
 		; write 4 decrypted low/right bytes
@@ -420,5 +421,6 @@ decrypt:
 
 		cpi ROUND_COUNTER, 1
 		brne decrypt_update
+	subi XL, 8
 	rcall last_round_key
 	ret
