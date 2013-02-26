@@ -15,7 +15,7 @@
 
 ; SPECS
 ; Size optimized version 1 - February 2013
-; Code size:                 432 bytes
+; Code size:                 416 bytes + 16 bytes for s-boxes
 ; RAM words:                 18
 ; Cycle count (encryption):  95079
 ; Cycle count (decryption): 108843
