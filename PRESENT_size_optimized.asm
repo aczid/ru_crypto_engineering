@@ -15,10 +15,10 @@
 
 ; SPECS
 ; Size optimized version 1 - February 2013
-; Code size:                 436 bytes
+; Code size:                 432 bytes
 ; RAM words:                 18
-; Cycle count (encryption):  87422
-; Cycle count (decryption): 100720
+; Cycle count (encryption):  93219
+; Cycle count (decryption): 106858
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -64,9 +64,9 @@
 ; registers r26 and up are X, Y and Z
 
 .org 256
-SBOX:   .db 0xc,0x5,0x6,0xb,0x9,0x0,0xa,0xd,0x3,0xe,0xF,0x8,0x4,0x7,0x1,0x2
+SBOX:   .db 0xc5,0x6b,0x90,0xad,0x3e,0xF8,0x47,0x12
 .org 512
-INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
+INVSBOX:.db 0x5e,0xf8,0xc1,0x2d,0xb4,0x63,0x07,0x9a
 
 ; state ^= roundkey (top 4 bytes of key register)
 addRoundKey:
@@ -86,17 +86,17 @@ addRoundKey:
 ; completed output bytes following this 4-bit period
 
 ; uses H (half-carry) flag to re-do this block twice
-setup_redo_pLayerByte:
+setup_continue_pLayerByte:
 	clh ; clear H flag
-	rjmp redo_pLayerByte ; do the second part
+	rjmp continue_pLayerByte ; do the second part
 ipLayerByte:
 	seh ; set H flag
-	rjmp redo_pLayerByte
+	rjmp continue_pLayerByte
 pLayerByte:
 	seh ; set H flag
 	ror ITEMP   ; move bit into carry
 	; fall through
-redo_pLayerByte:
+continue_pLayerByte:
 	ror OUTPUT0 ; move bit into output register
 	ror ITEMP   ; etc
 	ror OUTPUT1
@@ -105,7 +105,19 @@ redo_pLayerByte:
 	ror ITEMP
 	ror OUTPUT3
 	ror ITEMP
-	brhs setup_redo_pLayerByte ; redo this block? (if H flag set)
+	brhs setup_continue_pLayerByte ; redo this block? (if H flag set)
+	ret
+
+; decode packed s-box nibble
+unpack_sBox:
+	asr ZL
+	lpm SBOX_OUTPUT, Z ; get s-box output
+	brcs odd_unpack
+	; fall through
+even_unpack:
+	swap SBOX_OUTPUT
+odd_unpack:
+	cbr SBOX_OUTPUT, 0xf0
 	ret
 
 ; sBoxByte
@@ -118,7 +130,8 @@ sBoxByte:
 	cbr ZL, 0xf0    ; clear high nibble in input
 
 	; output (low nibble)
-	lpm SBOX_OUTPUT, Z    ; load s-box output into temp register
+	;lpm SBOX_OUTPUT, Z    ; load s-box output into temp register
+	rcall unpack_sBox
 	cbr ITEMP, 0xf        ; clear low nibble in output register
 	or ITEMP, SBOX_OUTPUT ; save low nibble to output register
 
@@ -130,7 +143,8 @@ sBoxHighNibble:
 	swap ZL         ; move high nibble to low nibble in input
 
 	; output (high nibble)
-	lpm SBOX_OUTPUT, Z    ; load s-box output into temp register
+	;lpm SBOX_OUTPUT, Z    ; load s-box output into temp register
+	rcall unpack_sBox
 	swap SBOX_OUTPUT      ; move low nibble of s-box output to high nibble
 	cbr ITEMP, 0xf0       ; clear high nibble in output
 	or ITEMP, SBOX_OUTPUT ; save high nibble to output
@@ -203,7 +217,7 @@ state_to_output:
 	mov OUTPUT3, STATE3
 	ret
 
-; apply the s-box and p-layer to output to the state registers
+; apply the s-box and p-layer from output to state registers
 SPnet:
 	rcall sBoxLayer
 	mov ITEMP, STATE3
@@ -252,7 +266,7 @@ setup:
 	ld KEY0, -X
 	ret
 
-; loads state bytes from back to front
+; loads state bytes from SRAM from back to front
 ; leaves 1 byte untouched in between each saved byte
 interleaved_input:
 	dec XL
@@ -265,7 +279,7 @@ interleaved_input:
 	ld STATE3, -X
 	ret
 
-; saves state bytes from back to front
+; saves output bytes to SRAM from back to front
 ; leaves 1 byte untouched in between each saved byte
 interleaved_output:
 	dec XL
@@ -278,15 +292,7 @@ interleaved_output:
 	st -X, OUTPUT3
 	ret
 
-; save 4 consecutive output bytes to ram
-consecutive_output:
-	st X+, OUTPUT0
-	st X+, OUTPUT1
-	st X+, OUTPUT2
-	st X+, OUTPUT3
-	ret
-
-; loads 4 consecutive ram bytes into state
+; loads 4 consecutive SRAM bytes into state
 consecutive_input:
 	ld STATE0, X+
 	ld STATE1, X+
@@ -294,7 +300,15 @@ consecutive_input:
 	ld STATE3, X+
 	ret
 
-; load input and apply current round key in ram consecutively
+; save 4 consecutive output bytes to SRAM
+consecutive_output:
+	st X+, OUTPUT0
+	st X+, OUTPUT1
+	st X+, OUTPUT2
+	st X+, OUTPUT3
+	ret
+
+; load input and apply current round key in SRAM consecutively
 roundkey_ram:
 	rcall consecutive_input
 	subi XL, 4
@@ -314,6 +328,7 @@ last_round_key:
 ; encryption routine: point X at 8 plaintext input bytes followed by 10 key input bytes
 encrypt:
 	rcall setup
+
 	; point at high/left 4 bytes
 	subi XL, 8
 	encrypt_update:
