@@ -138,6 +138,7 @@ odd_unpack:
 sBoxByte:
         ; input (low nibble)
         mov ZL, ITEMP         ; load s-box input
+        cbr ZL, 0xf0          ; clear high nibble in input
         rcall unpack_sBox     ; get output in SBOX_OUTPUT
 
         cbr ITEMP, 0xf        ; clear low nibble in output
@@ -146,6 +147,9 @@ sBoxByte:
         ; fall through
 sBoxHighNibble:
         mov ZL, ITEMP         ; load s-box input
+        cbr ZL, 0xf           ; clear low nibble in input
+        swap ZL               ; move high nibble to low nibble
+
         rcall unpack_sBox     ; get output in SBOX_OUTPUT
         swap SBOX_OUTPUT      ; move low nibble to high nibble
 
