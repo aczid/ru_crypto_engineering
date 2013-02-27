@@ -95,7 +95,7 @@ block:
 redo_block:
         ; instructions here happen twice when called from block(!)
 
-        brts setup_redo_block ; redo this block? (if T flag)
+        brts setup_redo_block ; redo this block? (if T flag set)
         ret
 \end{lstlisting}
 \end{frame}
@@ -282,11 +282,19 @@ decrypt:
 	\begin{tabular}{ l c c }
 
                 & Speed optimized & Size optimized \\
-        Size (bytes) & 1000 & 432 \\
-        Cycles (encryption) & 8700 & 91390 \\
+        Size (bytes) & 1794 & 432 \\
+        Cycles (encryption) & 8721 & 91390 \\
         Cycles (decryption) & - & 104937 \\
-        RAM words & 18 & 18
+        RAM (bytes) & 18 & 18
 
 	\end{tabular}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Questions?}
+	\footnotesize{
+	\url{https://github.com/aczid/ru_crypto_engineering}
+	\url{https://github.com/kostaspap88/PRESENT_speed_implementation/}
+	}
 \end{frame}
 \end{document}
