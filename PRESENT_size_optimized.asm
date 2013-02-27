@@ -1,4 +1,4 @@
-; PRESENT cipher for AVR devwices
+; PRESENT cipher for AVR devices
 
 ; AUTHORS
 ; implemented by Aram Verstegen
