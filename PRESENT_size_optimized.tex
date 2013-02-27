@@ -137,20 +137,20 @@ odd_unpack:
 \begin{lstlisting}
 sBoxByte:
         ; input (low nibble)
-        mov ZL, ITEMP     ; load s-box input
-        rcall unpack_sBox ; get output in SBOX_OUTPUT
+        mov ZL, ITEMP         ; load s-box input
+        rcall unpack_sBox     ; get output in SBOX_OUTPUT
 
-        cbr ITEMP, 0xf    ; clear low nibble in output register
-        or ITEMP, TEMP0   ; save low nibble to output register
+        cbr ITEMP, 0xf        ; clear low nibble in output register
+        or ITEMP, SBOX_OUTPUT ; save low nibble to output register
 
         ; fall through
 sBoxHighNibble:
-        mov ZL, ITEMP     ; load s-box input
-        rcall unpack_sBox ; get output in SBOX_OUTPUT
-        swap SBOX_OUTPUT  ; move low nibble to high nibble
+        mov ZL, ITEMP         ; load s-box input
+        rcall unpack_sBox     ; get output in SBOX_OUTPUT
+        swap SBOX_OUTPUT      ; move low nibble to high nibble
 
-        cbr ITEMP, 0xf0   ; clear high nibble in output
-        or ITEMP, TEMP0   ; save high nibble to output
+        cbr ITEMP, 0xf0       ; clear high nibble in output
+        or ITEMP, SBOX_OUTPUT ; save high nibble to output
 
         ret
 \end{lstlisting}
