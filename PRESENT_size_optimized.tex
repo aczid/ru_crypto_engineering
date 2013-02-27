@@ -93,7 +93,7 @@ block:
         set                   ; set T flag
         ; fall through
 redo_block:
-        ; instructions here happen twice when called from block(!)
+        ; instructions here happen twice when called from block
 
         brts setup_redo_block ; redo this block? (if T flag set)
         ret
@@ -128,6 +128,7 @@ even_unpack:
         swap SBOX_OUTPUT      ; swap nibbles in s-box output
 odd_unpack:
         cbr SBOX_OUTPUT, 0xf0 ; clear high nibble in s-box output
+        ret
 \end{lstlisting}
 \end{frame}
 
@@ -137,7 +138,7 @@ odd_unpack:
 sBoxByte:
         ; input (low nibble)
         mov ZL, ITEMP     ; load s-box input
-        rcall unpack_sBox ; get output in ITEMP
+        rcall unpack_sBox ; get output in SBOX_OUTPUT
 
         cbr ITEMP, 0xf    ; clear low nibble in output register
         or ITEMP, TEMP0   ; save low nibble to output register
@@ -145,7 +146,7 @@ sBoxByte:
         ; fall through
 sBoxHighNibble:
         mov ZL, ITEMP     ; load s-box input
-        rcall unpack_sBox ; get output in ITEMP
+        rcall unpack_sBox ; get output in SBOX_OUTPUT
         swap SBOX_OUTPUT  ; move low nibble to high nibble
 
         cbr ITEMP, 0xf0   ; clear high nibble in output
