@@ -164,7 +164,7 @@ sBoxHighNibble:
         swap ITEMP            ; swap nibbles
         rjmp sBoxLowNibble    ; do low nibble
 sBoxByte:
-        seh
+        seh                   ; set H flag to re-do this block
         ; fall through
 sBoxLowNibble:
         mov ZL, ITEMP         ; load s-box input
