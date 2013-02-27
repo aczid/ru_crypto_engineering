@@ -146,7 +146,7 @@ sBoxByte:
 sBoxHighNibble:
         mov ZL, ITEMP     ; load s-box input
         rcall unpack_sBox ; get output in ITEMP
-	swap SBOX_OUTPUT  ; move low nibble to high nibble
+        swap SBOX_OUTPUT  ; move low nibble to high nibble
 
         cbr ITEMP, 0xf0   ; clear high nibble in output
         or ITEMP, TEMP0   ; save high nibble to output
