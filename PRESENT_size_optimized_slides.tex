@@ -1,0 +1,306 @@
+\documentclass{beamer}
+\usepackage{listings}
+\lstset{basicstyle=\scriptsize\sffamily}
+%\lstset{language=Assembler}[avr8avra] % not standard
+\lstdefinestyle{customasm}{
+  morekeywords={adc,adiw,asr,brts,brcs,brhs,brne,cbr,clh,clr,clt,cp,cpi,dec,eor,ldi,lpm,lsl,mov,or,rcall,ret,seh,set,subi,swap,rjmp},
+  morecomment=[l][\color{blue}]{;}
+}
+\lstset{style=customasm}
+
+\begin{document}
+
+\title{A size-optimized implementation of PRESENT for AVR machines}
+\author{
+Aram Verstegen \\
+Kostas Papagiannopoulos
+}
+\date{\today}
+
+\frame{\titlepage}
+
+\begin{frame}
+\frametitle{AVR architecture}
+        \begin{itemize}
+        \item 16-bit opcodes
+        \item Harvard architecture
+        \item No bulk instructions
+        \item Some SRAM
+        \item SREG flags
+        \item SWAP instruction
+        \item CBR instruction
+        \item All kinds of branching instructions
+        \end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Optimization strategy}
+        \begin{itemize}
+        \item Be concise to start with
+        \item Look for repeating patterns
+        \item Refactor to reuse code wherever possible
+        \item Use the SRAM more
+        \item Employ a different I/O pattern
+        \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Serialization of the algorithm}
+\begin{lstlisting}
+; state ^= roundkey (first 8 bytes of key register)
+addRoundKey:
+        eor STATE0, KEY0
+        eor STATE1, KEY1
+        eor STATE2, KEY2
+        eor STATE3, KEY3
+        eor STATE4, KEY4
+        eor STATE5, KEY5
+        eor STATE6, KEY6
+        eor STATE7, KEY7
+        ret
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Serialization of the algorithm}
+\begin{lstlisting}
+; state ^= roundkey (first 4 bytes of key register)
+addRoundKey:
+        eor STATE0, KEY0
+        eor STATE1, KEY1
+        eor STATE2, KEY2
+        eor STATE3, KEY3
+        ret
+\end{lstlisting}
+
+This helps with:
+\begin{itemize}
+        \item doing I/O
+        \item applying round keys
+        \item applying S-Boxes
+        \item applying P-layer
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Using SREG flags}
+\begin{lstlisting}
+setup_redo_block:
+        clt                   ; clear T flag
+        rjmp redo_block       ; do the second part
+block:
+        set                   ; set T flag
+        ; fall through
+redo_block:
+        ; instructions here happen twice when called from block
+
+        brts setup_redo_block ; redo this block? (if T flag set)
+        ret
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Packing S-Boxes}
+	\footnotesize{
+	Before: \\
+	\begin{tabular}{ | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | }
+	  \hline                        
+	  C & 5 & 6 & B & 9 & 0 & A & D & 3 & E & F & 8 & 4 & 7 & 1 & 2 \\
+	  \hline  
+	\end{tabular}
+	\\
+
+	After: \\
+	\begin{tabular}{ | c | c | c | c | c | c | c | c | }
+	  \hline                        
+	  C5 & 6B & 90 & AD & 3E & F8 & 47 & 12 \\
+	  \hline  
+	\end{tabular}
+	}
+
+\begin{lstlisting}
+unpack_sBox:
+        asr ZL                ; halve input, take carry
+        lpm SBOX_OUTPUT, Z    ; get s-box output
+        brcs odd_unpack       ; branch depending on carry
+even_unpack:
+        swap SBOX_OUTPUT      ; swap nibbles in s-box output
+odd_unpack:
+        cbr SBOX_OUTPUT, 0xf0 ; clear high nibble in s-box output
+        ret
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{S-Box optimization}
+\begin{lstlisting}
+sBoxByte:
+        ; input (low nibble)
+        mov ZL, ITEMP         ; load s-box input
+        cbr ZL, 0xf0          ; clear high nibble in input
+        rcall unpack_sBox     ; get output in SBOX_OUTPUT
+
+        cbr ITEMP, 0xf        ; clear low nibble in output
+        or ITEMP, SBOX_OUTPUT ; save low nibble to output
+
+        ; fall through
+sBoxHighNibble:
+        mov ZL, ITEMP         ; load s-box input
+        cbr ZL, 0xf           ; clear low nibble in input
+        swap ZL               ; move high nibble to low nibble
+
+        rcall unpack_sBox     ; get output in SBOX_OUTPUT
+        swap SBOX_OUTPUT      ; move low nibble to high nibble
+
+        cbr ITEMP, 0xf0       ; clear high nibble in output
+        or ITEMP, SBOX_OUTPUT ; save high nibble to output
+
+        ret
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{S-Box optimization}
+\begin{lstlisting}
+sBoxHighNibble:
+        clh
+        swap ITEMP            ; swap nibbles
+        rjmp sBoxLowNibble    ; do low nibble
+sBoxByte:
+        seh                   ; set H flag to re-do this block
+        ; fall through
+sBoxLowNibble:
+        mov ZL, ITEMP         ; load s-box input
+        cbr ZL, 0xf0          ; clear high nibble in s-box input
+
+        rcall unpack_sBox
+
+        cbr ITEMP, 0xf        ; clear low nibble in IO register
+        or ITEMP, SBOX_OUTPUT ; save low nibble to IO register
+        brhs sBoxHighNibble   ; do the high nibble
+        swap ITEMP            ; swap nibbles
+        ret
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{S-Box optimization}
+\begin{lstlisting}
+sBoxHighNibble:
+        clh
+        swap ITEMP            ; swap nibbles
+        rjmp sBoxLowNibble    ; do low nibble
+sBoxByte:
+        seh                   ; set H flag to re-do this block
+sBoxLowNibble:
+        mov ZL, ITEMP         ; load s-box input from IO register
+        cbr ZL, 0xf0          ; clear high nibble in s-box input
+
+unpack_sBox:
+        asr ZL                ; halve input, take carry
+        lpm SBOX_OUTPUT, Z    ; get s-box output
+        brcs odd_unpack       ; branch depending on carry
+even_unpack:
+        swap SBOX_OUTPUT      ; swap nibbles in s-box output
+odd_unpack:
+        cbr SBOX_OUTPUT, 0xf0 ; clear high nibble in s-box output
+
+        cbr ITEMP, 0xf        ; clear low nibble in IO register
+        or ITEMP, SBOX_OUTPUT ; save low nibble to IO register
+        brhs sBoxHighNibble   ; do the high nibble
+        swap ITEMP            ; swap nibbles
+        ret
+\end{lstlisting}
+\end{frame}
+
+\lstset{basicstyle=\tiny\sffamily}
+\begin{frame}[fragile]
+\frametitle{Code}
+	\begin{tabular}{ l r }
+\begin{lstlisting}
+encrypt:
+  rcall setup
+  subi XL, 8
+  encrypt_update:
+    rcall roundkey_ram
+    rcall SPnet
+    rcall consecutive_input
+    rcall interleaved_output
+    ldi ITEMP, 32
+    rcall rotate_left_i
+    rcall addRoundkey
+    rcall state_to_output
+    rcall SPnet
+    adiw XL, 9
+    rcall interleaved_output
+    dec XL
+    ldi ITEMP, 48
+    rcall rotate_left_i
+    rcall schedule_key
+    cpi ROUND_COUNTER, 32
+    brne encrypt_update
+  rcall last_round_key
+  ret
+\end{lstlisting}
+&
+\begin{lstlisting}
+decrypt:
+  rcall setup
+  schedule_last_key:
+    rcall schedule_key
+    cpi ROUND_COUNTER, 32
+    brne schedule_last_key
+  ldi ZH, high(INVSBOX<<1)
+  decrypt_update:
+    subi XL, 8
+    rcall last_round_key
+    rcall interleaved_input
+    rcall invSPnet
+    adiw XL, 9
+    rcall interleaved_input
+    dec XL
+    rcall consecutive_output
+    rcall invSPnet
+    rcall consecutive_output
+    inv_schedule_key:
+      dec ROUND_COUNTER
+      mov ITEMP, KEY6
+      rcall sBoxHighNibble
+      mov KEY6, ITEMP
+      ldi ITEMP, 1
+      rcall rotate_left_i
+      eor KEY3, ROUND_COUNTER
+      ldi ITEMP, 66
+      rcall rotate_left_i
+    cpi ROUND_COUNTER, 1
+    brne decrypt_update
+  subi XL, 8
+  rcall last_round_key
+  ret
+\end{lstlisting}
+	\end{tabular}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Numbers}
+	\begin{tabular}{ l c c }
+
+                & Speed optimized & Size optimized \\
+        Size (bytes) & 1794 & 428 \\
+        Cycles (encryption) & 8721 & 91390 \\
+        Cycles (decryption) & - & 104937 \\
+        RAM (bytes) & 18 & 18
+
+	\end{tabular}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Questions?}
+	\footnotesize{
+	\url{https://github.com/aczid/ru_crypto_engineering}
+	\url{https://github.com/kostaspap88/PRESENT_speed_implementation/}
+	}
+\end{frame}
+\end{document}
