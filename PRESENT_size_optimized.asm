@@ -15,10 +15,10 @@
 
 ; SPECS
 ; Size optimized version 1 - February 2013
-; Code size:                 412 bytes + 16 bytes for s-boxes
+; Code size:                 404 bytes + 16 bytes for s-boxes
 ; RAM words:                 18
-; Cycle count (encryption):  91390
-; Cycle count (decryption): 104937
+; Cycle count (encryption):  92203
+; Cycle count (decryption): 104489
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -67,14 +67,6 @@
 SBOX:   .db 0xc5,0x6b,0x90,0xad,0x3e,0xF8,0x47,0x12
 .org 512
 INVSBOX:.db 0x5e,0xf8,0xc1,0x2d,0xb4,0x63,0x07,0x9a
-
-; state ^= roundkey (top 4 bytes of key register)
-addRoundKey:
-	eor STATE0, KEY0
-	eor STATE1, KEY1
-	eor STATE2, KEY2
-	eor STATE3, KEY3
-	ret
 
 ; pLayerByte
 ; approach stolen from KULeuven implementation
@@ -142,7 +134,7 @@ odd_unpack:
 	swap ITEMP ; swap nibbles
 	ret
 
-; rotates key register left by the number in ITEMP
+; rotate key register left by the number in ITEMP
 rotate_left_i:
 	clr ROTATION_COUNTER
 continue_rotate_left_i:
@@ -179,7 +171,7 @@ schedule_key:
 	inc ROUND_COUNTER
 	ret
 
-; applies loaded s-box to every state byte
+; apply loaded s-box to every state byte
 sBoxLayer:
 	; move each byte into a temporary register and apply
 	; the s-box procedure for bytes, then move it back
@@ -221,7 +213,7 @@ SPnet:
 	rcall pLayerByte
 	ret
 
-; invert s-box and p-layer from state to output registers
+; invert the s-box and p-layer from state to output registers
 invSPnet:
 	rcall state_to_output
 	rcall ipLayerByte
@@ -258,7 +250,7 @@ setup:
 	ret
 
 ; loads state bytes from SRAM from back to front
-; leaves 1 byte untouched in between each saved byte
+; leaves 1 byte unread in between each loaded byte
 interleaved_input:
 	dec XL
 	ld STATE0, -X
@@ -283,7 +275,7 @@ interleaved_output:
 	st -X, OUTPUT3
 	ret
 
-; loads 4 consecutive SRAM bytes into state
+; load 4 consecutive SRAM bytes into state
 consecutive_input:
 	ld STATE0, X+
 	ld STATE1, X+
@@ -303,7 +295,11 @@ consecutive_output:
 roundkey_ram:
 	rcall consecutive_input
 	subi XL, 4
-	rcall addRoundkey
+	; state ^= roundkey (top 4 bytes of key register)
+	eor STATE0, KEY0
+	eor STATE1, KEY1
+	eor STATE2, KEY2
+	eor STATE3, KEY3
 	rcall state_to_output
 	rcall consecutive_output
 	ret
@@ -324,20 +320,16 @@ encrypt:
 	subi XL, 8
 	encrypt_update:
 		; apply round key, s-box layer and p-layer
-		rcall roundkey_ram
-		rcall SPnet
+		rcall last_round_key
+		subi XL, 8
+
 		; load low/right 4 bytes
 		rcall consecutive_input
+		rcall SPnet
+		rcall consecutive_input
+
 		; save output to SRAM
 		rcall interleaved_output
-
-		; rotate key register to align with low/right part
-		ldi ITEMP, 32
-		rcall rotate_left_i
-
-		; apply round key, s-box layer and p-layer
-		rcall addRoundkey
-		rcall state_to_output
 		rcall SPnet
 
 		; save output to SRAM
@@ -372,12 +364,13 @@ decrypt:
 	
 	; start round
 	decrypt_update:
-		; point at high/left 4 bytes, apply round key to this block
+		; apply round key
 		subi XL, 8
 		rcall last_round_key
 
 		; get next invSPnet input
 		rcall interleaved_input
+
 		; decrypt input using SP-network
 		rcall invSPnet
 
