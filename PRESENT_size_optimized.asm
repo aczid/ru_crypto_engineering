@@ -35,20 +35,20 @@
 .def KEY8 = r8
 .def KEY9 = r9
 
-; pLayer output
-.def OUTPUT0 = r10
-.def OUTPUT1 = r11
-.def OUTPUT2 = r12
-.def OUTPUT3 = r13
+; State (input/output)
+.def STATE0 = r10
+.def STATE1 = r11
+.def STATE2 = r12
+.def STATE3 = r13
+
+; Output registers (these hold the last state to be saved to SRAM while the next state is read)
+.def OUTPUT0 = r14
+.def OUTPUT1 = r15
+.def OUTPUT2 = r16
+.def OUTPUT3 = r17
 
 ; Never used but needed for its 0 value to add carry bits with adc
-.def ZERO = r14
-
-; State (input/output)
-.def STATE0 = r15
-.def STATE1 = r16
-.def STATE2 = r17
-.def STATE3 = r18
+.def ZERO = r18
 
 ; Shared register for s-box output and to count key register rotations
 .def SBOX_OUTPUT = r19
@@ -60,14 +60,18 @@
 ; Register we can use for immediate values
 .def ITEMP = r21
 
-; registers 22..25 are unused
-; registers r26 and up are X, Y and Z
+; registers r22..r25 are unused
+; registers r26..r31 are X, Y and Z
 
 ; the Z register is used to point to these s-box tables
 .org 256
 SBOX:   .db 0xc5,0x6b,0x90,0xad,0x3e,0xF8,0x47,0x12
 .org 512
 INVSBOX:.db 0x5e,0xf8,0xc1,0x2d,0xb4,0x63,0x07,0x9a
+
+; -------------------------------------
+;           PRESENT procedures         |
+; -------------------------------------
 
 ; pLayerByte
 ; approach stolen from KULeuven implementation
@@ -129,6 +133,7 @@ even_unpack:
 	swap SBOX_OUTPUT
 odd_unpack:
 	cbr SBOX_OUTPUT, 0xf0
+
 	cbr ITEMP, 0xf        ; clear low nibble in output
 	or ITEMP, SBOX_OUTPUT ; save low nibble to output register
 	brhs sBoxHighNibble
@@ -193,41 +198,10 @@ sBoxLayer:
 	mov STATE3, ITEMP
 	ret
 
-; move current state to output registers
-state_to_output:
-	mov OUTPUT0, STATE0
-	mov OUTPUT1, STATE1
-	mov OUTPUT2, STATE2
-	mov OUTPUT3, STATE3
-	ret
 
-; apply the s-box and p-layer from state to output registers
-SPnet:
-	rcall sBoxLayer
-	mov ITEMP, STATE3
-	rcall pLayerByte
-	mov ITEMP, STATE2
-	rcall pLayerByte
-	mov ITEMP, STATE1
-	rcall pLayerByte
-	mov ITEMP, STATE0
-	rcall pLayerByte
-	ret
-
-; invert the s-box and p-layer from state to output registers
-invSPnet:
-	rcall state_to_output
-	rcall ipLayerByte
-	mov STATE3, ITEMP
-	rcall ipLayerByte
-	mov STATE2, ITEMP
-	rcall ipLayerByte
-	mov STATE1, ITEMP
-	rcall ipLayerByte
-	mov STATE0, ITEMP
-	rcall sBoxLayer
-	rcall state_to_output
-	ret
+; -------------------------------------
+;           utility procedures         |
+; -------------------------------------
 
 ; prepare for encryption or decryption
 setup:
@@ -252,32 +226,6 @@ setup:
 	subi XL, 18
 	ret
 
-; loads state bytes from SRAM from back to front
-; leaves 1 byte unread in between each loaded byte
-interleaved_input:
-	dec XL
-	ld STATE0, -X
-	dec XL
-	ld STATE1, -X
-	dec XL
-	ld STATE2, -X
-	dec XL
-	ld STATE3, -X
-	ret
-
-; saves output bytes to SRAM from back to front
-; leaves 1 byte untouched in between each saved byte
-interleaved_output:
-	dec XL
-	st -X, OUTPUT0
-	dec XL
-	st -X, OUTPUT1
-	dec XL
-	st -X, OUTPUT2
-	dec XL
-	st -X, OUTPUT3
-	ret
-
 ; load 4 consecutive SRAM bytes into state
 consecutive_input:
 	ld STATE0, X+
@@ -294,7 +242,15 @@ consecutive_output:
 	st X+, OUTPUT3
 	ret
 
-; load input and apply current round key in SRAM consecutively
+; move current state to output registers
+state_to_output:
+	mov OUTPUT0, STATE0
+	mov OUTPUT1, STATE1
+	mov OUTPUT2, STATE2
+	mov OUTPUT3, STATE3
+	ret
+
+; load input and apply current round key to 4 bytes in SRAM
 roundkey_ram:
 	rcall consecutive_input
 	subi XL, 4
@@ -307,20 +263,51 @@ roundkey_ram:
 	rcall consecutive_output
 	ret
 
-; apply round key to the final state
-last_round_key:
+; apply last computed round key to the full state
+addRoundKey:
 	rcall roundkey_ram
 	ldi ITEMP, 32
 	rcall rotate_left_i
 	rcall roundkey_ram
 	ret
 
-; encryption routine: point X at 8 plaintext input bytes followed by 10 key input bytes
+; -------------------------------------
+;         encryption procedures        |
+; -------------------------------------
+
+
+; saves output bytes to SRAM from back to front
+; leaves 1 byte untouched in between each saved byte
+interleaved_output:
+	dec XL
+	st -X, OUTPUT0
+	dec XL
+	st -X, OUTPUT1
+	dec XL
+	st -X, OUTPUT2
+	dec XL
+	st -X, OUTPUT3
+	ret
+
+; apply the s-box and p-layer from state to output registers
+SPnet:
+	rcall sBoxLayer
+	mov ITEMP, STATE3
+	rcall pLayerByte
+	mov ITEMP, STATE2
+	rcall pLayerByte
+	mov ITEMP, STATE1
+	rcall pLayerByte
+	mov ITEMP, STATE0
+	rcall pLayerByte
+	ret
+
+; encryption function: point X at 8 plaintext input bytes followed by 10 key input bytes
 encrypt:
 	rcall setup
 	encrypt_update:
 		; apply round key
-		rcall last_round_key
+		rcall addRoundKey
 		subi XL, 8
 
 		; load high/left 4 bytes
@@ -352,10 +339,42 @@ encrypt:
 
 		cpi ROUND_COUNTER, 32
 		brne encrypt_update
-	rcall last_round_key
+	rcall addRoundKey
 	ret
 
-; decryption routine: point X at 8 ciphertext input bytes followed by 10 key input bytes
+; -------------------------------------
+;         decryption procedures        |
+; -------------------------------------
+
+; loads state bytes from SRAM from back to front
+; leaves 1 byte unread in between each loaded byte
+interleaved_input:
+	dec XL
+	ld STATE0, -X
+	dec XL
+	ld STATE1, -X
+	dec XL
+	ld STATE2, -X
+	dec XL
+	ld STATE3, -X
+	ret
+
+; invert the s-box and p-layer from state to output registers
+invSPnet:
+	rcall state_to_output
+	rcall ipLayerByte
+	mov STATE3, ITEMP
+	rcall ipLayerByte
+	mov STATE2, ITEMP
+	rcall ipLayerByte
+	mov STATE1, ITEMP
+	rcall ipLayerByte
+	mov STATE0, ITEMP
+	rcall sBoxLayer
+	rcall state_to_output
+	ret
+
+; decryption function: point X at 8 ciphertext input bytes followed by 10 key input bytes
 decrypt:
 	rcall setup
 
@@ -371,7 +390,7 @@ decrypt:
 	; start round
 	decrypt_update:
 		; apply round key
-		rcall last_round_key
+		rcall addRoundKey
 
 		; get invSPnet input for high/left bytes
 		rcall interleaved_input
@@ -411,5 +430,5 @@ decrypt:
 
 		cpi ROUND_COUNTER, 1
 		brne decrypt_update
-	rcall last_round_key
+	rcall addRoundKey
 	ret
