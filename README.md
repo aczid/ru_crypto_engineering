@@ -9,11 +9,11 @@ PRESENT
 We implemented the PRESENT cipher in C and AVR assembly based on the original paper, the C version by Zhu/Gong and the Leuven AVR implementation.
 
 This AVR assembly version was optimized for small code size at the expense of speed.
-The current version requires 404 code bytes for the encryption and decryption routines and 16 bytes for s-boxes at adresses 0x100 and 0x200.
+The current version requires 402 code bytes for the encryption and decryption routines and 16 bytes for s-boxes at adresses 0x100 and 0x200.
 
-* Code size:                 404 bytes + 16 bytes for s-boxes
+* Code size:                 402 bytes + 16 bytes for s-boxes
 * RAM words:                 18
-* Cycle count (encryption):  92203
+* Cycle count (encryption):  92833
 * Cycle count (decryption): 104489
 
 The speed-optimized version of the algorithm can be found at my co-author's github browsable repository:

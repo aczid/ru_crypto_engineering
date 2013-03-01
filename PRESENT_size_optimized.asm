@@ -15,9 +15,9 @@
 
 ; SPECS
 ; Size optimized version 1 - February 2013
-; Code size:                 404 bytes + 16 bytes for s-boxes
+; Code size:                 402 bytes + 16 bytes for s-boxes
 ; RAM words:                 18
-; Cycle count (encryption):  92203
+; Cycle count (encryption):  92833
 ; Cycle count (decryption): 104489
 
 ; USE
@@ -247,6 +247,9 @@ setup:
 	ld KEY2, -X
 	ld KEY1, -X
 	ld KEY0, -X
+	
+	; point at high/left 4 bytes
+	subi XL, 8
 	ret
 
 ; loads state bytes from SRAM from back to front
@@ -315,21 +318,24 @@ last_round_key:
 ; encryption routine: point X at 8 plaintext input bytes followed by 10 key input bytes
 encrypt:
 	rcall setup
-
-	; point at high/left 4 bytes
-	subi XL, 8
 	encrypt_update:
-		; apply round key, s-box layer and p-layer
+		; apply round key
 		rcall last_round_key
 		subi XL, 8
 
-		; load low/right 4 bytes
+		; load high/left 4 bytes
 		rcall consecutive_input
+
+		; encrypt high/left 4 bytes using SP-network
 		rcall SPnet
+
+		; load low/right 4 bytes
 		rcall consecutive_input
 
 		; save output to SRAM
 		rcall interleaved_output
+
+		; encrypt using SP-network
 		rcall SPnet
 
 		; save output to SRAM
@@ -361,31 +367,30 @@ decrypt:
 
 	; initialize inv s-box
 	ldi ZH, high(INVSBOX<<1)
-	
+
 	; start round
 	decrypt_update:
 		; apply round key
-		subi XL, 8
 		rcall last_round_key
 
-		; get next invSPnet input
+		; get invSPnet input for high/left bytes
 		rcall interleaved_input
 
-		; decrypt input using SP-network
+		; decrypt high/left 4 bytes using SP-network
 		rcall invSPnet
 
-		; get next invSPnet input (low/right bytes)
+		; get next invSPnet input for low/right bytes
 		adiw XL, 9
 		rcall interleaved_input
 		dec XL
 
-		; write 4 decrypted high/left bytes
+		; save output to SRAM
 		rcall consecutive_output
 
-		; decrypt low/right bytes
+		; decrypt low/right 4 bytes using SP-network
 		rcall invSPnet
 
-		; write 4 decrypted low/right bytes
+		; save output to SRAM
 		rcall consecutive_output
 
 		; rotate key register to align with next input and schedule next key
@@ -403,8 +408,9 @@ decrypt:
 			ldi ITEMP, 66
 			rcall rotate_left_i
 
+		subi XL, 8
+
 		cpi ROUND_COUNTER, 1
 		brne decrypt_update
-	subi XL, 8
 	rcall last_round_key
 	ret
