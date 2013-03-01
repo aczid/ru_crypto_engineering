@@ -63,6 +63,7 @@
 ; registers 22..25 are unused
 ; registers r26 and up are X, Y and Z
 
+; the Z register is used to point to these s-box tables
 .org 256
 SBOX:   .db 0xc5,0x6b,0x90,0xad,0x3e,0xF8,0x47,0x12
 .org 512
@@ -234,22 +235,21 @@ setup:
 	ldi ROUND_COUNTER, 1
 	; initialize s-box
 	ldi ZH, high(SBOX<<1)
-	; point at the end of the key bytes
-	adiw XL, 18
-	; loads key from SRAM, back to front
-	ld KEY9, -X
-	ld KEY8, -X
-	ld KEY7, -X
-	ld KEY6, -X
-	ld KEY5, -X
-	ld KEY4, -X
-	ld KEY3, -X
-	ld KEY2, -X
-	ld KEY1, -X
-	ld KEY0, -X
-	
+	; point at the key bytes
+	adiw XL, 8
+	; load key from SRAM
+	ld KEY0, X+
+	ld KEY1, X+
+	ld KEY2, X+
+	ld KEY3, X+
+	ld KEY4, X+
+	ld KEY5, X+
+	ld KEY6, X+
+	ld KEY7, X+
+	ld KEY8, X+
+	ld KEY9, X+
 	; point at high/left 4 bytes
-	subi XL, 8
+	subi XL, 18
 	ret
 
 ; loads state bytes from SRAM from back to front
@@ -393,7 +393,6 @@ decrypt:
 		; save output to SRAM
 		rcall consecutive_output
 		subi XL, 8
-
 
 		; rotate key register to align with next input and schedule next key
 		inv_schedule_key:
