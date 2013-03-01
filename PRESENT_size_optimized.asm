@@ -392,6 +392,8 @@ decrypt:
 
 		; save output to SRAM
 		rcall consecutive_output
+		subi XL, 8
+
 
 		; rotate key register to align with next input and schedule next key
 		inv_schedule_key:
@@ -407,8 +409,6 @@ decrypt:
 			eor KEY3, ROUND_COUNTER
 			ldi ITEMP, 66
 			rcall rotate_left_i
-
-		subi XL, 8
 
 		cpi ROUND_COUNTER, 1
 		brne decrypt_update
