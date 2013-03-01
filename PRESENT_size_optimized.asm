@@ -13,17 +13,21 @@
 ; for the Cryptography Engineering course, 2012-2013
 ; part of the Kerckhoffs Institute master's program
 
-; SPECS
+; SPECIFICATIONS
 ; Size optimized version 1 - February 2013
-; Code size:                 402 bytes + 16 bytes for s-boxes
-; RAM words:                 18
+; Code size (total):           402 bytes + 16 bytes for both packed s-boxes
+; Code size (shared):          246 bytes including both packed s-boxes, 10 bytes of which unpack s-boxes
+; Code size (encryption):      320 bytes including both packed s-boxes, 318 with single unpacked s-box
+; Code size (decryption):      344 bytes including both packed s-boxes, 342 with single unpacked s-box
+; RAM words:                    18
 ; Cycle count (encryption):  92833
 ; Cycle count (decryption): 104489
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
+; After having called encryption or decryption X will point to the end of the input
 
-; Key registers
+; Key registers (the first 8 of these hold the current round key)
 .def KEY0 = r0
 .def KEY1 = r1
 .def KEY2 = r2
@@ -35,7 +39,7 @@
 .def KEY8 = r8
 .def KEY9 = r9
 
-; State (input/output)
+; State (these hold the input on which the round key and s-box layer are applied)
 .def STATE0 = r10
 .def STATE1 = r11
 .def STATE2 = r12
@@ -70,7 +74,7 @@ SBOX:   .db 0xc5,0x6b,0x90,0xad,0x3e,0xF8,0x47,0x12
 INVSBOX:.db 0x5e,0xf8,0xc1,0x2d,0xb4,0x63,0x07,0x9a
 
 ; -------------------------------------
-;           PRESENT procedures         |
+;           PRESENT procedures
 ; -------------------------------------
 
 ; pLayerByte
@@ -140,6 +144,27 @@ odd_unpack:
 	swap ITEMP ; swap nibbles
 	ret
 
+; apply loaded s-box to every state byte
+sBoxLayer:
+	; move each byte into a temporary register and apply
+	; the s-box procedure for bytes, then move it back
+	mov ITEMP, STATE0
+	rcall sBoxByte
+	mov STATE0, ITEMP
+
+	mov ITEMP, STATE1
+	rcall sBoxByte
+	mov STATE1, ITEMP
+
+	mov ITEMP, STATE2
+	rcall sBoxByte
+	mov STATE2, ITEMP
+
+	mov ITEMP, STATE3
+	rcall sBoxByte
+	mov STATE3, ITEMP
+	ret
+
 ; rotate key register left by the number in ITEMP
 rotate_left_i:
 	clr ROTATION_COUNTER
@@ -177,30 +202,8 @@ schedule_key:
 	inc ROUND_COUNTER
 	ret
 
-; apply loaded s-box to every state byte
-sBoxLayer:
-	; move each byte into a temporary register and apply
-	; the s-box procedure for bytes, then move it back
-	mov ITEMP, STATE0
-	rcall sBoxByte
-	mov STATE0, ITEMP
-
-	mov ITEMP, STATE1
-	rcall sBoxByte
-	mov STATE1, ITEMP
-
-	mov ITEMP, STATE2
-	rcall sBoxByte
-	mov STATE2, ITEMP
-
-	mov ITEMP, STATE3
-	rcall sBoxByte
-	mov STATE3, ITEMP
-	ret
-
-
 ; -------------------------------------
-;           utility procedures         |
+;           utility procedures
 ; -------------------------------------
 
 ; prepare for encryption or decryption
@@ -265,16 +268,18 @@ roundkey_ram:
 
 ; apply last computed round key to the full state
 addRoundKey:
+	; apply round key to high/left 4 bytes
 	rcall roundkey_ram
+	; rotate key register to add round key to low/right 4 bytes
 	ldi ITEMP, 32
 	rcall rotate_left_i
+	; apply round key to low/right 4 bytes
 	rcall roundkey_ram
 	ret
 
 ; -------------------------------------
-;         encryption procedures        |
+;         encryption procedures
 ; -------------------------------------
-
 
 ; saves output bytes to SRAM from back to front
 ; leaves 1 byte untouched in between each saved byte
@@ -343,7 +348,7 @@ encrypt:
 	ret
 
 ; -------------------------------------
-;         decryption procedures        |
+;         decryption procedures
 ; -------------------------------------
 
 ; loads state bytes from SRAM from back to front
