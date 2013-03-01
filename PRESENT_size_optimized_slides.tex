@@ -221,16 +221,13 @@ odd_unpack:
 \begin{lstlisting}
 encrypt:
   rcall setup
-  subi XL, 8
   encrypt_update:
-    rcall roundkey_ram
+    rcall last_round_key
+    subi XL, 8
+    rcall consecutive_input
     rcall SPnet
     rcall consecutive_input
     rcall interleaved_output
-    ldi ITEMP, 32
-    rcall rotate_left_i
-    rcall addRoundkey
-    rcall state_to_output
     rcall SPnet
     adiw XL, 9
     rcall interleaved_output
@@ -253,7 +250,6 @@ decrypt:
     brne schedule_last_key
   ldi ZH, high(INVSBOX<<1)
   decrypt_update:
-    subi XL, 8
     rcall last_round_key
     rcall interleaved_input
     rcall invSPnet
@@ -263,6 +259,7 @@ decrypt:
     rcall consecutive_output
     rcall invSPnet
     rcall consecutive_output
+    subi XL, 8
     inv_schedule_key:
       dec ROUND_COUNTER
       mov ITEMP, KEY6
@@ -275,7 +272,6 @@ decrypt:
       rcall rotate_left_i
     cpi ROUND_COUNTER, 1
     brne decrypt_update
-  subi XL, 8
   rcall last_round_key
   ret
 \end{lstlisting}
@@ -288,9 +284,9 @@ decrypt:
 	\begin{tabular}{ l c c }
 
                 & Speed optimized & Size optimized \\
-        Size (bytes) & 1794 & 428 \\
-        Cycles (encryption) & 8721 & 91390 \\
-        Cycles (decryption) & - & 104937 \\
+        Size (bytes) & 1794 & 418 \\
+        Encryption (cycles) & 8721 & 92833 \\
+        Decryption (cycles) & - & 104489 \\
         RAM (bytes) & 18 & 18
 
 	\end{tabular}
