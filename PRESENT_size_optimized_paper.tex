@@ -1,6 +1,7 @@
 \documentclass{llncs}
 \usepackage{listings}
 \usepackage{color}
+
 \lstset{basicstyle=\scriptsize\sffamily}
 %\lstset{language=Assembler}[avr8avra] % not standard
 \lstdefinestyle{customasm}{
@@ -26,7 +27,12 @@ Aram Verstegen
 We present our progress in experimenting with the PRESENT block cipher in both the direction of speed and area.}
 
 \section{PRESENT}
-\cite{bogdanov2007present}
+PRESENT \cite{bogdanov2007present} is an ultra-lightweight 64-bit block cipher using 80-bit or 128-bit keys that uses exclusive-or as a round key, a 4-bit substitution layer and a 4-bit period bit position permutation network in 31 rounds, and a final round key.
+Key scheduling is a combination of bit rotation, s-box application and exclusive-OR with the round counter.
+
+We chose PRESENT as a cipher to work with in a project to optimize AVR code because we deemed it extremely well-suited for a simple microcontroller, and felt we could improve upon the work by Leuven University's project to implement PRESENT for AVR machines \cite{eisenbarth2012compact} by providing one faster implementation, and one smaller implementation to complement their version which strikes a balance between the two.
+
+
 \section{Speed optimizations}
 \cite{gong2009towards}
 \section{Size optimizations}
@@ -66,16 +72,16 @@ Using even fewer state bytes in registers might allow for greater size reduction
         unpack:
                 cbr SBOX_OUTPUT, 0xf0 ; clear high nibble in s-box output
 	\end{lstlisting}
-	\caption{Unpacking bytes into nibbles in a constant cycle count takes us 8 instructions whereas unpacking unpacked nibbles takes us only 1. We decided this 2 byte size optimization was not worth the loss of throughput.}
+	\caption{Unpacking bytes into nibbles in a constant cycle count takes us 8 instructions whereas unpacking unpacked nibbles takes us only 1. The net gain is only 2 bytes of code.}
 \label{unpacking_code}
 \end{figure}
 % TODO footnotes
 
 
-The PRESENT s-boxes work on 4-bit nibbles, but defining a table of nibbles in the code seemed less size-efficient than packing the nibbles into bytes to be unpacked at first.
-This would save 8 bytes per s-box table to start with, but we need 5 to 8 instructions in stead of a \textbf{ld} (load) depending on whether or not we care about timing attacks to unpack the nibbles which diminishes the size benefit to 2-8 bytes of code. See Figure~\ref{unpacking_code}.
-We consider this a fair loss for our optimization strategy, and also see an upside: having the s-boxes unpacked as data improves throughput and makes the encryption and decryption code smaller to distribute separately.
-We decided 2 bytes of area reduction just wasn't worth the other losses.
+The PRESENT s-boxes work on 4-bit nibbles, but defining a table of nibbles in the code at first seemed less size-efficient than packing the nibbles into bytes to be unpacked.
+This would save 8 bytes per s-box table to start with, but we need 5 to 8 instructions in stead of a \textbf{ld} (load) depending on whether or not we care about timing attacks to unpack the nibbles which diminishes the size benefit from 6 to 2 bytes of code. See Figure~\ref{unpacking_code}.
+%We consider this a fair loss for our optimization strategy, and also see an upside: having the s-boxes unpacked as data improves throughput and makes the encryption and decryption code smaller to distribute separately.
+%We decided 2 bytes of area reduction just wasn't worth the other losses.
 %The packed table approach is therefore only beneficial when we require encryption and decryption routines in the target application, in which case it would save the remaining 6 bytes.
 
 	%\footnotesize{
@@ -145,9 +151,9 @@ While the attained size of the implementation of PRESENT should suffice for use 
 \section{Conclusion}
 	\begin{tabular}{ l c c }
                 & Speed optimized & Size optimized \\
-        Size (bytes) & 1794 & 418 \\
-        Encryption (cycles) & 8721 & 91390 \\
-        Decryption (cycles) & - & 104937 \\
+        Size (bytes) & 1794 & 426 \\
+        Encryption (cycles) & 8721 & 90725 \\
+        Decryption (cycles) & - & 102257 \\
         RAM (bytes) & 18 & 18
 
 	\end{tabular}
