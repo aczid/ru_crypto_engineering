@@ -202,33 +202,6 @@ schedule_key:
 	inc ROUND_COUNTER
 	ret
 
-; -------------------------------------
-;           utility procedures
-; -------------------------------------
-
-; prepare for encryption or decryption
-setup:
-	; initialize round counter
-	ldi ROUND_COUNTER, 1
-	; initialize s-box
-	ldi ZH, high(SBOX<<1)
-	; point at the key bytes
-	adiw XL, 8
-	; load key from SRAM
-	ld KEY0, X+
-	ld KEY1, X+
-	ld KEY2, X+
-	ld KEY3, X+
-	ld KEY4, X+
-	ld KEY5, X+
-	ld KEY6, X+
-	ld KEY7, X+
-	ld KEY8, X+
-	ld KEY9, X+
-	; point at high/left 4 bytes
-	subi XL, 18
-	ret
-
 ; load 4 consecutive SRAM bytes into state
 consecutive_input:
 	ld STATE0, X+
@@ -275,6 +248,33 @@ addRoundKey:
 	rcall rotate_left_i
 	; apply round key to low/right 4 bytes
 	rcall roundkey_ram
+	ret
+
+; -------------------------------------
+;           utility procedures
+; -------------------------------------
+
+; prepare for encryption or decryption
+setup:
+	; initialize round counter
+	ldi ROUND_COUNTER, 1
+	; initialize s-box
+	ldi ZH, high(SBOX<<1)
+	; point at the key bytes
+	adiw XL, 8
+	; load key from SRAM
+	ld KEY0, X+
+	ld KEY1, X+
+	ld KEY2, X+
+	ld KEY3, X+
+	ld KEY4, X+
+	ld KEY5, X+
+	ld KEY6, X+
+	ld KEY7, X+
+	ld KEY8, X+
+	ld KEY9, X+
+	; point at high/left 4 bytes
+	subi XL, 18
 	ret
 
 ; -------------------------------------
