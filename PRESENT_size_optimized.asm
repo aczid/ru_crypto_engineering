@@ -15,13 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 1 - February 2013
-; Code size (total):           402 bytes + 16 bytes for both packed s-boxes
-; Code size (shared):          246 bytes including both packed s-boxes, 10 bytes of which unpack s-boxes
-; Code size (encryption):      320 bytes including both packed s-boxes, 318 with single unpacked s-box
-; Code size (decryption):      344 bytes including both packed s-boxes, 342 with single unpacked s-box
+; Code size (total):           410 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption):  92833
-; Cycle count (decryption): 104489
+; Cycle count (encryption):  90725
+; Cycle count (decryption): 102257
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -69,9 +66,9 @@
 
 ; the Z register is used to point to these s-box tables
 .org 256
-SBOX:   .db 0xc5,0x6b,0x90,0xad,0x3e,0xF8,0x47,0x12
+SBOX:   .db 0x0c,0x05,0x06,0x0b,0x09,0x00,0x0a,0x0d,0x03,0x0e,0x0f,0x08,0x04,0x07,0x01,0x02
 .org 512
-INVSBOX:.db 0x5e,0xf8,0xc1,0x2d,0xb4,0x63,0x07,0x9a
+INVSBOX:.db 0x05,0x0e,0x0f,0x08,0x0c,0x01,0x02,0x0d,0x0b,0x04,0x06,0x03,0x00,0x07,0x09,0x0a
 
 ; -------------------------------------
 ;           PRESENT procedures
@@ -128,17 +125,8 @@ sBoxLowNibble:
 	cbr ZL, 0xf0    ; clear high nibble in s-box input
 
 	; output (low nibble)
-unpack_sBox:
-	asr ZL
 	lpm SBOX_OUTPUT, Z ; get s-box output
-	brcs odd_unpack
-	; fall through
-even_unpack:
-	swap SBOX_OUTPUT
-odd_unpack:
-	cbr SBOX_OUTPUT, 0xf0
-
-	cbr ITEMP, 0xf        ; clear low nibble in output
+	cbr ITEMP, 0xf    ; clear low nibble in s-box input
 	or ITEMP, SBOX_OUTPUT ; save low nibble to output register
 	brhs sBoxHighNibble
 	swap ITEMP ; swap nibbles

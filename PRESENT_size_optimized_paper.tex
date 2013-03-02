@@ -1,4 +1,4 @@
-\documentclass{article}
+\documentclass{llncs}
 \usepackage{listings}
 \usepackage{color}
 \lstset{basicstyle=\scriptsize\sffamily}
@@ -11,25 +11,29 @@
 
 \begin{document}
 
-\title{Size and speed-optimized implementations of the PRESENT cipher for AVR machines}
+\title{Speed and size-optimized implementations of the PRESENT cipher for AVR machines}
 \author{
 Kostas Papagiannopoulos \\
 Aram Verstegen
 }
+\institute{Radboud Universiteit Nijmegen}
 \date{\today}
 
 \maketitle
 
 % TODO
-\abstract{}
+\abstract{
+We present our progress in experimenting with the PRESENT block cipher in both the direction of speed and area.}
 
 \section{PRESENT}
+\cite{bogdanov2007present}
 \section{Speed optimizations}
+\cite{gong2009towards}
 \section{Size optimizations}
 
 Here we will list some of the size improvements we were able to apply to the PRESENT algorithm.
 While these modifications make the algorithm operate slower, the reduction in size would allow the cipher being included in microcontrollers with smaller available code area.
-Our version requires 206 AVR instructions (412 bytes of code) for both encryption and decryption routines, plus 16 bytes for the two s-boxes at memory addresses \textbf{0x100} and \textbf{0x200}.
+Our version requires 197 AVR instructions (394 bytes of code) for both the encryption and decryption routines, plus 32 bytes for two tables of s-box values at memory addresses \textbf{0x100} and \textbf{0x200}.
 We believe this should be sufficiently small for the code to be included in an AVR machine with 1K of available Flash storage, while still allowing over half of the available area to be devoted to application-specific code.
 
 Unfortunately, every opcode in the AVR instruction set is 16-bits wide, so there is nothing to be gained from exchanging any instructions for equivalent smaller ones (such as for example \textit{adiw Rd, 1} being more concisely expressed as \textit{inc Rd} on x86 machines).
@@ -38,69 +42,96 @@ Finally we note there are no `bulk' instructions which operate on several regist
 
 However, we do have access to some instructions that are specific to the AVR architecture and are uniquely suited to making parts of the code more condensed, such as the \textit{swap} and \textit{cbr} instructions.
 
-\subsection{Serialization of the algorithm}
+\subsection{Serialization}
 The biggest size optimization we have implemented is serialization of the algorithm, keeping part of the state in SRAM while we operate on fewer registers.
 This reduces the instruction count on all parts of the round update procedure except for key scheduling.
 
 We've chosen to keep 4 bytes of state in registers at a time, as we believe it allows us to apply the permutation layer of the algorithm in software with the most size-efficiency.
 Using even fewer state bytes in registers might allow for greater size reductions in other areas of the code, but applying the permutation layer may turn out to be more troublesome in that case.
-We would of course welcome efforts from the community to disprove this intuitive assumption.
+%We would of course welcome efforts from the community to disprove this assumption.
 
-\subsection{S-box packing}
-The PRESENT s-boxes work on 4-bit nibbles, but defining a table of nibbles in the code is less efficient than packing the nibbles into bytes to be unpacked.
-This would save 8 bytes per s-box table but we need 5 more instructions to unpack the nibbles, totalling 10 bytes.
-The packed table approach is only beneficial when we require encryption and decryption routines in the target application, in which case it would save the remaining 6 bytes.
-
-Furthermore we have constructed our code to substitute bytes to be called from two different offsets, where one offset substitutes an entire input byte, and another only substitutes the high nibble of an input byte.
-
-	\footnotesize{
-	Before: \\
-	\begin{tabular}{ | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | }
-	  \hline                        
-	  C & 5 & 6 & B & 9 & 0 & A & D & 3 & E & F & 8 & 4 & 7 & 1 & 2 \\
-	  \hline  
-	\end{tabular}
-	\\
-
-	After: \\
-	\begin{tabular}{ | c | c | c | c | c | c | c | c | }
-	  \hline                        
-	  C5 & 6B & 90 & AD & 3E & F8 & 47 & 12 \\
-	  \hline  
-	\end{tabular}
-	}
-
+\subsection{S-box packing?}
+\begin{figure}
 \begin{lstlisting}
-unpack_sBox:
-        asr ZL                ; halve input, take carry
-        lpm SBOX_OUTPUT, Z    ; get s-box output
-        brcs odd_unpack       ; branch depending on carry
-even_unpack:
-        swap SBOX_OUTPUT      ; swap nibbles in s-box output
-odd_unpack:
-        cbr SBOX_OUTPUT, 0xf0 ; clear high nibble in s-box output
-        ret
-\end{lstlisting}
+	unpack_sBox:
+		asr ZL                ; halve input, take carry
+		lpm SBOX_OUTPUT, Z    ; get s-box output
+		brcs odd_unpack       ; branch depending on carry
+	even_unpack:
+		swap SBOX_OUTPUT      ; swap nibbles in s-box output
+		rjmp unpack
+        odd_unpack:
+                nop                   ; guard against timing attacks
+                nop
+        unpack:
+                cbr SBOX_OUTPUT, 0xf0 ; clear high nibble in s-box output
+	\end{lstlisting}
+	\caption{Unpacking bytes into nibbles in a constant cycle count takes us 8 instructions whereas unpacking unpacked nibbles takes us only 1. We decided this 2 byte size optimization was not worth the loss of throughput.}
+\label{unpacking_code}
+\end{figure}
 % TODO footnotes
 
+
+The PRESENT s-boxes work on 4-bit nibbles, but defining a table of nibbles in the code seemed less size-efficient than packing the nibbles into bytes to be unpacked at first.
+This would save 8 bytes per s-box table to start with, but we need 5 to 8 instructions in stead of a \textbf{ld} (load) depending on whether or not we care about timing attacks to unpack the nibbles which diminishes the size benefit to 2-8 bytes of code. See Figure~\ref{unpacking_code}.
+We consider this a fair loss for our optimization strategy, and also see an upside: having the s-boxes unpacked as data improves throughput and makes the encryption and decryption code smaller to distribute separately.
+We decided 2 bytes of area reduction just wasn't worth the other losses.
+%The packed table approach is therefore only beneficial when we require encryption and decryption routines in the target application, in which case it would save the remaining 6 bytes.
+
+	%\footnotesize{
+	%Before: \\
+	%\begin{tabular}{ | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | }
+	  %\hline                        
+	  %C & 5 & 6 & B & 9 & 0 & A & D & 3 & E & F & 8 & 4 & 7 & 1 & 2 \\
+	  %\hline  
+	%\end{tabular}
+	%\\
+
+	%After: \\
+	%\begin{tabular}{ | c | c | c | c | c | c | c | c | }
+	  %\hline                        
+	  %C5 & 6B & 90 & AD & 3E & F8 & 47 & 12 \\
+	  %\hline  
+	%\end{tabular}
+	%}
+
+\subsection{Permutation layer}
+The code to apply permutations to the state in software borrows heavily from the AVR implementation of PRESENT drafted in Leuven by Eisenbarth et al \cite{eisenbarth2012compact}.
+Since the permutation follows a 4-bit period in the input it seems most efficient to use 4 bytes of I/O when rotating bits off registers into corresponding new positions.
+
+In the Leuven implementation one bit is rolled off from 4 state registers into one output register and this block is done twice, completing one output byte. It has made ingenious use of the side-effect that both the input and the output are being rotated, allowing the operation to be reversed depending on the offset at which the procedure is called.
+
 \subsection{Branching on SREG flags}
-The following construct allows the implementer to let a block of code be executed twice, while allowing them to take control of the machine before, after and in between these code blocks.
+A subtle but real size optimization we implemented focused on the code used to drive repeated operations .
+The construct in Figure~\ref{sreg_redo} allows the implementer to let a block of code be executed twice, while allowing them to take control of the machine before, after and in between these code blocks.
 In our implementation this has been applied to the substitution and permutation layer procedures to save a few instructions.
-This construct also allows the \textit{unpack\_sBox} procedure we just defined to be inlined into the \textit{sBoxByte} procedure.
+This does not affect the cycle count relative to the state or input.
+This construct also allows the \textit{unpack\_sBox} code we just defined to be inlined into our s-box procedure, if we choose to apply it.
 
-\begin{lstlisting}
-setup_redo_block:
-        clt                   ; clear T flag
-        rjmp redo_block       ; do the second part
-block:
-        set                   ; set T flag
-        ; fall through
-redo_block:
-        ; instructions here happen twice when called from block
+\begin{figure}
+	\begin{lstlisting}
+	setup_redo_block:
+		clt                   ; clear T flag
+		rjmp redo_block       ; do the second part
+	block:
+		set                   ; set T flag
+		; fall through
+	redo_block:
+		; instructions here happen twice when called from block
 
-        brts setup_redo_block ; redo this block? (if T flag set)
-        ret
-\end{lstlisting}
+		brts setup_redo_block ; redo this block? (if T flag set)
+		ret
+	\end{lstlisting}
+	\caption{A construct that uses the state register to re-do a block twice with code executing before, after and in between, allowing more code to be inlined.}
+\label{sreg_redo}
+\end{figure}
+
+We have used this construct in the procedures for both steps of applying the SP-network while retaining the property that these procedures can be called from two different offsets.
+
+In the substitution procedure one offset substitutes only the low nibble.
+The calling code applies this part, swaps the nibbles, applies it again and swaps the nibbles back.
+
+In the permutation procedure the operations on 4 input bits is done twice, to complete one output byte.
 
 \subsection{Keying and key scheduling}
 Because we have serialized part of the algorithm our key register needs to be rotated when changing the context between steps that apply to the higher and lower 4 bytes of the cipher's state.
@@ -114,12 +145,16 @@ While the attained size of the implementation of PRESENT should suffice for use 
 \section{Conclusion}
 	\begin{tabular}{ l c c }
                 & Speed optimized & Size optimized \\
-        Size (bytes) & 1794 & 428 \\
+        Size (bytes) & 1794 & 418 \\
         Encryption (cycles) & 8721 & 91390 \\
         Decryption (cycles) & - & 104937 \\
         RAM (bytes) & 18 & 18
 
 	\end{tabular}
+
+\section{References}
+\bibliography{PRESENT_size_optimized_paper}{}
+\bibliographystyle{plain}
 
 \end{document}
 
