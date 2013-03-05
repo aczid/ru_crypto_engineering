@@ -45,7 +45,108 @@ Constructs found in PRESENT are also used in the SPONGENT \cite{bogdanov2011spon
 
 
 \section{Speed optimizations}
-\cite{gong2009towards}
+\subsection{PRESENT S-Box}\label{sbox}
+In this section we examine the S-Box of the PRESENT cipher from the speed perspective and we view it as a standalone component. We start from the original S-Box, identify its performance issues (section \ref{osbox}) and we expand it to the more efficient Squared S-Box (section \ref{ssbox}). Based on these improvements, we examine the S-Box and permutation layer combined  in section \ref{msbox}.
+\subsubsection{Original S-Box}\label{osbox}
+The original S-Box, presented by Bogdanov et al.~\cite{bogdanov2007present} consists of 16 different S-Boxes, each with a 4-bit input and a 4-bit output, as show below.\\
+\begin{table}[h]
+\centering
+\begin{tabular}{| c | c  | c | c | c  | c | c | c  | c | c | c  | c | c | c  | c | c | c |}
+\hline
+  x & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & A & B & C & D & E & F   \\
+\hline
+  S-Box[x] & C & 5 & 6 & B & 9 & 0 & A & D & 3 & E & F & 8 & 4 & 7 & 1 & 2   \\
+\hline
+\end{tabular}
+ \caption{\small The original S-Box of the PRESENT cipher.}
+\end{table}
+
+
+The core issue with the 4-bit S-Box is the penalty in accessing it, if stored in a lookup table. The AVR architecture is designed to enable fast access for 8-bits at a time. Thus, a lookup table with of the original S-Box is rather small (16 bytes for an unpacked version, 8 bytes for a packed one), but it is also rather inefficient due to the required shifts and XOR operations that need to take place before and after each table lookup.
+
+\subsubsection{Squared S-Box}\label{ssbox}
+A solution to the afore mentioned problem is to construct a new lookup table that is custom made for the 8-bit AVR architecture. In the following table, we demonstrate a Squared S-Box, which uses an 8-bit input and produces an 8-bit output. As a result, there is no need for overhead computation and the substitution consists of a single lookup.\\
+\begin{table}[h]
+\centering
+\begin{tabular}{| c | c  | c | c | c  | c  | c | c | c  | c | c | c |}
+\hline
+  x & 00 & 01 & 02 & 03  &  $\dots$  & 0C & 0D & 0E & 0F   \\
+\hline
+ S-Box[x] & CC & C5 & C6 & CB & \dots & C4 & C7 & C1 & C2   \\
+\hline
+  x & 10 & 11 & 12 & 13  &  $\dots$  & 1C & 1D & 1E & 1F   \\
+\hline
+ S-Box[x] & 5C & 55 & 56 & 5B & \dots & 54 & 57 & 51 & 52   \\
+
+\hline
+\end{tabular}
+ \caption{\small The first two lines of the 256-byte Squared S-Box. It substitutes one byte at a time, without any overhead.}
+\end{table}
+The Squared S-Box described, is an efficient and viable solution with respect to the cipher's substitution layer. It is custom made for the 8-bit AVR architecture and allows us to perform byte substitutions with a single FLASH memory lookup. Furthermore, it is relatively size-efficient, consisting of 256 bytes, thus, it can also be transfered to ATtiny45 SRAM from FLASH memory during the initialization process of the algorithm. The memory transfer is viable, since ATtiny45 possesses 256 bytes of SRAM and it will reduce the lookup cost by 33\%, i.e. to perform a lookup, the software will use the \texttt{ld} instruction (load from SRAM - 2 clock cycles), instead of  \texttt{lpm} instruction (load from FLASH memory - 3 clock cycles). The only processing penalty consists of a 256 byte transfer from FLASH to SRAM which will occur only once, preferably in the beginning or setup phase.
+\subsection{PRESENT S-Box and Permutation Layer}
+
+Although the Squared S-Box lookup table solution is viable for the PRESENT cipher, we need to stress the fact that the PRESENT cipher possesses a complex permutation layer, requiring a large number of shift and rotate operations. The AVR architecture is not capable of performing fast shifts and rotations,  e.g. an $n$-bit shift requires $n$ clock cycles, and thusly we have to look for alternatives.
+\subsubsection{Merged SP Lookup Tables}\label{msbox}
+In this direction, work by Peter Schwabe~\cite{hutternacl} on ATmega\footnote{Benchmarking was performed on ATmega2560.} suggested the usage of multiplications instead of rotations/shifts, however this is not viable on ATtiny due to the fact that they do not possess native multiplication instructions. The fastest approach that we identified for the permutation layer is the idea developed by Zheng Gong and Bo Zhu~\cite{gong_code,gong2009towards}. Specifically, they exploited the internal structure of the permutation layer, i.e. the fact that every output of a 4-bit S-Box will contribute one bit to the cipher (the underlying pattern for the permutation is the following: $for$ $k:old$ $position,$ $l:new$ $position,$ $l=f(k)=16(k mod 4)+(k div 4)$ ). Thus, the first 2 bits of the output are derived from the first two 4-bit S-Boxes, i.e. from the first byte of the previous state. \\
+Using these observations, they crafted four 256-byte lookup tables (1024 bytes in total) that \emph{merge} the S-Box and the permutation layer and as a result, the whole SP network is performed via table lookups. On the downside, we have to perform one lookup for every two bits, resulting in 32 lookups for a 64-bit state (compared to the Squared S-Box that required only 8 lookups for a 64-bit state). Moreover, we need 1024 bytes to store the tables, thus it is not possible to transfer them to the SRAM. The 33\% speedup obtained in section \ref{ssbox} is only possible in an AVR microcontroller with at least 1024 bytes of internal\footnote{Additional external SRAM is not an option, since it is at least as slow as FLASH memory.} SRAM, for instance ATtiny1634.
+
+\subsubsection{Fast Lookup Table Access}
+In order to decrease the computational penalty of the table lookups, we performed several code-level optimizations. Below, we demonstrate the code required to perform a single table lookup from FLASH memory.
+
+\begin{figure}
+\begin{lstlisting}
+LookupTable_i:
+mov ZH, high_part_of_address_i ; load ZH with the 8 high bits
+mov ZL, low_part_of_address_i  ; load ZL with the table index
+lpm register, Z                ; load register with Table[ZL] contents
+\end{lstlisting}
+	\caption{Fast S-box table access.}
+\label{sbox_squared}
+\end{figure}
+We aim to keep the changes required in \texttt{ZH} to a minimum. Thus, we align the four 256-byte tables such that they can be accessed by using only the  \texttt{ZL} register as an index and keeping \texttt{ZH} unchanged. Elaborating, the four lookup tables \texttt{LookupTable3, LookupTable2, LookupTable1, LookupTable0} (section \ref{msbox}) start from \texttt{0x0600, 0x0700, 0x0800, 0x0900} respectively and thus, the 8 high bits of the address part (\texttt{0x06, 0x07, 0x08, 0x09}) remain the same and the 8 low bits can act as the table index, ranging from 0 to 255 (\texttt{0x00} to \texttt{0xFF}). \\
+To similar end, we group lookups that search in the same table, as follows.
+\begin{figure}
+\begin{lstlisting}
+LookupTable_0 ;	                LookupTable_0 ; Group 0 
+LookupTable_1 ;	                LookupTable_0 ; Group 0
+LookupTable_0 ;  transforms to  LookupTable_1 ; Group 1
+LookupTable_1 ;	                LookupTable_1 ; Group 1
+\end{lstlisting}
+	\caption{Batched lookup table access.}
+\label{batched_lookup}
+\end{figure}
+We perform the maximum amount of grouped table lookups, given the limited number of registers. Withing each grouping, \texttt{ZH} remains the same.
+\subsection{Key Update Function}
+They key update function of the PRESENT cipher consists of three operations, namely, key rotation, key substitution and key XOR the round counter. We present the optimizations performed below.
+\subsubsection{Key Rotation Operation}
+The algorithm specifies that the key must be rotated by 61 bits to the left. Given the fact that rotations/shifts are computationally expensive, we transform 61 left rotations to 19 right rotations, which can be further reduced to 16 right rotations and 3 right rotations. The 16 right rotations can be easily performed with the \texttt{mov} instructions and the 3 remaining are carried out with the \texttt{ror} and \texttt{shr} commands.
+\subsubsection{Key Substitution Operation}
+The highest 4 bits of the 80-bit key used by PRESENT cipher, must go through the S-Box. To avoid again 4-bit memory access, we craft another Squared S-Box that substitutes the 4 high bits of the 8-bit input, while the low 4 bits remain unchanged. The resulting table can be seen below and the key substitution operation consists of a single lookup.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{| c | c  | c | c | c  | c  | c | c | c  | c | c | c |}
+\hline
+  x & 00 & 01 & 02 & 03  &  $\dots$  & 0C & 0D & 0E & 0F   \\
+\hline
+ S-Box[x] & C0 & C1 & C2 & C3 & \dots & CC & CD & CE & CF   \\
+\hline
+  x & 10 & 11 & 12 & 13  &  $\dots$  & 1C & 1D & 1E & 1F   \\
+\hline
+ S-Box[x] & 50 & 5 & 56 & 5B & \dots & 5C & 5D & 5E & 5F   \\
+
+\hline
+\end{tabular}
+ \caption{Squared S-Box for key substitution, operating only on the high 4 bits of the input.}
+\end{table}
+
+\subsubsection{Key XOR Round Counter Operation}
+The algorithm specifies that the key bits 15, 16, 17, 18, 19 must be XORed with the round counter. The issue is that -under the current representation- bits 0$\dots$7 will be stored in register0, bits 8$\dots$15 will be stored in register1 and bits 16$\dots$23 will be stored in register2. As a result parts of the round counter need to be XORed with different parts of two separate registers. However, if we perform the XOR operation before the key rotation operation, the bits that will be operated on are bits 34,35,36,37,38 which span a single register (using the previous representation, they are located in register4 ). Performing this operation before the key rotation does not affect the outcome or security of the algorithm.
+
+\subsection{Bitslicing}
+NOTE: This is not a valid/verified section yet - we only present thoughts on the possibility of bitslicing. To be reconsidered.\\
+Bitslicing has been performed before for PRESENT ~\cite{grabher2008light}.In order to perform bitslicing in AVR, there is need for a large amount of SRAM, e.g. for a fully-blown bitslicing, we need 8*64=512 bytes of SRAM. With this approach we perform 64 encryptions in bitsliced form and we no longer need the permutation layer. On the downside, there will traffic between registers and SRAM and also, we cannot use lookup tables for the substitution layer and thus, we have to implement the S-Box with boolean functions that operate on each state bit.
+
 \section{Size optimizations}
 
 Here we will list some of the size improvements we were able to apply to the PRESENT algorithm.
@@ -161,7 +262,11 @@ While the attained size of the implementation of PRESENT should suffice for use 
 This is highlighted in the source code using comments.
 
 \section{Conclusion}
-	\begin{tabular}{ l c c c }
+We've compared our results to the existing AVR implementation by Eisenbarth et al \cite{eisenbarth2012compact} and are pleased to announce we were able to halve the code size and gain about 13\% speed increase.
+We note that having access to a larger SRAM could allow the lookup tables for the speed-optimized version to incur a lower overhead, and reduce an estimated 10\% more cycles per encryption. 
+\\
+
+	\begin{tabular}{ l | c | c | c }
                 & Reference & Speed optimized & Size optimized \\
         Size (bytes) & 936 & 1794 & 426 \\
         Encryption (cycles) & 10723 & 8721 & 90725 \\
@@ -169,7 +274,7 @@ This is highlighted in the source code using comments.
         RAM (bytes) & 0 & 18 & 18
 	\end{tabular}
 
-\section{References}
+%\section{References}
 \bibliography{PRESENT_size_optimized_paper}{}
 \bibliographystyle{plain}
 
