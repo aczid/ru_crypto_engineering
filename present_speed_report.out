@@ -1,0 +1,12 @@
+\BOOKMARK [1][-]{section.1}{Speed Optimizations}{}% 1
+\BOOKMARK [2][-]{subsection.1.1}{PRESENT S-Box}{section.1}% 2
+\BOOKMARK [3][-]{subsubsection.1.1.1}{Original S-Box}{subsection.1.1}% 3
+\BOOKMARK [3][-]{subsubsection.1.1.2}{Squared S-Box}{subsection.1.1}% 4
+\BOOKMARK [2][-]{subsection.1.2}{PRESENT S-Box and Permutation Layer}{section.1}% 5
+\BOOKMARK [3][-]{subsubsection.1.2.1}{Merged SP Lookup Tables}{subsection.1.2}% 6
+\BOOKMARK [3][-]{subsubsection.1.2.2}{Fast Lookup Table Access}{subsection.1.2}% 7
+\BOOKMARK [2][-]{subsection.1.3}{Key Update Function}{section.1}% 8
+\BOOKMARK [3][-]{subsubsection.1.3.1}{Key Rotation Operation}{subsection.1.3}% 9
+\BOOKMARK [3][-]{subsubsection.1.3.2}{Key Substitution Operation}{subsection.1.3}% 10
+\BOOKMARK [3][-]{subsubsection.1.3.3}{Key XOR Round Counter Operation}{subsection.1.3}% 11
+\BOOKMARK [2][-]{subsection.1.4}{Bitslicing}{section.1}% 12
