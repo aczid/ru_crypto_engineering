@@ -98,7 +98,7 @@ In order to decrease the computational penalty of the table lookups, we performe
 LookupTable_i:
 mov ZH, high_part_of_address_i ; load ZH with the 8 high bits
 mov ZL, low_part_of_address_i  ; load ZL with the table index
-lpm register, Z                ; load register with Table[ZL] contents
+lpm Rd, Z                      ; load register d with Table[ZL] contents
 \end{lstlisting}
 	\caption{Fast S-box table access.}
 \label{sbox_squared}
