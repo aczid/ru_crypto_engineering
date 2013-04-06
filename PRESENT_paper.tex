@@ -29,7 +29,7 @@ Aram Verstegen
 \maketitle
 
 \abstract{
-We present our progress in experimenting with the PRESENT block cipher to optimize it for the AVR architecture (specifically the ATtiny48 device)in both the direction of maximal speed and minimal area.}
+We present our progress in experimenting with the PRESENT block cipher to optimize it for the AVR architecture (specifically the ATtiny48 device) in both the direction of maximal speed and minimal area.}
 
 \section{PRESENT}
 PRESENT \cite{bogdanov2007present} is an ultra-lightweight 64-bit block cipher using 80-bit or 128-bit keys based on a substitution/permutation network, and it's named in reference to Serpent \cite{anderson1998serpent} for its similar constructs.
@@ -70,11 +70,12 @@ There are a total of 31 of these rounds in 80-bit PRESENT, and finally the round
 \section{The 8-bit family of tinyAVR Microcontrollers}
 Atmel offers a wide range of 8-bit microcontrollers, including high performance devices (ATxmega), mid-range devices (ATmega) and low-end devices with limited memory, storage and processing power (ATtiny). Common applications of AVR microcontrollers include smart cards, motor control systems, medical applications et cetera. 
 
-Our focal point is the resource-constrained ATtiny architecture, which typically features less than 1 kilobyte of static RAM (SRAM) and flash storage ranging from 1 to 8 kilobytes. The architecture uses 32 general-purpose registers, r0-r31, available for our implementation. Several registers have special characteristics, namely registers r0 to r15 can only be accessed by instructions that provide an immediate value as an operand, \emph{e.g.} you cannot perform memory access from these registers. In addition, registers r27:r26 (denoted as \emph{X}) and registers r29:r28 (denoted as\emph{Y}) can be used for accessing the SRAM, while registers r31:r30 (denoted as \emph{Z}) can access the flash storage. At all times, special memory registers can be utilized as general-purpose registers.
+Our focal point is the resource-constrained ATtiny architecture, which typically features less than 1 kilobyte of static RAM (SRAM) and flash storage ranging from 1 to 8 kilobytes. The architecture uses 32 general-purpose registers, \textit{R0}-\textit{R31}.
+Several registers have special characteristics, namely registers \textit{R0} through \textit{R15} can only be accessed by instructions that provide an immediate value as an operand, \emph{e.g.} you cannot perform memory access from these registers. In addition, registers \textit{R27:R26} (denoted as \emph{X}) and registers \textit{R29:R28} (denoted as\emph{Y}) can be used for accessing the SRAM, while registers \textit{R31:R30} (denoted as \emph{Z}) can access the flash storage. At all times, special memory registers can be utilized as general-purpose registers.
 
 The ATtiny instruction set consists of the basic 90 instructions, found in all AVR architectures. However, due to the limited size of its core, it does not support the extended instruction set which includes multiplication, in contrast with the ATmega architecture. \\\\
 \textbf{ATtiny configuration.} We perform all simulations on ATtiny45, which has a maximum clock frequency of 20 MHz, 256 bytes of SRAM and 4 KB of flash storage.\\
-\textbf{Radix-$2^8$ representation.} The PRESENT ciphers requires representing integers of size 64 or 80 bits. Thus, we split the number into 8-bit components, using radix-$2^8$ and an $m$-bit integer is represented as $n=\lceil{m/8}\rceil$ bytes $(x_0,x_1,\dots,x_{n-1})$ such that $x=\sum_{i=0}^n{x_i 2^{8*i}}$.
+\textbf{Radix-$2^8$ representation.} The PRESENT ciphers requires representing integers of size 64 and 80 bits. Thus, we split the number into 8-bit components, using radix-$2^8$ and an $m$-bit integer is represented as $n=\lceil{m/8}\rceil$ bytes $(x_0,x_1,\dots,x_{n-1})$ such that $x=\sum_{i=0}^n{x_i 2^{8*i}}$.
 \section{High-speed implementation}
 
 \subsection{PRESENT S-Box \& Player implementation}\label{sbox}
