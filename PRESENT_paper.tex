@@ -41,7 +41,7 @@ PRESENT uses exclusive-or as a round key, a 4-bit substitution layer and a 4-bit
 Key scheduling is a combination of bit rotation, S-box application and exclusive-or with the round counter.
 We chose PRESENT as a cipher to work on within a project to write and optimize AVR crypto code because we deemed it extremely well-suited for a simple microcontroller, and felt it was within our grasp to implement and optimize correctly within the allotted time.
 
-Constructs found in PRESENT are also used in the SPONGENT \cite{bogdanov2011spongent} hash function and hash function constructs based on block ciphers as proposed by Hirose \cite{hirose2006some,hirose2005provably,bogdanov2008hash} (H-PRESENT), so the optimizations we present here might also interest implementers of such hash functions.
+Constructs found in PRESENT are also used in the SPONGENT \cite{bogdanov2011spongent} hash function, hash function constructs based on block ciphers as proposed by Hirose \cite{hirose2006some,hirose2005provably,bogdanov2008hash} (H-PRESENT) and the derivative SMALLPRESENT \cite{leander2010small}, so the optimizations we present here might also interest implementers of these algorithms functions.
 
 We have implemented PRESENT for the recommended 80-bit key size in AVR assembly in two versions, optimized for maximal speed and minimal size.
 
