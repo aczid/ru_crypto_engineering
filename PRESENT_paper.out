@@ -1,0 +1,23 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Background}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{PRESENT cipher}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{PRESENT algorithm.}{section.2}% 4
+\BOOKMARK [2][-]{subsection.2.3}{The 8-bit family of tinyAVR Microcontrollers}{section.2}% 5
+\BOOKMARK [1][-]{section.3}{High-speed implementation}{}% 6
+\BOOKMARK [2][-]{subsection.3.1}{PRESENT S-Box \046 Player implementation}{section.3}% 7
+\BOOKMARK [3][-]{subsubsection.3.1.1}{Original S-Box}{subsection.3.1}% 8
+\BOOKMARK [3][-]{subsubsection.3.1.2}{Squared S-Box}{subsection.3.1}% 9
+\BOOKMARK [3][-]{subsubsection.3.1.3}{Merged SP lookup table}{subsection.3.1}% 10
+\BOOKMARK [3][-]{subsubsection.3.1.4}{Memory optimizations for lookup tables}{subsection.3.1}% 11
+\BOOKMARK [2][-]{subsection.3.2}{Key update implementation}{section.3}% 12
+\BOOKMARK [3][-]{subsubsection.3.2.1}{Key rotation}{subsection.3.2}% 13
+\BOOKMARK [3][-]{subsubsection.3.2.2}{Key substitution}{subsection.3.2}% 14
+\BOOKMARK [3][-]{subsubsection.3.2.3}{Key exclusive OR operation}{subsection.3.2}% 15
+\BOOKMARK [1][-]{section.4}{Size-optimized implementation}{}% 16
+\BOOKMARK [2][-]{subsection.4.1}{Serialization}{section.4}% 17
+\BOOKMARK [2][-]{subsection.4.2}{S-Box packing}{section.4}% 18
+\BOOKMARK [2][-]{subsection.4.3}{Permutation layer}{section.4}% 19
+\BOOKMARK [2][-]{subsection.4.4}{Branching on SREG flags}{section.4}% 20
+\BOOKMARK [2][-]{subsection.4.5}{Keying and key scheduling}{section.4}% 21
+\BOOKMARK [2][-]{subsection.4.6}{Reducing code size for specific applications}{section.4}% 22
+\BOOKMARK [1][-]{section.5}{Conclusion}{}% 23
