@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 \BOOKMARK [1][-]{section.1}{Introduction}{}% 1
 \BOOKMARK [1][-]{section.2}{Background}{}% 2
 \BOOKMARK [2][-]{subsection.2.1}{PRESENT cipher}{section.2}% 3
@@ -21,3 +22,6 @@
 \BOOKMARK [2][-]{subsection.4.5}{Keying and key scheduling}{section.4}% 21
 \BOOKMARK [2][-]{subsection.4.6}{Reducing code size for specific applications}{section.4}% 22
 \BOOKMARK [1][-]{section.5}{Conclusion}{}% 23
+=======
+\BOOKMARK [0][-]{chapter.1}{Speed and size-optimized implementations of the PRESENT cipher for tiny AVR devices}{}
+>>>>>>> 35a74480dba09c392b0fb7d9390bd098a3c6b231

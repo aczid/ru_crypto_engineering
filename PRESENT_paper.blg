@@ -1,6 +1,55 @@
+<<<<<<< HEAD
 This is BibTeX, Version 0.99dThe top-level auxiliary file: PRESENT_paper.aux
+=======
+This is BibTeX, Version 0.99c (TeX Live 2009/Debian)
+The top-level auxiliary file: PRESENT_paper.aux
+>>>>>>> 35a74480dba09c392b0fb7d9390bd098a3c6b231
 The style file: plain.bst
 Database file #1: PRESENT_paper.bib
 Warning--empty journal in hutternacl
 Warning--empty year in hutternacl
+<<<<<<< HEAD
+=======
+You've used 18 entries,
+            2118 wiz_defined-function locations,
+            593 strings with 7322 characters,
+and the built_in function-call counts, 7357 in all, are:
+= -- 745
+> -- 362
+< -- 11
++ -- 146
+- -- 126
+* -- 465
+:= -- 1155
+add.period$ -- 60
+call.type$ -- 18
+change.case$ -- 118
+chr.to.int$ -- 0
+cite$ -- 20
+duplicate$ -- 300
+empty$ -- 541
+format.name$ -- 126
+if$ -- 1609
+int.to.chr$ -- 0
+int.to.str$ -- 18
+missing$ -- 14
+newline$ -- 92
+num.names$ -- 34
+pop$ -- 151
+preamble$ -- 1
+purify$ -- 99
+quote$ -- 0
+skip$ -- 242
+stack$ -- 0
+substring$ -- 423
+swap$ -- 110
+text.length$ -- 11
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 72
+warning$ -- 2
+while$ -- 67
+width$ -- 20
+write$ -- 199
+>>>>>>> 35a74480dba09c392b0fb7d9390bd098a3c6b231
 (There were 2 warnings)

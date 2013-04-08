@@ -71,7 +71,11 @@ Shoichi Hirose.
 \bibitem{hirose2006some}
 Shoichi Hirose.
 \newblock Some plausible constructions of double-block-length hash functions.
+<<<<<<< HEAD
 \newblock In {\em FSE}, pages 210--225. Springer, 2006.
+=======
+\newblock In {\em Fast Software Encryption}, pages 210--225. Springer, 2006.
+>>>>>>> 35a74480dba09c392b0fb7d9390bd098a3c6b231
 
 \bibitem{hutternacl}
 Michael Hutter and Peter Schwabe.
@@ -103,8 +107,13 @@ The~GNU project.
 Bo~Zhu Zheng~Gong.
 \newblock Software implementation of block cipher present for 8-bit platforms.
 \newblock
+<<<<<<< HEAD
   \url{http://cis.sjtu.edu.cn/index.php/Software_Implementation_of_Block_Cipher_PRESENT_for_8-Bit_Platforms},
   2013.
+=======
+  \url{http://cis.sjtu.edu.cn/index.php/Software\_Implementation\_of\_Block\_C%
+ipher\_PRESENT\_for\_8-Bit\_Platforms}, 2013.
+>>>>>>> 35a74480dba09c392b0fb7d9390bd098a3c6b231
 \newblock [Online; accessed 19-February-2013].
 
 \end{thebibliography}
