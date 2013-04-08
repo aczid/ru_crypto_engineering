@@ -1,86 +1,82 @@
 \relax 
-\providecommand\HyperFirstAtBeginDocument{\AtBeginDocument}
-\HyperFirstAtBeginDocument{\ifx\hyper@anchor\@undefined
-\global\let\oldcontentsline\contentsline
-\gdef\contentsline#1#2#3#4{\oldcontentsline{#1}{#2}{#3}}
-\global\let\oldnewlabel\newlabel
-\gdef\newlabel#1#2{\newlabelxx{#1}#2}
-\gdef\newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
-\AtEndDocument{\ifx\hyper@anchor\@undefined
-\let\contentsline\oldcontentsline
-\let\newlabel\oldnewlabel
-\fi}
-\fi}
-\global\let\hyper@last\relax 
-\gdef\HyperFirstAtBeginDocument#1{#1}
-\providecommand\HyField@AuxAddToFields[1]{}
+\ifx\hyper@anchor\@undefined
+\global \let \oldcontentsline\contentsline
+\gdef \contentsline#1#2#3#4{\oldcontentsline{#1}{#2}{#3}}
+\global \let \oldnewlabel\newlabel
+\gdef \newlabel#1#2{\newlabelxx{#1}#2}
+\gdef \newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
+\AtEndDocument{\let \contentsline\oldcontentsline
+\let \newlabel\oldnewlabel}
+\else
+\global \let \hyper@last\relax 
+\fi
+
+\providecommand*\HyPL@Entry[1]{}
 \citation{bogdanov2007present}
-\citation{klein}
-\citation{led}
-\citation{cryptolib}
-\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}}
+\citation{gong2012klein}
+\citation{guo2011led}
+\citation{avr_crypto_lib}
 \citation{bogdanov2007present}
 \citation{anderson1998serpent}
 \citation{present_iso}
-\citation{abed2012biclique}
-\citation{collard2009statistical}
-\citation{nakahara2009linear}
+\citation{abed2012biclique,collard2009statistical,nakahara2009linear}
+\HyPL@Entry{0<</S/D>>}
+\@writefile{toc}{\contentsline {title}{Speed and size-optimized implementations of the PRESENT cipher for tiny AVR devices}{1}{chapter.1}}
+\@writefile{toc}{\authcount {1}}
+\@writefile{toc}{\contentsline {author}{}{1}{chapter.1}}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1.1}}
 \citation{bogdanov2011spongent}
-\citation{bogdanov2008hash}
-\citation{hirose2005provably}
-\citation{hirose2006some}
+\citation{bogdanov2008hash,hirose2005provably,hirose2006some}
 \citation{leander2010small}
-\newlabel{present_schematic}{{1}{3}{Introduction\relax }{section.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces \relax \fontsize  {9}{11}\selectfont  \abovedisplayskip 8\p@ plus2\p@ minus4\p@ \abovedisplayshortskip \z@ plus\p@ \belowdisplayshortskip 4\p@ plus2\p@ minus2\p@ \def \leftmargin \leftmargini \parsep 4.5\p@ plus2\p@ minus\p@ \topsep 9\p@ plus3\p@ minus5\p@ \itemsep 4.5\p@ plus2\p@ minus\p@ {\leftmargin \leftmargini \topsep 4\p@ plus2\p@ minus2\p@ \parsep 2\p@ plus\p@ minus\p@ \itemsep \parsep }\belowdisplayskip \abovedisplayskip Schematic of the PRESENT cipher. It consists of 31 rounds, including substitution, permutation and key update.}}{3}{figure.1}}
-\@writefile{toc}{\contentsline {section}{\numberline {2}The 8-bit family of tinyAVR Microcontrollers}{3}{section.2}}
+\newlabel{present_schematic}{{1}{2}{Introduction\relax }{section.1.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces \relax \fontsize  {9}{11}\selectfont  \abovedisplayskip 8.5\p@ plus3\p@ minus4\p@ \abovedisplayshortskip \z@ plus2\p@ \belowdisplayshortskip 4\p@ plus2\p@ minus2\p@ \def \leftmargin \leftmargini \parsep 0\p@ plus1\p@ minus\p@ \topsep 8\p@ plus2\p@ minus4\p@ \itemsep 0\p@ {\leftmargin \leftmargini \parsep 0\p@ plus1\p@ minus\p@ \topsep 8\p@ plus2\p@ minus4\p@ \itemsep 0\p@ }\belowdisplayskip \abovedisplayskip Schematic of the PRESENT cipher. It consists of 31 rounds, including substitution, permutation and key update.}}{2}{figure.1.1}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}The 8-bit family of tinyAVR Microcontrollers}{3}{section.1.2}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}High-speed implementation}{3}{section.1.3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}PRESENT S-Box \& Player implementation}{3}{subsection.1.3.1}}
+\newlabel{sbox}{{3.1}{3}{PRESENT S-Box \& Player implementation\relax }{subsection.1.3.1}{}}
 \citation{bogdanov2007present}
-\@writefile{toc}{\contentsline {section}{\numberline {3}High-speed implementation}{4}{section.3}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}PRESENT S-Box \& Player implementation}{4}{subsection.3.1}}
-\newlabel{sbox}{{3.1}{4}{PRESENT S-Box \& Player implementation\relax }{subsection.3.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.1}Original S-Box}{4}{subsubsection.3.1.1}}
-\newlabel{osbox}{{3.1.1}{4}{Original S-Box\relax }{subsubsection.3.1.1}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces \relax \fontsize  {9}{11}\selectfont  \abovedisplayskip 8\p@ plus2\p@ minus4\p@ \abovedisplayshortskip \z@ plus\p@ \belowdisplayshortskip 4\p@ plus2\p@ minus2\p@ \def \leftmargin \leftmargini \topsep 4\p@ plus2\p@ minus2\p@ \parsep 2\p@ plus\p@ minus\p@ \itemsep \parsep {\leftmargin \leftmargini \topsep 4\p@ plus2\p@ minus2\p@ \parsep 2\p@ plus\p@ minus\p@ \itemsep \parsep }\belowdisplayskip \abovedisplayskip The original S-Box of the PRESENT cipher.}}{4}{table.1}}
-\newlabel{original_sbox}{{1}{4}{\footnotesize The original S-Box of the PRESENT cipher}{table.1}{}}
+\newlabel{osbox}{{3.1}{4}{Original S-Box\relax }{section*.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Original S-Box}{4}{section*.2}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces \relax \fontsize  {9}{11}\selectfont  \abovedisplayskip 8.5\p@ plus3\p@ minus4\p@ \abovedisplayshortskip \z@ plus2\p@ \belowdisplayshortskip 4\p@ plus2\p@ minus2\p@ \def \leftmargin \leftmargini \parsep 0\p@ plus1\p@ minus\p@ \topsep 8\p@ plus2\p@ minus4\p@ \itemsep 0\p@ {\leftmargin \leftmargini \parsep 0\p@ plus1\p@ minus\p@ \topsep 8\p@ plus2\p@ minus4\p@ \itemsep 0\p@ }\belowdisplayskip \abovedisplayskip The original S-Box of the PRESENT cipher.}}{4}{table.1.1}}
+\newlabel{original_sbox}{{1}{4}{\footnotesize The original S-Box of the PRESENT cipher}{table.1.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces \relax \fontsize  {7}{8}\selectfont  The unpacked representation of the original S-Box, using 16 bytes. Each table column represents a single substitution.}}{4}{table.1.2}}
+\newlabel{unpacked_sbox}{{2}{4}{\scriptsize The unpacked representation of the original S-Box, using 16 bytes. Each table column represents a single substitution}{table.1.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces \relax \fontsize  {7}{8}\selectfont  The packed representation of the original S-Box, using 8 bytes. Each table column represents two substitutions. This would give a size optimization of 8 bytes to begin with, but considerations for unpacking code apply. (See Section\nobreakspace  {}\ref  {sbox_packing}.)}}{4}{table.1.3}}
+\newlabel{packed_sbox}{{3}{4}{\scriptsize The packed representation of the original S-Box, using 8 bytes. Each table column represents two substitutions. This would give a size optimization of 8 bytes to begin with, but considerations for unpacking code apply. (See Section~\ref {sbox_packing}.)\relax }{table.1.3}{}}
 \citation{eisenbarth2012compact}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces \relax \fontsize  {8}{9.5}\selectfont  The unpacked representation of the original S-Box, using 16 bytes. Each table column represents a single substitution.}}{5}{table.2}}
-\newlabel{unpacked_sbox}{{2}{5}{\scriptsize The unpacked representation of the original S-Box, using 16 bytes. Each table column represents a single substitution}{table.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces \relax \fontsize  {8}{9.5}\selectfont  The packed representation of the original S-Box, using 8 bytes. Each table column represents two substitutions. This would give a size optimization of 8 bytes to begin with, but considerations for unpacking code apply. (See Section\nobreakspace  {}\ref  {sbox_packing}.)}}{5}{table.3}}
-\newlabel{packed_sbox}{{3}{5}{\scriptsize The packed representation of the original S-Box, using 8 bytes. Each table column represents two substitutions. This would give a size optimization of 8 bytes to begin with, but considerations for unpacking code apply. (See Section~\ref {sbox_packing}.)\relax }{table.3}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.2}Squared S-Box}{5}{subsubsection.3.1.2}}
-\newlabel{ssbox}{{3.1.2}{5}{Squared S-Box\relax }{subsubsection.3.1.2}{}}
+\newlabel{ssbox}{{3.1}{5}{Squared S-Box\relax }{section*.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Squared S-Box}{5}{section*.3}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces \relax \fontsize  {9}{11}\selectfont  \abovedisplayskip 8.5\p@ plus3\p@ minus4\p@ \abovedisplayshortskip \z@ plus2\p@ \belowdisplayshortskip 4\p@ plus2\p@ minus2\p@ \def \leftmargin \leftmargini \parsep 0\p@ plus1\p@ minus\p@ \topsep 8\p@ plus2\p@ minus4\p@ \itemsep 0\p@ {\leftmargin \leftmargini \parsep 0\p@ plus1\p@ minus\p@ \topsep 8\p@ plus2\p@ minus4\p@ \itemsep 0\p@ }\belowdisplayskip \abovedisplayskip The 256-byte Squared S-Box. It substitutes one byte at a time, without any overhead or redundancy.}}{5}{table.1.4}}
+\newlabel{squared_sbox}{{4}{5}{\footnotesize The 256-byte Squared S-Box. It substitutes one byte at a time, without any overhead or redundancy}{table.1.4}{}}
 \citation{hutternacl}
-\citation{gong_code}
-\citation{gong2009towards}
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces \relax \fontsize  {9}{11}\selectfont  \abovedisplayskip 8\p@ plus2\p@ minus4\p@ \abovedisplayshortskip \z@ plus\p@ \belowdisplayshortskip 4\p@ plus2\p@ minus2\p@ \def \leftmargin \leftmargini \topsep 4\p@ plus2\p@ minus2\p@ \parsep 2\p@ plus\p@ minus\p@ \itemsep \parsep {\leftmargin \leftmargini \topsep 4\p@ plus2\p@ minus2\p@ \parsep 2\p@ plus\p@ minus\p@ \itemsep \parsep }\belowdisplayskip \abovedisplayskip The 256-byte Squared S-Box. It substitutes one byte at a time, without any overhead or redundancy.}}{6}{table.4}}
-\newlabel{squared_sbox}{{4}{6}{\footnotesize The 256-byte Squared S-Box. It substitutes one byte at a time, without any overhead or redundancy}{table.4}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.3}Merged SP lookup table}{6}{subsubsection.3.1.3}}
-\newlabel{msbox}{{3.1.3}{6}{Merged SP lookup table\relax }{subsubsection.3.1.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \relax \fontsize  {9}{11}\selectfont  \abovedisplayskip 8\p@ plus2\p@ minus4\p@ \abovedisplayshortskip \z@ plus\p@ \belowdisplayshortskip 4\p@ plus2\p@ minus2\p@ \def \leftmargin \leftmargini \parsep 4.5\p@ plus2\p@ minus\p@ \topsep 9\p@ plus3\p@ minus5\p@ \itemsep 4.5\p@ plus2\p@ minus\p@ {\leftmargin \leftmargini \topsep 4\p@ plus2\p@ minus2\p@ \parsep 2\p@ plus\p@ minus\p@ \itemsep \parsep }\belowdisplayskip \abovedisplayskip The available S-Box representations, shown on the size-speed spectrum.}}{7}{figure.2}}
-\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces \relax \fontsize  {9}{11}\selectfont  \abovedisplayskip 8\p@ plus2\p@ minus4\p@ \abovedisplayshortskip \z@ plus\p@ \belowdisplayshortskip 4\p@ plus2\p@ minus2\p@ \def \leftmargin \leftmargini \topsep 4\p@ plus2\p@ minus2\p@ \parsep 2\p@ plus\p@ minus\p@ \itemsep \parsep {\leftmargin \leftmargini \topsep 4\p@ plus2\p@ minus2\p@ \parsep 2\p@ plus\p@ minus\p@ \itemsep \parsep }\belowdisplayskip \abovedisplayskip Comparison of S-Box representations. Note that all representations are viable on ATtiny45 when implemented with flash storage. In the case that the tables are transfered to SRAM for faster lookups, only packed, unpacked and squared are viable on ATtiny45 due its SRAM size (256 bytes). Merged SP on SRAM is viable on ATtiny1634 (featuring 1KB of SRAM). }}{8}{table.5}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.4}Memory optimizations for lookup tables}{8}{subsubsection.3.1.4}}
+\citation{gong_code,gong2009towards}
+\newlabel{msbox}{{3.1}{6}{Merged SP lookup table\relax }{section*.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Merged SP lookup table}{6}{section*.4}}
+\@writefile{toc}{\contentsline {subsubsection}{Memory optimizations for lookup tables}{6}{section*.5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \relax \fontsize  {9}{11}\selectfont  \abovedisplayskip 8.5\p@ plus3\p@ minus4\p@ \abovedisplayshortskip \z@ plus2\p@ \belowdisplayshortskip 4\p@ plus2\p@ minus2\p@ \def \leftmargin \leftmargini \parsep 0\p@ plus1\p@ minus\p@ \topsep 8\p@ plus2\p@ minus4\p@ \itemsep 0\p@ {\leftmargin \leftmargini \parsep 0\p@ plus1\p@ minus\p@ \topsep 8\p@ plus2\p@ minus4\p@ \itemsep 0\p@ }\belowdisplayskip \abovedisplayskip The available S-Box representations, shown on the size-speed spectrum.}}{7}{figure.1.2}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces \relax \fontsize  {9}{11}\selectfont  \abovedisplayskip 8.5\p@ plus3\p@ minus4\p@ \abovedisplayshortskip \z@ plus2\p@ \belowdisplayshortskip 4\p@ plus2\p@ minus2\p@ \def \leftmargin \leftmargini \parsep 0\p@ plus1\p@ minus\p@ \topsep 8\p@ plus2\p@ minus4\p@ \itemsep 0\p@ {\leftmargin \leftmargini \parsep 0\p@ plus1\p@ minus\p@ \topsep 8\p@ plus2\p@ minus4\p@ \itemsep 0\p@ }\belowdisplayskip \abovedisplayskip Comparison of S-Box representations. Note that all representations are viable on ATtiny45 when implemented with flash storage. In the case that the tables are transfered to SRAM for faster lookups, only packed, unpacked and squared are viable on ATtiny45 due its SRAM size (256 bytes). Merged SP on SRAM is viable on ATtiny1634 (featuring 1KB of SRAM). }}{7}{table.1.5}}
 \citation{eisenbarth2012compact}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Key update implementation}{9}{subsection.3.2}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.1}Key rotation}{9}{subsubsection.3.2.1}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.2}Key substitution}{9}{subsubsection.3.2.2}}
-\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces \relax \fontsize  {9}{11}\selectfont  \abovedisplayskip 8\p@ plus2\p@ minus4\p@ \abovedisplayshortskip \z@ plus\p@ \belowdisplayshortskip 4\p@ plus2\p@ minus2\p@ \def \leftmargin \leftmargini \topsep 4\p@ plus2\p@ minus2\p@ \parsep 2\p@ plus\p@ minus\p@ \itemsep \parsep {\leftmargin \leftmargini \topsep 4\p@ plus2\p@ minus2\p@ \parsep 2\p@ plus\p@ minus\p@ \itemsep \parsep }\belowdisplayskip \abovedisplayskip Special-purpose Squared S-Box for key substitution, operating only on the high 4 bits of the input.}}{10}{table.6}}
-\newlabel{key_sbox}{{6}{10}{\footnotesize Special-purpose Squared S-Box for key substitution, operating only on the high 4 bits of the input}{table.6}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.3}Key exclusive OR operation}{10}{subsubsection.3.2.3}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Size optimizations}{10}{section.4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Key update implementation}{8}{subsection.1.3.2}}
+\@writefile{toc}{\contentsline {subsubsection}{Key rotation}{8}{section*.6}}
+\@writefile{toc}{\contentsline {subsubsection}{Key substitution}{8}{section*.7}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces \relax \fontsize  {9}{11}\selectfont  \abovedisplayskip 8.5\p@ plus3\p@ minus4\p@ \abovedisplayshortskip \z@ plus2\p@ \belowdisplayshortskip 4\p@ plus2\p@ minus2\p@ \def \leftmargin \leftmargini \parsep 0\p@ plus1\p@ minus\p@ \topsep 8\p@ plus2\p@ minus4\p@ \itemsep 0\p@ {\leftmargin \leftmargini \parsep 0\p@ plus1\p@ minus\p@ \topsep 8\p@ plus2\p@ minus4\p@ \itemsep 0\p@ }\belowdisplayskip \abovedisplayskip Special-purpose Squared S-Box for key substitution, operating only on the high 4 bits of the input.}}{8}{table.1.6}}
+\newlabel{key_sbox}{{6}{8}{\footnotesize Special-purpose Squared S-Box for key substitution, operating only on the high 4 bits of the input}{table.1.6}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Key exclusive OR operation}{9}{section*.8}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Size optimizations}{9}{section.1.4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Serialization}{9}{subsection.1.4.1}}
 \citation{eisenbarth2012compact}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Serialization}{11}{subsection.4.1}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}S-box packing}{11}{subsection.4.2}}
-\newlabel{sbox_packing}{{4.2}{11}{S-box packing\relax }{subsection.4.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Permutation layer}{11}{subsection.4.3}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Unpacking bytes into nibbles in a constant cycle count takes us 8 instructions whereas unpacking unpacked nibbles takes us only 1. The net gain is only 2 bytes of code.}}{12}{figure.3}}
-\newlabel{unpacking_code}{{3}{12}{Unpacking bytes into nibbles in a constant cycle count takes us 8 instructions whereas unpacking unpacked nibbles takes us only 1. The net gain is only 2 bytes of code}{figure.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Branching on SREG flags}{12}{subsection.4.4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}S-box packing}{10}{subsection.1.4.2}}
+\newlabel{sbox_packing}{{4.2}{10}{S-box packing\relax }{subsection.1.4.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Unpacking bytes into nibbles in a constant cycle count takes us 8 instructions whereas unpacking unpacked nibbles takes us only 1. The net gain is only 2 bytes of code.}}{10}{figure.1.3}}
+\newlabel{unpacking_code}{{3}{10}{Unpacking bytes into nibbles in a constant cycle count takes us 8 instructions whereas unpacking unpacked nibbles takes us only 1. The net gain is only 2 bytes of code}{figure.1.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Permutation layer}{10}{subsection.1.4.3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Branching on SREG flags}{10}{subsection.1.4.4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces A construct that uses the state register to re-do a block twice with code executing before, after and in between, allowing more code to be inlined.}}{11}{figure.1.4}}
+\newlabel{sreg_redo}{{4}{11}{A construct that uses the state register to re-do a block twice with code executing before, after and in between, allowing more code to be inlined}{figure.1.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Keying and key scheduling}{11}{subsection.1.4.5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Reducing code size for specific applications}{11}{subsection.1.4.6}}
 \citation{eisenbarth2012compact}
 \citation{avr_crypto_lib}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces A construct that uses the state register to re-do a block twice with code executing before, after and in between, allowing more code to be inlined.}}{13}{figure.4}}
-\newlabel{sreg_redo}{{4}{13}{A construct that uses the state register to re-do a block twice with code executing before, after and in between, allowing more code to be inlined}{figure.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Keying and key scheduling}{13}{subsection.4.5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Reducing code size for specific applications}{13}{subsection.4.6}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion}{13}{section.5}}
 \bibdata{PRESENT_paper}
 \bibcite{abed2012biclique}{1}
 \bibcite{anderson1998serpent}{2}
@@ -88,16 +84,19 @@
 \bibcite{bogdanov2007present}{4}
 \bibcite{bogdanov2008hash}{5}
 \bibcite{collard2009statistical}{6}
-\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Speed and size comparisons to existing implementations of PRESENT for the AVR architecture.}}{14}{table.7}}
-\newlabel{numbers}{{7}{14}{Speed and size comparisons to existing implementations of PRESENT for the AVR architecture}{table.7}{}}
 \bibcite{eisenbarth2012compact}{7}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion}{12}{section.1.5}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Speed and size comparisons to existing implementations of PRESENT for the AVR architecture.}}{12}{table.1.7}}
+\newlabel{numbers}{{7}{12}{Speed and size comparisons to existing implementations of PRESENT for the AVR architecture}{table.1.7}{}}
 \bibcite{gong2009towards}{8}
-\bibcite{hirose2005provably}{9}
-\bibcite{hirose2006some}{10}
-\bibcite{hutternacl}{11}
-\bibcite{present_iso}{12}
-\bibcite{leander2010small}{13}
-\bibcite{nakahara2009linear}{14}
-\bibcite{avr_crypto_lib}{15}
-\bibcite{gong_code}{16}
+\bibcite{gong2012klein}{9}
+\bibcite{guo2011led}{10}
+\bibcite{hirose2005provably}{11}
+\bibcite{hirose2006some}{12}
+\bibcite{hutternacl}{13}
+\bibcite{present_iso}{14}
+\bibcite{leander2010small}{15}
+\bibcite{nakahara2009linear}{16}
+\bibcite{avr_crypto_lib}{17}
+\bibcite{gong_code}{18}
 \bibstyle{plain}

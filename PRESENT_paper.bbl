@@ -50,6 +50,17 @@ Zheng Gong, Pieter Hartel, Svetla Nikova, and Bo~Zhu.
 \newblock Towards secure and practical macs for body sensor networks.
 \newblock {\em Progress in Cryptology-INDOCRYPT 2009}, pages 182--198, 2009.
 
+\bibitem{gong2012klein}
+Zheng Gong, Svetla Nikova, and Yee~Wei Law.
+\newblock Klein: a new family of lightweight block ciphers.
+\newblock In {\em RFID. Security and Privacy}, pages 1--18. Springer, 2012.
+
+\bibitem{guo2011led}
+Jian Guo, Thomas Peyrin, Axel Poschmann, and Matt Robshaw.
+\newblock The led block cipher.
+\newblock In {\em Cryptographic Hardware and Embedded Systems--CHES 2011},
+  pages 326--341. Springer, 2011.
+
 \bibitem{hirose2005provably}
 Shoichi Hirose.
 \newblock Provably secure double-block-length hash functions in a black-box
@@ -92,8 +103,8 @@ The~GNU project.
 Bo~Zhu Zheng~Gong.
 \newblock Software implementation of block cipher present for 8-bit platforms.
 \newblock
-  \url{http://cis.sjtu.edu.cn/index.php/Software\_Implementation\_of\_Block\_Cipher\_PRESENT\_for\_8-Bit\_Platforms},
-  2013.
+  \url{http://cis.sjtu.edu.cn/index.php/Software\_Implementation\_of\_Block\_C%
+ipher\_PRESENT\_for\_8-Bit\_Platforms}, 2013.
 \newblock [Online; accessed 19-February-2013].
 
 \end{thebibliography}

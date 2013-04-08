@@ -1,10 +1,6 @@
-<<<<<<< HEAD
-%\title{Speed and size-optimized implementations of the PRESENT cipher for AVR machines}
-\title{\textbf{PRESENT Cipher for tinyAVR Architectures}}
-
-
-
-\documentclass[11pt]{article}
+%\title{\textbf{PRESENT Cipher for tinyAVR Architectures}}
+%\documentclass[11pt]{article} % change this around if you don't have lncs style installed
+\documentclass{llncs}
 \usepackage{listings}
 \usepackage{color}
 \usepackage{tabularx}
@@ -12,16 +8,8 @@
 \usepackage{graphicx}
 \usepackage{sidecap}
 \usepackage{epstopdf}
-=======
-%\documentclass{article} % change this around if you don't have lncs style installed
-\documentclass{llncs}
 \usepackage{listings}
 \usepackage{color}
-%\usepackage{tabularx}
-\usepackage{hyperref}
-\usepackage{graphicx}
-\usepackage{sidecap}
->>>>>>> f67e08cb265fd50856f450be451ab3e8e3a15c3d
 
 \lstset{basicstyle=\scriptsize\sffamily}
 %\lstset{language=Assembler}[avr8avra] % not standard
@@ -32,7 +20,8 @@
 \lstset{style=customasm}
 
 \begin{document}
-<<<<<<< HEAD
+\title{Speed and size-optimized implementations of the PRESENT cipher for tiny AVR devices}
+\institute{}
 \author{}
 \date{}
 \maketitle
@@ -41,8 +30,8 @@
 \textbf{This paper presents high-speed and low-size assembly implementations of the 80-bit version of the PRESENT cipher for the AVRtiny family of microcontrollers. We report new speed and size records for our implementation, with the speed-optimized version achieving a full encryption in 8721 clock cycles and the size-optimized version compressing the cipher down to 424 bytes. Along with these two implementation extrema, we offer insight into techniques and representations that utilize the time-memory tradeoff and provide intermediate solutions.\\Keywords: PRESENT, AVR tiny, software implementation.}
 \end{abstract}
 \section{Introduction}
-Modern computer science is constantly witnessing the extensive and large scale deployment of tiny computing devices. Information processing and wireless communication is being thoroughly integrated into everyday objects and activities, developing a large distributed mobile infrastructure and ushering into the era of ubiquitous computing. RFID tags attached on products, cardiac pacemakers, fire-detecting sensor nodes need to operate securely under particularly restricted conditions, namely low battery life, small processing power and bandwidth-demanding ad-hoc network protocols. To achieve sustainable security in this new landscape, researchers have developed new cryptographic primitives and techniques, namely lightweight cryptographic ciphers, such as PRESENT~\cite{bogdanov2007present}, Klein~\cite{klein}, LED~\cite{led} and others.\\
-The majority of these ciphers was designed with hardware performance in mind, thus most software implementations are still not efficient. For instance, the AVR-Crypto-Lib~\cite{cryptolib} uses C language implementation resulting in 100k clock cycles for a single encryption with PRESENT. AVR microcontrollers are encountered very often regarding the Internet of Things and ubiquitous computing, thus they compose of an interesting platform to enable and optimize lightweight ciphers. Our contribution consists of a speed-optimized (achieving  a full encryption in 8721 clock cycles) and a size-optimized (compressing the cipher down to 424 bytes)  implementation of the PRESENT cipher, with the aid of efficient S-Box representations, merged substitution-permutation layers and interleaving of instructions. We aim to provide a range of possible solutions for usage within the AVRtiny architecture.
+Modern computer science is constantly witnessing the extensive and large scale deployment of tiny computing devices. Information processing and wireless communication is being thoroughly integrated into everyday objects and activities, developing a large distributed mobile infrastructure and ushering into the era of ubiquitous computing. RFID tags attached on products, cardiac pacemakers, fire-detecting sensor nodes need to operate securely under particularly restricted conditions, namely low battery life, small processing power and bandwidth-demanding ad-hoc network protocols. To achieve sustainable security in this new landscape, researchers have developed new cryptographic primitives and techniques, namely lightweight cryptographic ciphers, such as PRESENT~\cite{bogdanov2007present}, Klein~\cite{gong2012klein}, LED~\cite{guo2011led} and others.\\
+The majority of these ciphers was designed with hardware performance in mind, thus most software implementations are still not efficient. For instance, the AVR-Crypto-Lib~\cite{avr_crypto_lib} uses C language implementation resulting in 100k clock cycles for a single encryption with PRESENT. AVR microcontrollers are encountered very often regarding the Internet of Things and ubiquitous computing, thus they compose of an interesting platform to enable and optimize lightweight ciphers. Our contribution consists of a speed-optimized (achieving  a full encryption in 8721 clock cycles) and a size-optimized (compressing the cipher down to 424 bytes)  implementation of the PRESENT cipher, with the aid of efficient S-Box representations, merged substitution-permutation layers and interleaving of instructions. We aim to provide a range of possible solutions for usage within the AVRtiny architecture.
 
 \textbf{PRESENT cipher}. PRESENT~\cite{bogdanov2007present} is an ultra-lightweight, 64-bit block symmetric cipher, using 80-bit or 128-bit keys based on a substitution/permutation network and it is named in reference to Serpent~\cite{anderson1998serpent} due to its similar constructs.
 As of 2012, PRESENT (among with other ciphers) was adopted by ISO as a standard for a lightweight block cipher (ISO/IEC 29192-2:2012~\cite{present_iso}). The full algorithm has so far been resistant to attempts at cryptanalysis, although the most successful attack has shown that up to 15 rounds can be feasibly broken with $2^{35.6}$ plaintext-ciphertext pairs in $2^{20}$ operations~\cite{abed2012biclique,collard2009statistical,nakahara2009linear}.
@@ -51,44 +40,12 @@ PRESENT uses exclusive-or as round key operation, a 4-bit substitution layer, a 
 Key scheduling is a combination of bit rotation, S-Box application and exclusive-or with the round counter.
 %We chose PRESENT as a cipher to work on within a project to write and optimize AVR crypto code %because we deemed it extremely well-suited for a simple microcontroller, and felt it was within our %grasp to implement and optimize correctly within the allotted time.
 Constructs found in PRESENT are also encountered in SPONGENT~\cite{bogdanov2011spongent}, in hash function constructs based on block ciphers proposed by Hirose \cite{bogdanov2008hash,hirose2005provably,hirose2006some} (H-PRESENT) and in the derivative SMALLPRESENT \cite{leander2010small}, so the optimizations presented here can also be of interest with respect to the implementations of these ciphers. In our approach, we have implemented PRESENT for the recommended 80-bit key size in AVR assembly in two versions, optimized for maximal speed and minimal size.\\
-=======
-
-\title{Speed and size-optimized implementations of the PRESENT cipher for AVR machines}
-%\title{\textbf{PRESENT Cipher for tinyAVR Architectures}}
-\author{
-Kostas Papagiannopoulos \\
-Aram Verstegen
-}
-\institute{Radboud Universiteit Nijmegen}
-\date{\today}
-
-\maketitle
-
-\abstract{
-We present our progress in experimenting with the PRESENT block cipher to optimize it for the AVR architecture (specifically the ATtiny48 device) in both the direction of maximal speed and minimal area.}
-
-\section{PRESENT}
-PRESENT \cite{bogdanov2007present} is an ultra-lightweight 64-bit block cipher using 80-bit or 128-bit keys based on a substitution/permutation network, and it's named in reference to Serpent \cite{anderson1998serpent} for its similar constructs.
-
-PRESENT was adopted by ISO as a standard for a lightweight block cipher. \cite{present_iso}
-The full algorithm has so far been resistant to attempts at cryptanalysis although the most successful attack has shown that up to 15 rounds can be feasibly broken with $2^{35.6}$ plaintext-ciphertext pairs in $2^{20}$ operations. \cite{collard2009statistical,abed2012biclique,nakahara2009linear}
-
-PRESENT uses exclusive-or as a round key, a 4-bit substitution layer and a 4-bit period bit position permutation network in 31 rounds, and a final round key.
-Key scheduling is a combination of bit rotation, S-box application and exclusive-or with the round counter.
-We chose PRESENT as a cipher to work on within a project to write and optimize AVR crypto code because we deemed it extremely well-suited for a simple microcontroller, and felt it was within our grasp to implement and optimize correctly within the allotted time.
-
-Constructs found in PRESENT are also used in the SPONGENT \cite{bogdanov2011spongent} hash function, hash function constructs based on block ciphers as proposed by Hirose \cite{hirose2006some,hirose2005provably,bogdanov2008hash} (H-PRESENT) and the derivative SMALLPRESENT \cite{leander2010small}, so the optimizations we present here might also interest implementers of these algorithms functions.
-
-We have implemented PRESENT for the recommended 80-bit key size in AVR assembly in two versions, optimized for maximal speed and minimal size.
->>>>>>> f67e08cb265fd50856f450be451ab3e8e3a15c3d
 
 %The coursework asked us to draft optimized implementations in the direction of speed and code size, and these constraints also drove us to .
 %by providing one faster implementation, and one smaller implementation to complement their version which strikes a balance between the two.
 %We were already underway implementing the algorithm in a high-level language to understand it better when we learned of the work done by Leuven University's project group to implement PRESENT and other light-weight ciphers for AVR machines \cite{eisenbarth2012compact}.
 %Although we felt it would be bad sportsmanship to peek at the code before we had some AVR code up and running, by the time we needed to implement the permutation layer our curiosity was hard to temper.
 %Meanwhile we had also found 
-
-<<<<<<< HEAD
 
 \textbf{PRESENT algorithm.}This key register is supplied with the 80-bit cipher key and in every encryption round the first 64 bits of the 80-bit key register form the round key.
 To encrypt a single 64-bit block, during each encryption round, PRESENT applies a XOR with the current round key followed by a substitution and a permutation layer.
@@ -106,23 +63,6 @@ There is a total of 31 rounds in 80-bit PRESENT and finally the round key is app
 \end{figure}
 
 \textbf{Paper organization.} The organization of the paper follows. Section 2 provides an introduction to the AVR architecture, including the capabilities and limitations of AVRtiny microcontrollers. Section 3 focuses on high-speed implementation of the PRESENT cipher, regarding efficient S-Box representations and lookup tables. Section 4 describes various techniques that produce a very compact version of the cipher. Section 5 provides the final benchmarking results and conclusions.
-=======
-\subsection{Algorithm}
-
-\begin{figure}
-	\label{present_schematic}
-	\caption{Schematic of the PRESENT cipher}
-	\centering \includegraphics[width=0.4\textwidth]{present.eps}
-\end{figure}
-
-The first 64 bits of the 80-bit key register form the round key.
-This key register is supplied with the 80-bit cipher key.
-To encrypt one 64-bit block, each encryption round PRESENT applies an XOR with the current round key followed by substitution and permutation layer.
-The substitution layer applies nibble-wise (4-bit) S-boxes to the state, the permutation layer re-arranges the bits in the state following a 4-bit period.
-Key scheduling is done by rotating the key register 61 bit positions to the left, applying the S-box to the top nibble of the key register and XORing bits 15 through 19 with the round counter.
-There are a total of 31 of these rounds in 80-bit PRESENT, and finally the round key is applied one last time.
-(See Figure~\ref{present_schematic}.)
->>>>>>> f67e08cb265fd50856f450be451ab3e8e3a15c3d
 
 \section{The 8-bit family of tinyAVR Microcontrollers}
 Atmel offers a wide range of 8-bit microcontrollers, including high performance devices (ATxmega), mid-range devices (ATmega) and low-end devices with limited memory, storage and processing power (ATtiny). Common applications of AVR microcontrollers include smart cards, motor control systems, medical applications et cetera. 
