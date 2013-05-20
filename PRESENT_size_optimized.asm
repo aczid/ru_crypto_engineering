@@ -14,11 +14,11 @@
 ; part of the Kerckhoffs Institute master's program
 
 ; SPECIFICATIONS
-; Size optimized version 1 - February 2013
-; Code size (total):           408 bytes + 16 bytes for both packed s-boxes
+; Size optimized version 2 - May 2013
+; Code size (total):           402 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption):  93887
-; Cycle count (decryption): 105605
+; Cycle count (encryption):  95320
+; Cycle count (decryption): 107286
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -61,7 +61,9 @@
 ; Register we can use for immediate values
 .def ITEMP = r21
 
-; registers r22..r25 are unused
+.def KEY_INDEX = r22
+
+; registers r23..r25 are unused
 ; registers r26..r31 are X, Y and Z
 
 ; the Z register is used to point to these s-box tables
@@ -202,52 +204,24 @@ schedule_key:
 	inc ROUND_COUNTER
 	ret
 
-; load 4 consecutive SRAM bytes into state
-consecutive_input:
-	ld STATE0, X+
-	ld STATE1, X+
-	ld STATE2, X+
-	ld STATE3, X+
-	ret
-
-; save 4 consecutive output bytes to SRAM
-consecutive_output:
-	st X+, OUTPUT0
-	st X+, OUTPUT1
-	st X+, OUTPUT2
-	st X+, OUTPUT3
-	ret
-
-; move current state to output registers
-state_to_output:
-	mov OUTPUT0, STATE0
-	mov OUTPUT1, STATE1
-	mov OUTPUT2, STATE2
-	mov OUTPUT3, STATE3
-	ret
-
-; load input and apply current round key to 4 bytes in SRAM
-roundkey_ram:
-	rcall consecutive_input
-	subi XL, 4
-	; state ^= roundkey (top 4 bytes of key register)
-	eor STATE0, KEY0
-	eor STATE1, KEY1
-	eor STATE2, KEY2
-	eor STATE3, KEY3
-	rcall state_to_output
-	rcall consecutive_output
-	ret
-
-; apply last computed round key to the full state
+; apply last computed round key to the full 8-byte state
 addRoundKey:
-	; apply round key to high/left 4 bytes
-	rcall roundkey_ram
-	; rotate key register to add round key to low/right 4 bytes
-	ldi ITEMP, 32
+	clr KEY_INDEX
+addRoundKey_byte:
+	ld STATE0, X
+	eor STATE0, KEY0
+	st X+, STATE0
+	inc KEY_INDEX
+	; rotate key register to next byte
+	ldi ITEMP, 8
 	rcall rotate_left_i
-	; apply round key to low/right 4 bytes
-	rcall roundkey_ram
+	; loop
+	cpi KEY_INDEX, 8
+	brne addRoundKey_byte
+
+	; rotate key register to align with the start of the block
+	ldi ITEMP, 16
+	rcall rotate_left_i
 	ret
 
 ; -------------------------------------
@@ -256,6 +230,8 @@ addRoundKey:
 
 ; prepare for encryption or decryption
 setup:
+	; clear zero register
+	clr ZERO
 	; initialize round counter
 	ldi ROUND_COUNTER, 1
 	; initialize s-box
@@ -280,6 +256,14 @@ setup:
 ; -------------------------------------
 ;         encryption procedures
 ; -------------------------------------
+
+; load 4 consecutive SRAM bytes into state
+consecutive_input:
+	ld STATE0, X+
+	ld STATE1, X+
+	ld STATE2, X+
+	ld STATE3, X+
+	ret
 
 ; saves output bytes to SRAM from back to front
 ; leaves 1 byte untouched in between each saved byte
@@ -335,10 +319,6 @@ encrypt:
 		rcall interleaved_output
 		dec XL
 
-		; rotate key register to align with high/left part
-		ldi ITEMP, 48
-		rcall rotate_left_i
-
 		; schedule next key
 		rcall schedule_key
 
@@ -362,6 +342,22 @@ interleaved_input:
 	ld STATE2, -X
 	dec XL
 	ld STATE3, -X
+	ret
+
+; save 4 consecutive output bytes to SRAM
+consecutive_output:
+	st X+, OUTPUT0
+	st X+, OUTPUT1
+	st X+, OUTPUT2
+	st X+, OUTPUT3
+	ret
+
+; move current state to output registers
+state_to_output:
+	mov OUTPUT0, STATE0
+	mov OUTPUT1, STATE1
+	mov OUTPUT2, STATE2
+	mov OUTPUT3, STATE3
 	ret
 
 ; invert the s-box and p-layer from state to output registers
@@ -422,15 +418,15 @@ decrypt:
 		inv_schedule_key:
 			dec ROUND_COUNTER
 			; 2: inv s-box high nibble of key
-			mov ITEMP, KEY6
+			mov ITEMP, KEY0
 			rcall sBoxHighNibble
-			mov KEY6, ITEMP
-			; 1: rotate key register left by 48+19=67 positions
-			ldi ITEMP, 1
+			mov KEY0, ITEMP
+			; 1: rotate key register left by 19 positions
+			ldi ITEMP, 17
 			rcall rotate_left_i
 			; 3: xor key bits with round counter
-			eor KEY3, ROUND_COUNTER
-			ldi ITEMP, 66
+			eor KEY5, ROUND_COUNTER
+			ldi ITEMP, 2
 			rcall rotate_left_i
 
 		cpi ROUND_COUNTER, 1
