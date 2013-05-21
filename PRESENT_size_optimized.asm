@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           402 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           388 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
 ; Cycle count (encryption):  95320
-; Cycle count (decryption): 107286
+; Cycle count (decryption): 105922
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -367,34 +367,25 @@ encrypt:
 ; leaves 1 byte unread in between each loaded byte
 interleaved_input:
 	dec XL
-	ld STATE0, -X
+	ld OUTPUT0, -X
 	dec XL
-	ld STATE1, -X
+	ld OUTPUT1, -X
 	dec XL
-	ld STATE2, -X
+	ld OUTPUT2, -X
 	dec XL
-	ld STATE3, -X
+	ld OUTPUT3, -X
 	ret
 
 ; save 4 consecutive output bytes to SRAM
 consecutive_output:
-	st X+, OUTPUT0
-	st X+, OUTPUT1
-	st X+, OUTPUT2
-	st X+, OUTPUT3
-	ret
-
-; move current state to output registers
-state_to_output:
-	mov OUTPUT0, STATE0
-	mov OUTPUT1, STATE1
-	mov OUTPUT2, STATE2
-	mov OUTPUT3, STATE3
+	st X+, STATE0
+	st X+, STATE1
+	st X+, STATE2
+	st X+, STATE3
 	ret
 
 ; invert the s-box and p-layer from state to output registers
 invSPnet:
-	rcall state_to_output
 	rcall ipLayerByte
 	mov STATE3, ITEMP
 	rcall ipLayerByte
@@ -404,7 +395,6 @@ invSPnet:
 	rcall ipLayerByte
 	mov STATE0, ITEMP
 	rcall sBoxLayer
-	rcall state_to_output
 	ret
 
 ; decryption function: point X at 8 ciphertext input bytes followed by 10 key input bytes
