@@ -22,7 +22,7 @@
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
-; After having called encryption or decryption X will point to the end of the input
+; After having called encrypt or decrypt X will point to the end of the input
 
 ; Number of rounds
 .equ ROUNDS = 32 ; PRESENT round counter is initialized to 1. This value means there are 31 rounds (+ 1 final round key)
