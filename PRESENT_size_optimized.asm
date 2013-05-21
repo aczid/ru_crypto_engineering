@@ -139,29 +139,29 @@ continue_pLayerByte:
 ; reads from and writes to ITEMP
 ; uses H (half-carry) flag to re-do this block twice
 sBoxHighNibble:
-	clh                ; clear H flag
-	swap ITEMP         ; swap nibbles
-	rjmp sBoxLowNibble ; do the low nibble
+	clh                   ; clear H flag
+	swap ITEMP            ; swap nibbles
+	rjmp sBoxLowNibble    ; do the low nibble
 sBoxByte:
-	seh                ; set H flag
+	seh                   ; set H flag
 	; fall through
 sBoxLowNibble:
 	; input (low nibble)
-	mov ZL, ITEMP      ; load s-box input
-	cbr ZL, 0xf0       ; clear high nibble in s-box input
+	mov ZL, ITEMP         ; load s-box input
+	cbr ZL, 0xf0          ; clear high nibble in s-box input
 
 	; output (low nibble)
 #ifdef PACKED_SBOXES
-	asr ZL             ; halve input, take carry
+	asr ZL                ; halve input, take carry
 #endif
-	lpm SBOX_OUTPUT, Z ; get s-box output
+	lpm SBOX_OUTPUT, Z    ; get s-box output
 
 #ifdef PACKED_SBOXES
 	brcs odd_unpack
 even_unpack:
 	swap SBOX_OUTPUT
 	rjmp unpack
-odd_unpack:                ; avoid timing attacks
+odd_unpack:               ; avoid timing attacks
 	nop
 	nop
 unpack:
