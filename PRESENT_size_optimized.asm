@@ -195,7 +195,7 @@ sBoxLayer:
 	mov STATE3, ITEMP
 	ret
 
-; rotate the 80-byte key register left by the number in ITEMP
+; rotate the 80-bit key register left by the number in ITEMP
 rotate_left_i:
 	clr ROTATION_COUNTER
 continue_rotate_left_i:
