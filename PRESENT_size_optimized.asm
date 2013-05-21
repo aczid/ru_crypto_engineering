@@ -161,7 +161,7 @@ sBoxLowNibble:
 even_unpack:
 	swap SBOX_OUTPUT
 	rjmp unpack
-odd_unpack:               ; avoid timing attacks
+odd_unpack:                   ; avoid timing attacks
 	nop
 	nop
 unpack:
