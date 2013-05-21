@@ -244,7 +244,7 @@ addRoundKey_byte:
 	; rotate key register to next byte
 	ldi ITEMP, 8
 	rcall rotate_left_i
-	; loop
+	; loop over 8 bytes
 	cpi KEY_INDEX, 8
 	brne addRoundKey_byte
 
