@@ -112,18 +112,18 @@ INVSBOX:.db 0x5, 0xe,0xf, 0x8,0xc, 0x1,0x2, 0xd,0xb, 0x4,0x6, 0x3,0x0, 0x7,0x9, 
 
 ; uses H (half-carry) flag to re-do this block twice
 setup_continue_pLayerByte:
-	clh ; clear H flag
-	rjmp continue_pLayerByte ; do the second part
+	clh                            ; clear H flag
+	rjmp continue_pLayerByte       ; do the second part
 ipLayerByte:
-	seh ; set H flag
-	rjmp continue_pLayerByte
+	seh                            ; set H flag
+	rjmp continue_pLayerByte       ; do the second part
 pLayerByte:
-	seh ; set H flag
-	ror ITEMP   ; move bit into carry
+	seh                            ; set H flag
+	ror ITEMP                      ; move bit into carry
 	; fall through
 continue_pLayerByte:
-	ror OUTPUT0 ; move bit into output register
-	ror ITEMP   ; etc
+	ror OUTPUT0                    ; move bit into output register
+	ror ITEMP                      ; etc
 	ror OUTPUT1
 	ror ITEMP
 	ror OUTPUT2
@@ -139,16 +139,16 @@ continue_pLayerByte:
 ; reads from and writes to ITEMP
 ; uses H (half-carry) flag to re-do this block twice
 sBoxHighNibble:
-	clh
-	swap ITEMP      ; swap nibbles
-	rjmp sBoxLowNibble
+	clh                ; clear H flag
+	swap ITEMP         ; swap nibbles
+	rjmp sBoxLowNibble ; do the low nibble
 sBoxByte:
-	seh
+	seh                ; set H flag
 	; fall through
 sBoxLowNibble:
 	; input (low nibble)
-	mov ZL, ITEMP   ; load s-box input
-	cbr ZL, 0xf0    ; clear high nibble in s-box input
+	mov ZL, ITEMP      ; load s-box input
+	cbr ZL, 0xf0       ; clear high nibble in s-box input
 
 	; output (low nibble)
 #ifdef PACKED_SBOXES
@@ -161,7 +161,7 @@ sBoxLowNibble:
 even_unpack:
 	swap SBOX_OUTPUT
 	rjmp unpack
-odd_unpack:            ; avoid timing attacks
+odd_unpack:                ; avoid timing attacks
 	nop
 	nop
 unpack:
@@ -171,7 +171,7 @@ unpack:
 	cbr ITEMP, 0xf        ; clear low nibble in s-box input
 	or ITEMP, SBOX_OUTPUT ; save low nibble to output register
 	brhs sBoxHighNibble   ; do high nibble
-	swap ITEMP            ; swap nibbles
+	swap ITEMP            ; swap nibbles back
 	ret
 
 ; apply loaded s-box to every state byte
@@ -294,7 +294,7 @@ consecutive_input:
 	ld STATE3, X+
 	ret
 
-; saves output bytes to SRAM from back to front
+; save output bytes to SRAM from back to front
 ; leaves 1 byte untouched in between each saved byte
 interleaved_output:
 	dec XL
@@ -358,12 +358,11 @@ encrypt:
 #endif
 
 #ifdef DECRYPTION
-
 ; -------------------------------------
 ;         decryption procedures
 ; -------------------------------------
 
-; loads state bytes from SRAM from back to front
+; load state bytes from SRAM from back to front
 ; leaves 1 byte unread in between each loaded byte
 interleaved_input:
 	dec XL
@@ -414,7 +413,7 @@ decrypt:
 	; schedule key for last round
 	schedule_last_key:
 		rcall schedule_key
-		cpi ROUND_COUNTER, 32
+		cpi ROUND_COUNTER, ROUNDS
 		brne schedule_last_key
 
 	; initialize inv s-box
@@ -456,7 +455,7 @@ decrypt:
 			; 1: rotate key register left by 19 positions
 			ldi ITEMP, 17
 			rcall rotate_left_i
-			; 3: xor key bits with round counter
+			; 3: xor key bits with round counter (as the 2 bytes align while rotating the key register)
 			eor KEY5, ROUND_COUNTER
 			ldi ITEMP, 2
 			rcall rotate_left_i
