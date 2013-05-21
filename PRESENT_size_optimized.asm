@@ -157,13 +157,14 @@ sBoxLowNibble:
 	lpm SBOX_OUTPUT, Z    ; get s-box output
 
 #ifdef PACKED_SBOXES
-	brcs odd_unpack
+	brcs odd_unpack       ; 2 cycles if true, 1 if false
 even_unpack:
-	swap SBOX_OUTPUT
-	rjmp unpack
+	swap SBOX_OUTPUT      ; 1 cycle
+	rjmp unpack           ; 2 cycles
 odd_unpack:                   ; avoid timing attacks
+	nop                   ; 1 cycle
 	nop
-	nop
+; 4 cycles total
 unpack:
 	cbr SBOX_OUTPUT, 0xf0
 #endif
