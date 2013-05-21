@@ -31,7 +31,7 @@
 #define ENCRYPTION
 #define DECRYPTION
 
-#if defined(ENCRYPTION) && defined(DECRYPTION)
+#if defined(DECRYPTION)
 #define PACKED_SBOXES ; Use packed s-boxes (which need to be unpacked) - this saves 2 bytes
 #endif
 
