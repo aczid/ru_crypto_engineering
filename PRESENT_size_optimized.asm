@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           388 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           378 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption):  95320
-; Cycle count (decryption): 105922
+; Cycle count (encryption):  94845
+; Cycle count (decryption): 105447
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -250,8 +250,7 @@ addRoundKey_byte:
 
 	; rotate key register to align with the start of the block
 	ldi ITEMP, 16
-	rcall rotate_left_i
-	ret
+	rjmp rotate_left_i
 
 ; -------------------------------------
 ;           utility procedures
@@ -318,8 +317,7 @@ SPnet:
 	mov ITEMP, STATE1
 	rcall pLayerByte
 	mov ITEMP, STATE0
-	rcall pLayerByte
-	ret
+	rjmp pLayerByte
 
 ; encryption function: point X at 8 plaintext input bytes followed by 10 key input bytes
 encrypt:
@@ -354,8 +352,7 @@ encrypt:
 
 		cpi ROUND_COUNTER, ROUNDS
 		brne encrypt_update
-	rcall addRoundKey
-	ret
+	rjmp addRoundKey
 #endif
 
 #ifdef DECRYPTION
@@ -394,8 +391,7 @@ invSPnet:
 	mov STATE1, ITEMP
 	rcall ipLayerByte
 	mov STATE0, ITEMP
-	rcall sBoxLayer
-	ret
+	rjmp sBoxLayer
 
 ; decryption function: point X at 8 ciphertext input bytes followed by 10 key input bytes
 decrypt:
@@ -453,6 +449,5 @@ decrypt:
 
 		cpi ROUND_COUNTER, 1
 		brne decrypt_update
-	rcall addRoundKey
-	ret
+	rjmp addRoundKey
 #endif
