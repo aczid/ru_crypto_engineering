@@ -435,7 +435,7 @@ decrypt:
 		rcall consecutive_output
 		subi XL, 8
 
-		; schedule next key
+		; inverse key scheduling
 		inv_schedule_key:
 			dec ROUND_COUNTER
 			; 2: inv s-box high nibble of key
