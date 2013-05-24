@@ -27,7 +27,7 @@
 ; Number of rounds
 .equ ROUNDS = 32 ; PRESENT round counter is initialized to 1. This value means there are 31 rounds (+ 1 final round key)
 
-; Uncomment either to omit
+; Comment out either to omit
 #define ENCRYPTION
 #define DECRYPTION
 
@@ -69,11 +69,11 @@
 ; The round counter
 .def ROUND_COUNTER = r20
 
-; Register we can use for immediate values
-.def ITEMP = r21
-
 ; Offset to the current key byte being applied to the state in SRAM
-.def KEY_INDEX = r22
+.def KEY_INDEX = r21
+
+; Register we can use for immediate values
+.def ITEMP = r22
 
 ; registers r23..r25 are unused
 ; registers r26..r31 are X, Y and Z
@@ -327,19 +327,19 @@ encrypt:
 		rcall addRoundKey
 		subi XL, 8
 
-		; load high/left 4 bytes
+		; get invSPnet input for high/left 4 bytes
 		rcall consecutive_input
 
 		; encrypt high/left 4 bytes using SP-network
 		rcall SPnet
 
-		; load low/right 4 bytes
+		; get next SPnet input for low/right 4 bytes
 		rcall consecutive_input
 
 		; save output to SRAM
 		rcall interleaved_output
 
-		; encrypt using SP-network
+		; encrypt low/right 4 bytes using SP-network
 		rcall SPnet
 
 		; save output to SRAM
@@ -411,7 +411,7 @@ decrypt:
 		; apply round key
 		rcall addRoundKey
 
-		; get invSPnet input for high/left bytes
+		; get invSPnet input for high/left 4 bytes
 		rcall interleaved_input
 
 		; decrypt high/left 4 bytes using SP-network
