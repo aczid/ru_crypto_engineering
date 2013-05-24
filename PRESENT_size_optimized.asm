@@ -25,14 +25,16 @@
 ; After having called encrypt or decrypt X will point to the end of the input
 
 ; Number of rounds
-.equ ROUNDS = 32 ; PRESENT round counter is initialized to 1. This value means there are 31 rounds (+ 1 final round key)
+.equ ROUNDS = 32 ; PRESENT round counter is initialized to 1
+		 ; This value means there are 31 rounds (+ 1 final round key)
 
 ; Comment out either to omit
 #define ENCRYPTION
 #define DECRYPTION
 
 #ifdef DECRYPTION
-#define PACKED_SBOXES ; Use packed s-boxes (which need to be unpacked) - this saves 2 bytes
+#define PACKED_SBOXES ; Use packed s-boxes (which need to be unpacked)
+                      ; This saves 2 bytes
 #endif
 
 ; Key registers (the first 8 of these hold the current round key)
@@ -53,7 +55,7 @@
 .def STATE2 = r12
 .def STATE3 = r13
 
-; Output registers (these hold the last state to be saved to SRAM while the next state is read)
+; Output registers (these hold p-layer output to be saved to SRAM)
 .def OUTPUT0 = r14
 .def OUTPUT1 = r15
 .def OUTPUT2 = r16
@@ -69,7 +71,7 @@
 ; The round counter
 .def ROUND_COUNTER = r20
 
-; Offset to the current key byte being applied to the state in SRAM
+; Index of the current round key byte being applied to the state in SRAM
 .def KEY_INDEX = r21
 
 ; Register we can use for immediate values
@@ -221,7 +223,8 @@ schedule_key:
 	; 1: rotate key register left by 61 positions
 	ldi ITEMP, 6
 	rcall rotate_left_i
-	; 3: xor key bits with round counter (as the 2 bytes align while rotating the key register)
+	; 3: xor key bits with round counter
+	; (as the 2 bytes align while rotating the key register)
 	eor KEY4, ROUND_COUNTER
 	ldi ITEMP, 55
 	rcall rotate_left_i
@@ -277,7 +280,7 @@ setup:
 	ld KEY7, X+
 	ld KEY8, X+
 	ld KEY9, X+
-	; point at high/left 4 bytes
+	; point at the start of the input
 	subi XL, 18
 	ret
 
@@ -286,7 +289,7 @@ setup:
 ;         encryption procedures
 ; -------------------------------------
 
-; load 4 consecutive SRAM bytes into state
+; load 4 consecutive input bytes from SRAM into state
 consecutive_input:
 	ld STATE0, X+
 	ld STATE1, X+
@@ -294,7 +297,7 @@ consecutive_input:
 	ld STATE3, X+
 	ret
 
-; save output bytes to SRAM from back to front
+; save 4 interleaved output bytes to SRAM from back to front
 ; leaves 1 byte untouched in between each saved byte
 interleaved_output:
 	dec XL
@@ -327,22 +330,22 @@ encrypt:
 		rcall addRoundKey
 		subi XL, 8
 
-		; get SPnet input for high/left 4 bytes
+		; get high/left 4 bytes as SP-network input 
 		rcall consecutive_input
 
 		; encrypt high/left 4 bytes using SP-network
 		rcall SPnet
 
-		; get next SPnet input for low/right 4 bytes
+		; get low/right 4 bytes as next SP-network input
 		rcall consecutive_input
 
-		; save output to SRAM
+		; save SP-network output to SRAM
 		rcall interleaved_output
 
 		; encrypt low/right 4 bytes using SP-network
 		rcall SPnet
 
-		; save output to SRAM
+		; save SP-network output to SRAM
 		adiw XL, 9
 		rcall interleaved_output
 		dec XL
@@ -360,7 +363,7 @@ encrypt:
 ;         decryption procedures
 ; -------------------------------------
 
-; load state bytes from SRAM from back to front
+; load 4 interleaved input bytes from SRAM from back to front
 ; leaves 1 byte unread in between each loaded byte
 interleaved_input:
 	dec XL
@@ -381,7 +384,7 @@ consecutive_output:
 	st X+, STATE3
 	ret
 
-; invert the s-box and p-layer from state to output registers
+; invert the s-box and p-layer from output to state registers
 invSPnet:
 	rcall ipLayerByte
 	mov STATE3, ITEMP
@@ -411,24 +414,24 @@ decrypt:
 		; apply round key
 		rcall addRoundKey
 
-		; get invSPnet input for high/left 4 bytes
+		; get inverse SP-net input for high/left 4 bytes
 		rcall interleaved_input
 
 		; decrypt high/left 4 bytes using SP-network
 		rcall invSPnet
 
-		; get next invSPnet input for low/right bytes
+		; get next inverse SP-network input for low/right bytes
 		adiw XL, 9
 		rcall interleaved_input
 		dec XL
 
-		; save output to SRAM
+		; save SP-network output to SRAM
 		rcall consecutive_output
 
 		; decrypt low/right 4 bytes using SP-network
 		rcall invSPnet
 
-		; save output to SRAM
+		; save SP-network output to SRAM
 		rcall consecutive_output
 		subi XL, 8
 
@@ -442,7 +445,8 @@ decrypt:
 			; 1: rotate key register left by 19 positions
 			ldi ITEMP, 17
 			rcall rotate_left_i
-			; 3: xor key bits with round counter (as the 2 bytes align while rotating the key register)
+			; 3: xor key bits with round counter
+			; (as the 2 bytes align while rotating the key register)
 			eor KEY5, ROUND_COUNTER
 			ldi ITEMP, 2
 			rcall rotate_left_i
