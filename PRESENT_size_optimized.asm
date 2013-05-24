@@ -414,7 +414,7 @@ decrypt:
 		; apply round key
 		rcall addRoundKey
 
-		; get inverse SP-net input for high/left 4 bytes
+		; get inverse SP-network input for high/left 4 bytes
 		rcall interleaved_input
 
 		; decrypt high/left 4 bytes using SP-network
