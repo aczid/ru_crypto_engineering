@@ -327,7 +327,7 @@ encrypt:
 		rcall addRoundKey
 		subi XL, 8
 
-		; get invSPnet input for high/left 4 bytes
+		; get SPnet input for high/left 4 bytes
 		rcall consecutive_input
 
 		; encrypt high/left 4 bytes using SP-network
