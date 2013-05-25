@@ -37,6 +37,9 @@
                       ; This saves 2 bytes
 #endif
 
+;#define RELOCATABLE_SBOXES ; This makes s-boxes relocatable in flash
+                            ; otherwise they are mapped at 0x100 and 0x200
+
 ; Key registers (the first 8 of these hold the current round key)
 .def KEY0 = r0
 .def KEY1 = r1
@@ -74,25 +77,36 @@
 ; Index of the current round key byte being applied to the state in SRAM
 .def KEY_INDEX = r21
 
-; Register we can use for immediate values
-.def ITEMP = r22
+; Offset to s-box
+.def SBOX_DISPLACEMENT = r22
 
-; registers r23..r25 are unused
+; Register we can use for immediate values
+.def ITEMP = r23
+
+; registers r24..r25 are unused
 ; registers r26..r31 are X, Y and Z
 
 ; the Z register is used to point to these s-box tables
 #ifdef PACKED_SBOXES
+  #ifndef RELOCATABLE_SBOXES
 .org 256
+  #endif
 SBOX:   .db 0xc5,0x6b,0x90,0xad,0x3e,0xf8,0x47,0x12
   #ifdef DECRYPTION
+    #ifndef RELOCATABLE_SBOXES
 .org 512
+    #endif
 INVSBOX:.db 0x5e,0xf8,0xc1,0x2d,0xb4,0x63,0x07,0x9a
   #endif
 #else
+  #ifndef RELOCATABLE_SBOXES
 .org 256
+  #endif
 SBOX:   .db 0xc,0x5,0x6,0xb,0x9,0x0,0xa,0xd,0x3,0xe,0xf,0x8,0x4,0x7,0x1,0x2
   #ifdef DECRYPTION
+    #ifndef RELOCATABLE_SBOXES
 .org 512
+    #endif
 INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
   #endif
 #endif
@@ -112,15 +126,15 @@ INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
 ; after 4 calls from different input registers we will have collected 4
 ; completed output bytes following this 4-bit period
 
-; uses H (half-carry) flag to re-do this block twice
+; uses T (transfer) flag to re-do this block twice
 setup_continue_pLayerByte:
-	clh                            ; clear H flag
+	clt                            ; clear T flag
 	rjmp continue_pLayerByte       ; do the second part
 ipLayerByte:
-	seh                            ; set H flag
+	set                            ; set T flag
 	rjmp continue_pLayerByte       ; do the second part
 pLayerByte:
-	seh                            ; set H flag
+	set                            ; set T flag
 	ror ITEMP                      ; move bit into carry
 	; fall through
 continue_pLayerByte:
@@ -132,25 +146,28 @@ continue_pLayerByte:
 	ror ITEMP
 	ror OUTPUT3
 	ror ITEMP
-	brhs setup_continue_pLayerByte ; redo this block? (if H flag set)
+	brts setup_continue_pLayerByte ; redo this block? (if T flag set)
 	ret
 
 ; sBoxByte
 ; applying the s-box nibble-wise allows us to reuse the second half of the
 ; procedure as its own procedure when key scheduling
 ; reads from and writes to ITEMP
-; uses H (half-carry) flag to re-do this block twice
+; uses T (transfer) flag to re-do this block twice
 sBoxHighNibble:
-	clh                   ; clear H flag
+	clt                   ; clear T flag
 	swap ITEMP            ; swap nibbles
 	rjmp sBoxLowNibble    ; do the low nibble
 sBoxByte:
-	seh                   ; set H flag
+	set                   ; set T flag
 	; fall through
 sBoxLowNibble:
 	; input (low nibble)
 	mov ZL, ITEMP         ; load s-box input
 	cbr ZL, 0xf0          ; clear high nibble in s-box input
+#ifdef RELOCATABLE_SBOXES
+	add ZL, SBOX_DISPLACEMENT
+#endif
 
 	; output (low nibble)
 #ifdef PACKED_SBOXES
@@ -173,7 +190,7 @@ unpack:
 
 	cbr ITEMP, 0xf        ; clear low nibble in s-box input
 	or ITEMP, SBOX_OUTPUT ; save low nibble to output register
-	brhs sBoxHighNibble   ; do high nibble
+	brts sBoxHighNibble   ; do high nibble (if T flag set)
 	swap ITEMP            ; swap nibbles back
 	ret
 
@@ -267,6 +284,13 @@ setup:
 	ldi ROUND_COUNTER, 1
 	; initialize s-box
 	ldi ZH, high(SBOX<<1)
+  #ifdef RELOCATABLE_SBOXES
+	#ifdef PACKED_SBOXES
+	ldi SBOX_DISPLACEMENT, low(SBOX<<2)
+	#else
+	ldi SBOX_DISPLACEMENT, low(SBOX<<1)
+	#endif
+  #endif
 	; point at the key bytes
 	adiw XL, 8
 	; load key from SRAM
@@ -408,6 +432,13 @@ decrypt:
 
 	; initialize inv s-box
 	ldi ZH, high(INVSBOX<<1)
+  #ifdef RELOCATABLE_SBOXES
+    #ifdef PACKED_SBOXES
+	ldi SBOX_DISPLACEMENT, low(INVSBOX<<2)
+    #else
+	ldi SBOX_DISPLACEMENT, low(INVSBOX<<1)
+	#endif
+  #endif
 
 	; start round
 	decrypt_update:
