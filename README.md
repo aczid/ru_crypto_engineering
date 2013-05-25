@@ -23,7 +23,7 @@ The code for either procedure can be easily omitted by commenting out the **ENCR
 
 The s-box tables can be located at addresses not aligned to 256 bytes when the **RELOCATABLE_SBOXES** define is uncommented, provided the tables do not span a 256-byte address boundary. This allows the encryption and decryption code + packed s-box tables to fit in 400 consecutive bytes of flash.
 
-If you want a tiny bit more performance at the expense of 2 bytes you can uncomment the **PACKED_SBOXES** define to use 16-byte s-box tables and omit the required 14-byte unpacking code.
+If you want a tiny bit more performance at the expense of 2 bytes you can uncomment the **PACKED_SBOXES** define to use 16-byte s-box tables and omit the 14-byte unpacking code.
 
 Authors
 =======
