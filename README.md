@@ -16,14 +16,14 @@ The current version requires 378 code bytes for the encryption and decryption ro
 
 The speed-optimized version of the algorithm can be found at [my co-author's github browsable repository](https://github.com/kostaspap88/PRESENT_speed_implementation/)
 
-SETTINGS
+Settings
 ========
 For specific applications that require only encryption or decryption, the code size can be further reduced.
 The code for either procedure can be easily omitted by commenting out the **ENCRYPTION** or **DECRYPTION** define statement.
 
 The s-box tables can be located at addresses not aligned to 256 bytes when the **RELOCATABLE_SBOXES** define is uncommented, provided the tables do not span a 256-byte address boundary. This allows the encryption and decryption code + packed s-box tables to fit in 400 consecutive bytes of flash.
 
-If you want a tiny bit more performance at the expense of 2 bytes you can uncomment the **PACKED_SBOXES** define to use 16-byte s-box tables and omit the 14-byte unpacking code.
+To get a tiny bit more performance at the expense of 2 bytes the **PACKED_SBOXES** define can be commented out to use 16-byte s-box tables and omit the 14-byte unpacking code.
 
 Authors
 =======
