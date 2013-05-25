@@ -25,8 +25,7 @@
 ; After having called encrypt or decrypt X will point to the end of the input
 
 ; Number of rounds
-.equ ROUNDS = 32 ; PRESENT round counter is initialized to 1
-		 ; This value means there are 31 rounds (+ 1 final round key)
+.equ ROUNDS = 31
 
 ; Comment out either to omit
 #define ENCRYPTION
@@ -237,6 +236,8 @@ continue_rotate_left_i:
 
 ; key scheduling
 schedule_key:
+	; increment round counter
+	inc ROUND_COUNTER
 	; 1: rotate key register left by 61 positions
 	ldi ITEMP, 6
 	rcall rotate_left_i
@@ -249,8 +250,6 @@ schedule_key:
 	mov ITEMP, KEY0
 	rcall sBoxHighNibble
 	mov KEY0, ITEMP
-	; increment round counter
-	inc ROUND_COUNTER
 	ret
 
 ; apply last computed round key to the full 8-byte state in SRAM
@@ -281,7 +280,7 @@ setup:
 	; clear zero register
 	clr ZERO
 	; initialize round counter
-	ldi ROUND_COUNTER, 1
+	clr ROUND_COUNTER
 	; initialize s-box
 	ldi ZH, high(SBOX<<1)
 #ifdef RELOCATABLE_SBOXES
@@ -468,7 +467,6 @@ decrypt:
 
 		; inverse key scheduling
 		inv_schedule_key:
-			dec ROUND_COUNTER
 			; 2: inv s-box high nibble of key
 			mov ITEMP, KEY0
 			rcall sBoxHighNibble
@@ -481,8 +479,9 @@ decrypt:
 			eor KEY5, ROUND_COUNTER
 			ldi ITEMP, 2
 			rcall rotate_left_i
+			dec ROUND_COUNTER
 
-		cpi ROUND_COUNTER, 1
+		cpi ROUND_COUNTER, 0
 		brne decrypt_update
 	rjmp addRoundKey
 #endif
