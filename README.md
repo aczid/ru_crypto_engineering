@@ -14,7 +14,7 @@ The current version requires 378 code bytes for the encryption and decryption ro
 * Cycle count (encryption):  94845
 * Cycle count (decryption): 105447
 
-The speed-optimized version of the algorithm can be found at [my co-author's github browsable repository](https://github.com/kostaspap88/PRESENT_speed_implementation/)
+The speed-optimized version of the algorithm can be found at [my co-author's github browsable repository](https://github.com/kostaspap88/PRESENT_speed_implementation/).
 
 Settings
 ========
