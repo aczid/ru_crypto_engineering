@@ -8,7 +8,7 @@ We implemented the PRESENT cipher in C and AVR assembly based on the original pa
 
 This AVR assembly version was optimized for small code size at the expense of speed.
 The current version requires 378 code bytes for the encryption and decryption routines, and 16 bytes for s-box tables at addresses 0x100 and 0x200.
-The s-box tables can be located at addresses not aligned to 256 bytes when the **RELOCATABLE_SBOXES** define is uncommented, provided the tables do not cross a 256-byte boundary. This allows the encryption and decryption code + packed s-box tables to fit in 400 consecutive bytes of flash.
+The s-box tables can be located at addresses not aligned to 256 bytes when the **RELOCATABLE_SBOXES** define is uncommented, provided the tables do not span a 256-byte boundary. This allows the encryption and decryption code + packed s-box tables to fit in 400 consecutive bytes of flash.
 
 For specific applications that require only encryption or decryption, the code size can be further reduced.
 The code for either procedure can be easily omitted by commenting out the **ENCRYPTION** or **DECRYPTION** define statement.
