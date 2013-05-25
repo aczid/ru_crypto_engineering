@@ -284,13 +284,13 @@ setup:
 	ldi ROUND_COUNTER, 1
 	; initialize s-box
 	ldi ZH, high(SBOX<<1)
-  #ifdef RELOCATABLE_SBOXES
-	#ifdef PACKED_SBOXES
+#ifdef RELOCATABLE_SBOXES
+  #ifdef PACKED_SBOXES
 	ldi SBOX_DISPLACEMENT, low(SBOX<<2)
-	#else
+  #else
 	ldi SBOX_DISPLACEMENT, low(SBOX<<1)
-	#endif
   #endif
+#endif
 	; point at the key bytes
 	adiw XL, 8
 	; load key from SRAM
@@ -432,13 +432,13 @@ decrypt:
 
 	; initialize inv s-box
 	ldi ZH, high(INVSBOX<<1)
-  #ifdef RELOCATABLE_SBOXES
-    #ifdef PACKED_SBOXES
+#ifdef RELOCATABLE_SBOXES
+  #ifdef PACKED_SBOXES
 	ldi SBOX_DISPLACEMENT, low(INVSBOX<<2)
-    #else
+  #else
 	ldi SBOX_DISPLACEMENT, low(INVSBOX<<1)
-	#endif
   #endif
+#endif
 
 	; start round
 	decrypt_update:
