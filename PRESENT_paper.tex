@@ -35,7 +35,7 @@
 \maketitle
 
 \begin{abstract}
-\textbf{This paper presents high-speed and low-size assembly implementations of the 80-bit version of the PRESENT cipher for the AVRtiny family of microcontrollers. We report new speed and size records for our implementation, with the speed-optimized version achieving a full encryption in 8721 clock cycles and the size-optimized version compressing the cipher down to 378 bytes; the previous state of the art for AVRtiny achieved 10723 clock cycles for encryption with a size of 936 bytes. Along with the two implementation extrema (speed \& size optimized versions), we offer insight into techniques and representations that utilize the time-memory tradeoff and provide intermediate solutions for various configurations.\\Keywords: PRESENT, AVR, tinyAVR, software implementation.}
+\textbf{This paper presents high-speed and low-size assembly implementations of the 80-bit version of the PRESENT cipher for the AVRtiny family of microcontrollers. We report new speed and size records for our implementation, with the speed-optimized version achieving a full encryption in 8721 clock cycles and the size-optimized version compressing the cipher down to 372 bytes; the previous state of the art for AVRtiny achieved 10723 clock cycles for encryption with a size of 936 bytes. Along with the two implementation extrema (speed \& size optimized versions), we offer insight into techniques and representations that utilize the time-memory tradeoff and provide intermediate solutions for various configurations.\\Keywords: PRESENT, AVR, tinyAVR, software implementation.}
 \end{abstract}
 \section{Introduction}
 Modern computer science is constantly witnessing an extensive and large scale deployment of tiny computing devices. Information processing and wireless communication is being thoroughly integrated into everyday objects and activities, developing a large distributed mobile infrastructure and ushering in the era of ubiquitous computing. RFID tags attached to products, cardiac pacemakers, fire-detecting sensor nodes and the like need to operate \emph{securely} under particularly \emph{restricted conditions}, namely low battery life, small processing power and bandwidth-demanding ad-hoc network protocols. To achieve sustainable security in this new landscape, researchers have developed new cryptographic primitives and techniques, namely lightweight cryptographic ciphers such as PRESENT~\cite{bogdanov2007present}, Klein~\cite{gong2012klein}, LED~\cite{guo2011led} and others.
@@ -359,9 +359,9 @@ Overall, we managed to push the limits of the PRESENT implementation and establi
 \footnotesize
 	\begin{tabular}{ l | c | c | c | c }
                 & Crypto-lib~\cite{avr_crypto_lib} & Eisenbarth~\cite{eisenbarth2012compact} &\specialcell{Ours\\Speed optimized} & \specialcell{Ours\\Size optimized} \\
-        Size (bytes) & 1514 & 936 & 1794 & 378 \\
-        Encryption (cycles) & 105796 & 10723 & 8721 & 96085 \\
-        Decryption (cycles) & 151624 & 11239 & - & 106501 \\
+        Size (bytes) & 1514 & 936 & 1794 & 372 \\
+        Encryption (cycles) & 105796 & 10723 & 8721 & 95574 \\
+        Decryption (cycles) & 151624 & 11239 & - & 105959 \\
         RAM (bytes) & 256 & 0 & 18 & 18
 	\end{tabular}
 	\caption{\footnotesize Speed and size comparisons to existing implementations of PRESENT for the AVR architecture.}
