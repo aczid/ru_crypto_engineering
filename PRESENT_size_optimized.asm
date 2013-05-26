@@ -169,25 +169,25 @@ sBoxLowNibble:
 #ifdef RELOCATABLE_SBOXES
 	add ZL, SBOX_DISPLACEMENT
 #endif
-
-	; output (low nibble)
 #ifdef PACKED_SBOXES
 	asr ZL                ; halve input, take carry
 #endif
+
+	; output (low nibble)
 	lpm SBOX_OUTPUT, Z    ; get s-box output
 
 #ifdef PACKED_SBOXES
 	brcs odd_unpack       ; 2 cycles if true, 1 if false
 even_unpack:
 	swap SBOX_OUTPUT      ; 1 cycle
-#ifdef QUANTIZE_TIMING
+  #ifdef QUANTIZE_TIMING
 	rjmp unpack           ; 2 cycles
-#endif
+  #endif
 odd_unpack:                   ; avoid timing attacks
-#ifdef QUANTIZE_TIMING
+  #ifdef QUANTIZE_TIMING
 	nop                   ; 1 cycle
 	nop
-#endif
+  #endif
 ; 4 cycles total
 unpack:
 	cbr SBOX_OUTPUT, 0xf0
