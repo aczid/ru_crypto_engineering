@@ -24,20 +24,22 @@
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
 ; After having called encrypt or decrypt X will point to the end of the input
 
-; Number of rounds
-.equ ROUNDS = 31
-
 ; Comment out either to omit
 #define ENCRYPTION
 #define DECRYPTION
+
+; Number of rounds
+.equ ROUNDS = 31
 
 #ifdef DECRYPTION
 #define PACKED_SBOXES ; Use packed s-boxes (which need to be unpacked)
                       ; This saves 2 bytes
 #endif
 
-;#define RELOCATABLE_SBOXES ; This makes s-boxes relocatable in flash
-                            ; otherwise they are mapped at 0x100 and 0x200
+#define RELOCATABLE_SBOXES ; This makes s-boxes relocatable in flash
+                           ; otherwise they are mapped at 0x100 and 0x200
+
+;#define QUANTIZE_TIMING ; Avoid timing attacks when unpacking s-box values
 
 ; Key registers (the first 8 of these hold the current round key)
 .def KEY0 = r0
@@ -178,10 +180,14 @@ sBoxLowNibble:
 	brcs odd_unpack       ; 2 cycles if true, 1 if false
 even_unpack:
 	swap SBOX_OUTPUT      ; 1 cycle
+#ifdef QUANTIZE_TIMING
 	rjmp unpack           ; 2 cycles
+#endif
 odd_unpack:                   ; avoid timing attacks
+#ifdef QUANTIZE_TIMING
 	nop                   ; 1 cycle
 	nop
+#endif
 ; 4 cycles total
 unpack:
 	cbr SBOX_OUTPUT, 0xf0
@@ -479,6 +485,7 @@ decrypt:
 			eor KEY5, ROUND_COUNTER
 			ldi ITEMP, 2
 			rcall rotate_left_i
+			; decrement round counter
 			dec ROUND_COUNTER
 
 		cpi ROUND_COUNTER, 0
