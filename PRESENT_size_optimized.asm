@@ -39,7 +39,7 @@
 #define RELOCATABLE_SBOXES ; This makes s-boxes relocatable in flash
                            ; otherwise they are mapped at 0x100 and 0x200
 
-;#define QUANTIZE_TIMING ; Avoid timing attacks when unpacking s-box values
+#define QUANTIZE_TIMING ; Avoid timing attacks when unpacking s-box values
 
 ; Key registers (the first 8 of these hold the current round key)
 .def KEY0 = r0
