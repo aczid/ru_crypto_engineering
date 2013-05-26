@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           356 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           306 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
 ; Cycle count (encryption):  95574
-; Cycle count (decryption): 105959
+; Cycle count (decryption): 116468
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -307,11 +307,6 @@ setup:
 	subi XL, 18
 	ret
 
-#ifdef ENCRYPTION
-; -------------------------------------
-;         encryption procedures
-; -------------------------------------
-
 ; load 4 consecutive input bytes from SRAM into state
 consecutive_input:
 	ld STATE0, X+
@@ -334,7 +329,7 @@ interleaved_output:
 	ret
 
 ; apply the p-layer from state to output registers
-pLayer:
+pLayerHalf:
 	mov ITEMP, STATE3
 	rcall pLayerByte
 	mov ITEMP, STATE2
@@ -343,6 +338,34 @@ pLayer:
 	rcall pLayerByte
 	mov ITEMP, STATE0
 	rjmp pLayerByte
+
+pLayer:
+	; get high/left 4 bytes as p-layer input 
+	rcall consecutive_input
+
+	; apply p-layer
+	rcall pLayerHalf
+
+	; get low/right 4 bytes as next p-layer input
+	rcall consecutive_input
+
+	; save SP-network output to SRAM
+	rcall interleaved_output
+
+	; apply p-layer
+	rcall pLayerHalf
+
+	; save SP-network output to SRAM
+	adiw XL, 9
+	rcall interleaved_output
+	dec XL
+	ret
+
+
+#ifdef ENCRYPTION
+; -------------------------------------
+;         encryption procedures
+; -------------------------------------
 
 ; encryption function: point X at 8 plaintext input bytes followed by 10 key input bytes
 encrypt:
@@ -354,25 +377,8 @@ encrypt:
 		; apply s-box layer
 		rcall sBoxLayer
 
-		; get high/left 4 bytes as p-layer input 
-		rcall consecutive_input
-
 		; apply p-layer
 		rcall pLayer
-
-		; get low/right 4 bytes as next p-layer input
-		rcall consecutive_input
-
-		; save SP-network output to SRAM
-		rcall interleaved_output
-
-		; apply p-layer
-		rcall pLayer
-
-		; save SP-network output to SRAM
-		adiw XL, 9
-		rcall interleaved_output
-		dec XL
 
 		; schedule next key
 		rcall schedule_key
@@ -388,39 +394,6 @@ encrypt:
 ; -------------------------------------
 ;         decryption procedures
 ; -------------------------------------
-
-; load 4 interleaved input bytes from SRAM from back to front
-; leaves 1 byte unread in between each loaded byte
-interleaved_input:
-	dec XL
-	ld OUTPUT0, -X
-	dec XL
-	ld OUTPUT1, -X
-	dec XL
-	ld OUTPUT2, -X
-	dec XL
-	ld OUTPUT3, -X
-	ret
-
-; save 4 consecutive output bytes to SRAM
-consecutive_output:
-	st X+, STATE0
-	st X+, STATE1
-	st X+, STATE2
-	st X+, STATE3
-	ret
-
-; invert the inverse p-layer from output to state registers
-inv_pLayer:
-	rcall ipLayerByte
-	mov STATE3, ITEMP
-	rcall ipLayerByte
-	mov STATE2, ITEMP
-	rcall ipLayerByte
-	mov STATE1, ITEMP
-	rcall ipLayerByte
-	mov STATE0, ITEMP
-	ret
 
 ; decryption function: point X at 8 ciphertext input bytes followed by 10 key input bytes
 decrypt:
@@ -446,28 +419,12 @@ decrypt:
 	decrypt_update:
 		; apply round key
 		rcall addRoundKey
-
-		; get inverse p-layer input for high/left 4 bytes
-		rcall interleaved_input
-
-		; apply inverse p-layer
-		rcall inv_pLayer
-
-		; get next inverse p-layer input for low/right bytes
-		adiw XL, 9
-		rcall interleaved_input
-		dec XL
-
-		; save inverse p-layer output to SRAM
-		rcall consecutive_output
-
-		; apply inverse p-layer
-		rcall inv_pLayer
-
-		; save inverse p-layer output to SRAM
-		rcall consecutive_output
-
+		; invert p-layer
+		subi XL, 8
+		rcall pLayer
+		rcall pLayer
 		; apply inverse s-box layer
+		adiw XL, 8
 		rcall sBoxLayer
 
 		; inverse key scheduling
