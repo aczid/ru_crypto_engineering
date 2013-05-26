@@ -349,13 +349,13 @@ pLayer:
 	; get low/right 4 bytes as next p-layer input
 	rcall consecutive_input
 
-	; save SP-network output to SRAM
+	; save first p-layer output to SRAM
 	rcall interleaved_output
 
 	; apply p-layer
 	rcall pLayerHalf
 
-	; save SP-network output to SRAM
+	; save second p-layer output to SRAM
 	adiw XL, 9
 	rcall interleaved_output
 	dec XL
