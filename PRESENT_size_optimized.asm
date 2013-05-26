@@ -28,9 +28,6 @@
 #define ENCRYPTION
 #define DECRYPTION
 
-; Number of rounds
-.equ ROUNDS = 31
-
 #ifdef DECRYPTION
 #define PACKED_SBOXES ; Use packed s-boxes (which need to be unpacked)
                       ; This saves 2 bytes
@@ -42,6 +39,9 @@
 
 ;#define RELOCATABLE_SBOXES ; This makes s-boxes relocatable in flash
                             ; otherwise they are mapped at 0x100 and 0x200
+
+; Number of rounds
+.equ ROUNDS = 31
 
 ; Key registers (the first 8 of these hold the current round key)
 .def KEY0 = r0
