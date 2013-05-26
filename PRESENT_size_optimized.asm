@@ -174,8 +174,6 @@ continue_rotate_left_i:
 	brne continue_rotate_left_i
 	ret
 
-
-
 ; sBoxByte
 ; applying the s-box nibble-wise allows us to reuse the second half of the
 ; procedure as its own procedure when key scheduling
