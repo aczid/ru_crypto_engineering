@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           360 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           356 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption):  95830
-; Cycle count (decryption): 106246
+; Cycle count (encryption):  95574
+; Cycle count (decryption): 105959
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -260,11 +260,10 @@ addRoundKey_byte:
 	ld STATE0, X
 	eor STATE0, KEY0
 	st X+, STATE0
-	dec KEY_INDEX
 	; rotate key register to next byte
 	rcall rotate_left_i
+	dec KEY_INDEX
 	; loop over 8 bytes
-	cpi KEY_INDEX, 0
 	brne addRoundKey_byte
 
 	; rotate key register to align with the start of the block
@@ -487,7 +486,6 @@ decrypt:
 			; decrement round counter
 			dec ROUND_COUNTER
 		; loop for ROUNDS
-		cpi ROUND_COUNTER, 0
 		brne decrypt_update
 	; apply final round key
 	rjmp addRoundKey
