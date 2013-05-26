@@ -279,7 +279,7 @@ addRoundKey_byte:
 setup:
 	; clear zero register
 	clr ZERO
-	; initialize round counter
+	; clear round counter
 	clr ROUND_COUNTER
 	; initialize s-box
 	ldi ZH, high(SBOX<<1)
