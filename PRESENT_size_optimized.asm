@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           306 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           302 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption):  95637
-; Cycle count (decryption): 116438
+; Cycle count (encryption):  95449
+; Cycle count (decryption): 116119
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -117,26 +117,6 @@ INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
   #endif
 #endif
 
-; rotate the 80-bit key register left by the number in ITEMP
-rotate_left_i:
-	clr ROTATION_COUNTER
-continue_rotate_left_i:
-	lsl KEY9
-	rol KEY8
-	rol KEY7
-	rol KEY6
-	rol KEY5
-	rol KEY4
-	rol KEY3
-	rol KEY2
-	rol KEY1
-	rol KEY0
-	adc KEY9, ZERO
-	inc ROTATION_COUNTER
-	cp ROTATION_COUNTER, ITEMP
-	brne continue_rotate_left_i
-	ret
-
 ; key scheduling
 schedule_key:
 	; increment round counter
@@ -173,7 +153,28 @@ addRoundKey_byte:
 	subi XL, 8
 	; rotate key register to align with the start of the block
 	ldi ITEMP, 16
-	rjmp rotate_left_i
+
+; rotate the 80-bit key register left by the number in ITEMP
+rotate_left_i:
+	clr ROTATION_COUNTER
+continue_rotate_left_i:
+	lsl KEY9
+	rol KEY8
+	rol KEY7
+	rol KEY6
+	rol KEY5
+	rol KEY4
+	rol KEY3
+	rol KEY2
+	rol KEY1
+	rol KEY0
+	adc KEY9, ZERO
+	inc ROTATION_COUNTER
+	cp ROTATION_COUNTER, ITEMP
+	brne continue_rotate_left_i
+	ret
+
+
 
 ; sBoxByte
 ; applying the s-box nibble-wise allows us to reuse the second half of the
@@ -261,6 +262,16 @@ interleaved_output:
 	st -X, OUTPUT3
 	ret
 
+; apply half the p-layer from state to output registers
+pLayerHalf:
+	mov ITEMP, STATE3
+	rcall pLayerByte
+	mov ITEMP, STATE2
+	rcall pLayerByte
+	mov ITEMP, STATE1
+	rcall pLayerByte
+	mov ITEMP, STATE0
+
 ; pLayerByte
 ; approach stolen from KULeuven implementation
 
@@ -272,14 +283,9 @@ interleaved_output:
 ; completed output bytes following this 4-bit period
 
 ; uses T (transfer) flag to re-do this block twice
-setup_continue_pLayerByte:
-	clt                            ; clear T flag
-	rjmp continue_pLayerByte       ; do the second part
 pLayerByte:
-	ror ITEMP                      ; move bit into carry
-ipLayerByte:
 	set                            ; set T flag
-	; fall through
+	ror ITEMP                      ; move bit into carry
 continue_pLayerByte:
 	ror OUTPUT0                    ; move bit into output register
 	ror ITEMP                      ; etc
@@ -291,17 +297,9 @@ continue_pLayerByte:
 	ror ITEMP
 	brts setup_continue_pLayerByte ; redo this block? (if T flag set)
 	ret
-
-; apply half the p-layer from state to output registers
-pLayerHalf:
-	mov ITEMP, STATE3
-	rcall pLayerByte
-	mov ITEMP, STATE2
-	rcall pLayerByte
-	mov ITEMP, STATE1
-	rcall pLayerByte
-	mov ITEMP, STATE0
-	rjmp pLayerByte
+setup_continue_pLayerByte:
+	clt                            ; clear T flag
+	rjmp continue_pLayerByte       ; do the second part
 
 ; apply the p-layer to the full 8-byte state in SRAM
 pLayer:
@@ -436,4 +434,3 @@ decrypt:
 	; apply final round key
 	rjmp addRoundKey
 #endif
-
