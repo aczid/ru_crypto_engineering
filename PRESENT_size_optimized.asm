@@ -17,8 +17,8 @@
 ; Size optimized version 2 - May 2013
 ; Code size (total):           306 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption):  95574
-; Cycle count (decryption): 116468
+; Cycle count (encryption):  95637
+; Cycle count (decryption): 116438
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -240,17 +240,18 @@ schedule_key:
 	mov KEY0, ITEMP
 	ret
 
-; apply loaded s-box to the full 8-byte state in SRAM from back to front
+; apply loaded s-box to the full 8-byte state in SRAM
 sBoxLayer:
 	ldi SBOX_BYTE, 8
 sBoxLayer_byte:
 	; apply s-box procedure
-	ld ITEMP, -X
+	ld ITEMP, X
 	rcall sBoxByte
-	st X, ITEMP
+	st X+, ITEMP
 	dec SBOX_BYTE
 	; loop over 8 bytes
 	brne sBoxLayer_byte
+	subi XL, 8
 	ret
 
 ; apply last computed round key to the full 8-byte state in SRAM
@@ -267,6 +268,7 @@ addRoundKey_byte:
 	; loop over 8 bytes
 	brne addRoundKey_byte
 
+	subi XL, 8
 	; rotate key register to align with the start of the block
 	ldi ITEMP, 16
 	rjmp rotate_left_i
@@ -349,13 +351,13 @@ pLayer:
 	; get low/right 4 bytes as next p-layer input
 	rcall consecutive_input
 
-	; save first p-layer output to SRAM
+	; save SP-network output to SRAM
 	rcall interleaved_output
 
 	; apply p-layer
 	rcall pLayerHalf
 
-	; save second p-layer output to SRAM
+	; save SP-network output to SRAM
 	adiw XL, 9
 	rcall interleaved_output
 	dec XL
@@ -420,11 +422,9 @@ decrypt:
 		; apply round key
 		rcall addRoundKey
 		; invert p-layer
-		subi XL, 8
 		rcall pLayer
 		rcall pLayer
 		; apply inverse s-box layer
-		adiw XL, 8
 		rcall sBoxLayer
 
 		; inverse key scheduling
