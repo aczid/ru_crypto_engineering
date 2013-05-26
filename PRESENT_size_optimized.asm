@@ -117,41 +117,63 @@ INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
   #endif
 #endif
 
-
-; -------------------------------------
-;           PRESENT procedures
-; -------------------------------------
-
-; pLayerByte
-; approach stolen from KULeuven implementation
-
-; splices 1 input byte over 4 output bytes, which will then each hold 2 bits
-; following a 4-bit period in the input
-
-; reads from ITEMP and saves to output registers
-; after 4 calls from different input registers we will have collected 4
-; completed output bytes following this 4-bit period
-
-; uses T (transfer) flag to re-do this block twice
-setup_continue_pLayerByte:
-	clt                            ; clear T flag
-	rjmp continue_pLayerByte       ; do the second part
-pLayerByte:
-	ror ITEMP                      ; move bit into carry
-ipLayerByte:
-	set                            ; set T flag
-	; fall through
-continue_pLayerByte:
-	ror OUTPUT0                    ; move bit into output register
-	ror ITEMP                      ; etc
-	ror OUTPUT1
-	ror ITEMP
-	ror OUTPUT2
-	ror ITEMP
-	ror OUTPUT3
-	ror ITEMP
-	brts setup_continue_pLayerByte ; redo this block? (if T flag set)
+; rotate the 80-bit key register left by the number in ITEMP
+rotate_left_i:
+	clr ROTATION_COUNTER
+continue_rotate_left_i:
+	lsl KEY9
+	rol KEY8
+	rol KEY7
+	rol KEY6
+	rol KEY5
+	rol KEY4
+	rol KEY3
+	rol KEY2
+	rol KEY1
+	rol KEY0
+	adc KEY9, ZERO
+	inc ROTATION_COUNTER
+	cp ROTATION_COUNTER, ITEMP
+	brne continue_rotate_left_i
 	ret
+
+; key scheduling
+schedule_key:
+	; increment round counter
+	inc ROUND_COUNTER
+	; 1: rotate key register left by 61 positions
+	ldi ITEMP, 6
+	rcall rotate_left_i
+	; 3: xor key bits with round counter
+	; (as the 2 bytes align while rotating the key register)
+	eor KEY4, ROUND_COUNTER
+	ldi ITEMP, 55
+	rcall rotate_left_i
+	; 2: s-box high nibble of key
+	mov ITEMP, KEY0
+	rcall sBoxHighNibble
+	mov KEY0, ITEMP
+	ret
+
+; apply last computed round key to the full 8-byte state in SRAM
+addRoundKey:
+	ldi KEY_INDEX, 8
+	ldi ITEMP, 8
+addRoundKey_byte:
+	ld STATE0, X
+	eor STATE0, KEY0
+	st X+, STATE0
+	; rotate key register to next byte
+	rcall rotate_left_i
+	dec KEY_INDEX
+	; loop over 8 bytes
+	brne addRoundKey_byte
+
+	; point at the start of the block
+	subi XL, 8
+	; rotate key register to align with the start of the block
+	ldi ITEMP, 16
+	rjmp rotate_left_i
 
 ; sBoxByte
 ; applying the s-box nibble-wise allows us to reuse the second half of the
@@ -202,44 +224,6 @@ unpack:
 	swap ITEMP            ; swap nibbles back
 	ret
 
-; rotate the 80-bit key register left by the number in ITEMP
-rotate_left_i:
-	clr ROTATION_COUNTER
-continue_rotate_left_i:
-	lsl KEY9
-	rol KEY8
-	rol KEY7
-	rol KEY6
-	rol KEY5
-	rol KEY4
-	rol KEY3
-	rol KEY2
-	rol KEY1
-	rol KEY0
-	adc KEY9, ZERO
-	inc ROTATION_COUNTER
-	cp ROTATION_COUNTER, ITEMP
-	brne continue_rotate_left_i
-	ret
-
-; key scheduling
-schedule_key:
-	; increment round counter
-	inc ROUND_COUNTER
-	; 1: rotate key register left by 61 positions
-	ldi ITEMP, 6
-	rcall rotate_left_i
-	; 3: xor key bits with round counter
-	; (as the 2 bytes align while rotating the key register)
-	eor KEY4, ROUND_COUNTER
-	ldi ITEMP, 55
-	rcall rotate_left_i
-	; 2: s-box high nibble of key
-	mov ITEMP, KEY0
-	rcall sBoxHighNibble
-	mov KEY0, ITEMP
-	ret
-
 ; apply loaded s-box to the full 8-byte state in SRAM
 sBoxLayer:
 	ldi SBOX_BYTE, 8
@@ -255,26 +239,6 @@ sBoxLayer_byte:
 	; point at the start of the block
 	subi XL, 8
 	ret
-
-; apply last computed round key to the full 8-byte state in SRAM
-addRoundKey:
-	ldi KEY_INDEX, 8
-	ldi ITEMP, 8
-addRoundKey_byte:
-	ld STATE0, X
-	eor STATE0, KEY0
-	st X+, STATE0
-	; rotate key register to next byte
-	rcall rotate_left_i
-	dec KEY_INDEX
-	; loop over 8 bytes
-	brne addRoundKey_byte
-
-	; point at the start of the block
-	subi XL, 8
-	; rotate key register to align with the start of the block
-	ldi ITEMP, 16
-	rjmp rotate_left_i
 
 ; load 4 consecutive input bytes from SRAM into state
 consecutive_input:
@@ -297,7 +261,38 @@ interleaved_output:
 	st -X, OUTPUT3
 	ret
 
-; apply the p-layer from state to output registers
+; pLayerByte
+; approach stolen from KULeuven implementation
+
+; splices 1 input byte over 4 output bytes, which will then each hold 2 bits
+; following a 4-bit period in the input
+
+; reads from ITEMP and saves to output registers
+; after 4 calls from different input registers we will have collected 4
+; completed output bytes following this 4-bit period
+
+; uses T (transfer) flag to re-do this block twice
+setup_continue_pLayerByte:
+	clt                            ; clear T flag
+	rjmp continue_pLayerByte       ; do the second part
+pLayerByte:
+	ror ITEMP                      ; move bit into carry
+ipLayerByte:
+	set                            ; set T flag
+	; fall through
+continue_pLayerByte:
+	ror OUTPUT0                    ; move bit into output register
+	ror ITEMP                      ; etc
+	ror OUTPUT1
+	ror ITEMP
+	ror OUTPUT2
+	ror ITEMP
+	ror OUTPUT3
+	ror ITEMP
+	brts setup_continue_pLayerByte ; redo this block? (if T flag set)
+	ret
+
+; apply half the p-layer from state to output registers
 pLayerHalf:
 	mov ITEMP, STATE3
 	rcall pLayerByte
@@ -308,6 +303,7 @@ pLayerHalf:
 	mov ITEMP, STATE0
 	rjmp pLayerByte
 
+; apply the p-layer to the full 8-byte state in SRAM
 pLayer:
 	; get high/left 4 bytes as p-layer input 
 	rcall consecutive_input
