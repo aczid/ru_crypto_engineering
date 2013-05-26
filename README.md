@@ -7,12 +7,13 @@ PRESENT
 We implemented the PRESENT cipher in C and AVR assembly based on the original paper, the C version by Zhu/Gong and the Leuven AVR implementation.
 
 This AVR assembly version was optimized for small code size at the expense of speed.
-The current version requires 378 code bytes for the encryption and decryption routines, and 16 bytes for s-box tables at addresses 0x100 and 0x200.
+The current version requires 374 code bytes for the encryption and decryption routines, and 16 bytes for s-box tables at addresses 0x100 and 0x200.
 
-* Code size (total):           378 bytes + 16 bytes for both packed s-box tables
+* Size optimized version 2 - May 2013
+* Code size (total):           374 bytes + 16 bytes for both packed s-boxes
 * RAM words:                    18
 * Cycle count (encryption):  94845
-* Cycle count (decryption): 105447
+* Cycle count (decryption): 104951
 
 The speed-optimized version of the algorithm can be found at [my co-author's github browsable repository](https://github.com/kostaspap88/PRESENT_speed_implementation/).
 
@@ -21,7 +22,7 @@ Settings
 For specific applications that require only encryption or decryption, the code size can be further reduced.
 The code for either procedure can be easily omitted by commenting out the **ENCRYPTION** or **DECRYPTION** define statement.
 
-At a cost of 6 extra bytes the s-box tables can be located at addresses not aligned to 256 bytes when the **RELOCATABLE_SBOXES** define statement is uncommented, provided the tables do not span a 256-byte address boundary. This allows the encryption and decryption code + packed s-box tables to fit in 400 consecutive bytes of flash.
+At a cost of 6 extra bytes the s-box tables can be located at addresses not aligned to 256 bytes when the **RELOCATABLE_SBOXES** define statement is uncommented, provided the tables do not span a 256-byte address boundary. This allows the encryption and decryption code + packed s-box tables to fit in under 400 consecutive bytes of flash.
 
 To get a tiny bit more performance at the expense of 2 bytes the **PACKED_SBOXES** define statement can be commented out to use 16-byte s-box tables and omit the 14-byte unpacking code.
 

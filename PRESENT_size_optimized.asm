@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           378 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           374 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
 ; Cycle count (encryption):  94845
-; Cycle count (decryption): 105447
+; Cycle count (decryption): 104951
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -133,12 +133,10 @@ INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
 setup_continue_pLayerByte:
 	clt                            ; clear T flag
 	rjmp continue_pLayerByte       ; do the second part
+pLayerByte:
+	ror ITEMP                      ; move bit into carry
 ipLayerByte:
 	set                            ; set T flag
-	rjmp continue_pLayerByte       ; do the second part
-pLayerByte:
-	set                            ; set T flag
-	ror ITEMP                      ; move bit into carry
 	; fall through
 continue_pLayerByte:
 	ror OUTPUT0                    ; move bit into output register
