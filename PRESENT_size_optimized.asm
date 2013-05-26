@@ -81,7 +81,7 @@
 ; the index of the current round key byte being applied to the state in SRAM
 .def KEY_INDEX = r21
 ; the index of the current s-box input
-.def SBOX_BYTE = r22
+.def SBOX_BYTE = r21
 
 ; Low-byte offset to s-box in flash
 .def SBOX_DISPLACEMENT = r22
