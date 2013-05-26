@@ -251,6 +251,8 @@ sBoxLayer_byte:
 	dec SBOX_BYTE
 	; loop over 8 bytes
 	brne sBoxLayer_byte
+
+	; point at the start of the block
 	subi XL, 8
 	ret
 
@@ -268,46 +270,11 @@ addRoundKey_byte:
 	; loop over 8 bytes
 	brne addRoundKey_byte
 
+	; point at the start of the block
 	subi XL, 8
 	; rotate key register to align with the start of the block
 	ldi ITEMP, 16
 	rjmp rotate_left_i
-
-; -------------------------------------
-;           utility procedures
-; -------------------------------------
-
-; prepare for encryption or decryption
-setup:
-	; clear zero register
-	clr ZERO
-	; clear round counter
-	clr ROUND_COUNTER
-	; initialize s-box
-	ldi ZH, high(SBOX<<1)
-#ifdef RELOCATABLE_SBOXES
-  #ifdef PACKED_SBOXES
-	ldi SBOX_DISPLACEMENT, low(SBOX<<2)
-  #else
-	ldi SBOX_DISPLACEMENT, low(SBOX<<1)
-  #endif
-#endif
-	; point at the key bytes
-	adiw XL, 8
-	; load key from SRAM
-	ld KEY0, X+
-	ld KEY1, X+
-	ld KEY2, X+
-	ld KEY3, X+
-	ld KEY4, X+
-	ld KEY5, X+
-	ld KEY6, X+
-	ld KEY7, X+
-	ld KEY8, X+
-	ld KEY9, X+
-	; point at the start of the input
-	subi XL, 18
-	ret
 
 ; load 4 consecutive input bytes from SRAM into state
 consecutive_input:
@@ -363,11 +330,39 @@ pLayer:
 	dec XL
 	ret
 
+; prepare for encryption or decryption
+setup:
+	; clear zero register
+	clr ZERO
+	; clear round counter
+	clr ROUND_COUNTER
+	; initialize s-box
+	ldi ZH, high(SBOX<<1)
+#ifdef RELOCATABLE_SBOXES
+  #ifdef PACKED_SBOXES
+	ldi SBOX_DISPLACEMENT, low(SBOX<<2)
+  #else
+	ldi SBOX_DISPLACEMENT, low(SBOX<<1)
+  #endif
+#endif
+	; point at the key bytes
+	adiw XL, 8
+	; load key from SRAM
+	ld KEY0, X+
+	ld KEY1, X+
+	ld KEY2, X+
+	ld KEY3, X+
+	ld KEY4, X+
+	ld KEY5, X+
+	ld KEY6, X+
+	ld KEY7, X+
+	ld KEY8, X+
+	ld KEY9, X+
+	; point at the start of the input
+	subi XL, 18
+	ret
 
 #ifdef ENCRYPTION
-; -------------------------------------
-;         encryption procedures
-; -------------------------------------
 
 ; encryption function: point X at 8 plaintext input bytes followed by 10 key input bytes
 encrypt:
@@ -393,9 +388,6 @@ encrypt:
 #endif
 
 #ifdef DECRYPTION
-; -------------------------------------
-;         decryption procedures
-; -------------------------------------
 
 ; decryption function: point X at 8 ciphertext input bytes followed by 10 key input bytes
 decrypt:
@@ -448,3 +440,4 @@ decrypt:
 	; apply final round key
 	rjmp addRoundKey
 #endif
+
