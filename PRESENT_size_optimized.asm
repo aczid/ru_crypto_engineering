@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           374 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           366 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption):  94845
-; Cycle count (decryption): 104951
+; Cycle count (encryption):  96147
+; Cycle count (decryption): 106563
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -77,8 +77,11 @@
 ; The round counter
 .def ROUND_COUNTER = r20
 
-; Index of the current round key byte being applied to the state in SRAM
+; Shared register
+; the index of the current round key byte being applied to the state in SRAM
 .def KEY_INDEX = r21
+; the index of the current s-box input
+.def SBOX_BYTE = r22
 
 ; Low-byte offset to s-box in flash
 .def SBOX_DISPLACEMENT = r22
@@ -199,27 +202,6 @@ unpack:
 	swap ITEMP            ; swap nibbles back
 	ret
 
-; apply loaded s-box to every state byte
-sBoxLayer:
-	; move each byte into a temporary register and apply
-	; the s-box procedure for bytes, then move it back
-	mov ITEMP, STATE0
-	rcall sBoxByte
-	mov STATE0, ITEMP
-
-	mov ITEMP, STATE1
-	rcall sBoxByte
-	mov STATE1, ITEMP
-
-	mov ITEMP, STATE2
-	rcall sBoxByte
-	mov STATE2, ITEMP
-
-	mov ITEMP, STATE3
-	rcall sBoxByte
-	mov STATE3, ITEMP
-	ret
-
 ; rotate the 80-bit key register left by the number in ITEMP
 rotate_left_i:
 	clr ROTATION_COUNTER
@@ -256,6 +238,23 @@ schedule_key:
 	mov ITEMP, KEY0
 	rcall sBoxHighNibble
 	mov KEY0, ITEMP
+	ret
+
+; apply loaded s-box to the full 8-byte state in SRAM
+sBoxLayer:
+	subi XL, 8
+	clr SBOX_BYTE
+sBoxLayer_byte:
+	; apply s-box procedure
+	ld ITEMP, X
+	rcall sBoxByte
+	st X+, ITEMP
+	inc SBOX_BYTE
+	; loop over 8 bytes
+	cpi SBOX_BYTE, 8
+	brne sBoxLayer_byte
+	;
+	subi XL, 8
 	ret
 
 ; apply last computed round key to the full 8-byte state in SRAM
@@ -339,9 +338,8 @@ interleaved_output:
 	st -X, OUTPUT3
 	ret
 
-; apply the s-box and p-layer from state to output registers
-SPnet:
-	rcall sBoxLayer
+; apply the p-layer from state to output registers
+pLayer:
 	mov ITEMP, STATE3
 	rcall pLayerByte
 	mov ITEMP, STATE2
@@ -357,22 +355,24 @@ encrypt:
 	encrypt_update:
 		; apply round key
 		rcall addRoundKey
-		subi XL, 8
 
-		; get high/left 4 bytes as SP-network input 
+		; apply s-box layer
+		rcall sBoxLayer
+
+		; get high/left 4 bytes as p-layer input 
 		rcall consecutive_input
 
-		; encrypt high/left 4 bytes using SP-network
-		rcall SPnet
+		; apply p-layer
+		rcall pLayer
 
-		; get low/right 4 bytes as next SP-network input
+		; get low/right 4 bytes as next p-layer input
 		rcall consecutive_input
 
 		; save SP-network output to SRAM
 		rcall interleaved_output
 
-		; encrypt low/right 4 bytes using SP-network
-		rcall SPnet
+		; apply p-layer
+		rcall pLayer
 
 		; save SP-network output to SRAM
 		adiw XL, 9
@@ -413,8 +413,8 @@ consecutive_output:
 	st X+, STATE3
 	ret
 
-; invert the s-box and p-layer from output to state registers
-invSPnet:
+; invert the inverse p-layer from output to state registers
+inv_pLayer:
 	rcall ipLayerByte
 	mov STATE3, ITEMP
 	rcall ipLayerByte
@@ -423,7 +423,7 @@ invSPnet:
 	mov STATE1, ITEMP
 	rcall ipLayerByte
 	mov STATE0, ITEMP
-	rjmp sBoxLayer
+	ret
 
 ; decryption function: point X at 8 ciphertext input bytes followed by 10 key input bytes
 decrypt:
@@ -450,26 +450,28 @@ decrypt:
 		; apply round key
 		rcall addRoundKey
 
-		; get inverse SP-network input for high/left 4 bytes
+		; get inverse p-layer input for high/left 4 bytes
 		rcall interleaved_input
 
-		; decrypt high/left 4 bytes using SP-network
-		rcall invSPnet
+		; apply inverse p-layer
+		rcall inv_pLayer
 
-		; get next inverse SP-network input for low/right bytes
+		; get next inverse p-layer input for low/right bytes
 		adiw XL, 9
 		rcall interleaved_input
 		dec XL
 
-		; save SP-network output to SRAM
+		; save inverse p-layer output to SRAM
 		rcall consecutive_output
 
-		; decrypt low/right 4 bytes using SP-network
-		rcall invSPnet
+		; apply inverse p-layer
+		rcall inv_pLayer
 
-		; save SP-network output to SRAM
+		; save inverse p-layer output to SRAM
 		rcall consecutive_output
-		subi XL, 8
+
+		; apply inverse s-box layer
+		rcall sBoxLayer
 
 		; inverse key scheduling
 		inv_schedule_key:
