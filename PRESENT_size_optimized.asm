@@ -405,13 +405,15 @@ decrypt:
 	decrypt_update:
 		; apply round key
 		rcall addRoundKey
+
 		; invert p-layer
 		rcall pLayer
 		rcall pLayer
+
 		; apply inverse s-box layer
 		rcall sBoxLayer
 
-		; inverse key scheduling
+		; schedule previous key
 		inv_schedule_key:
 			; 2: inv s-box high nibble of key
 			mov ITEMP, KEY0
@@ -427,6 +429,7 @@ decrypt:
 			rcall rotate_left_i
 			; decrement round counter
 			dec ROUND_COUNTER
+
 		; loop for ROUNDS
 		brne decrypt_update
 	; apply final round key
