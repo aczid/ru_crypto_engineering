@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           294 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           292 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption):  90655
-; Cycle count (decryption): 110464
+; Cycle count (encryption):  90407
+; Cycle count (decryption): 109968
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -267,8 +267,8 @@ pLayerHalf:
 ; uses T (transfer) flag to re-do this block twice
 pLayerByte:
 	set                            ; set T flag
-	ror ITEMP                      ; move bit into carry
 continue_pLayerByte:
+	ror ITEMP                      ; move bit into carry
 	ror OUTPUT0                    ; move bit into output register
 	ror ITEMP                      ; etc
 	ror OUTPUT1
@@ -276,7 +276,6 @@ continue_pLayerByte:
 	ror OUTPUT2
 	ror ITEMP
 	ror OUTPUT3
-	ror ITEMP
 	brts setup_continue_pLayerByte ; redo this block? (if T flag set)
 	ret
 setup_continue_pLayerByte:
