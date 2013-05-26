@@ -21,9 +21,11 @@ Settings
 For specific applications that require only encryption or decryption, the code size can be further reduced.
 The code for either procedure can be easily omitted by commenting out the **ENCRYPTION** or **DECRYPTION** define statement.
 
-The s-box tables can be located at addresses not aligned to 256 bytes when the **RELOCATABLE_SBOXES** define is uncommented, provided the tables do not span a 256-byte address boundary. This allows the encryption and decryption code + packed s-box tables to fit in 400 consecutive bytes of flash.
+At a cost of 6 extra bytes the s-box tables can be located at addresses not aligned to 256 bytes when the **RELOCATABLE_SBOXES** define statement is uncommented, provided the tables do not span a 256-byte address boundary. This allows the encryption and decryption code + packed s-box tables to fit in 400 consecutive bytes of flash.
 
-To get a tiny bit more performance at the expense of 2 bytes the **PACKED_SBOXES** define can be commented out to use 16-byte s-box tables and omit the 14-byte unpacking code.
+To get a tiny bit more performance at the expense of 2 bytes the **PACKED_SBOXES** define statement can be commented out to use 16-byte s-box tables and omit the 14-byte unpacking code.
+
+Although it is unadvised, there is the option of not quantizing the timing of s-box application by commenting out the **QUANTIZE_TIMING** define statement to save 6 bytes.
 
 Authors
 =======
