@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           298 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           294 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption):  95232
-; Cycle count (decryption): 115692
+; Cycle count (encryption):  90655
+; Cycle count (decryption): 110464
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -70,9 +70,8 @@
 ; Never used but needed for its 0 value to add carry bits with adc
 .def ZERO = r18
 
-; Shared register for s-box output and to count key register rotations
+; Register for s-box output
 .def SBOX_OUTPUT = r19
-.def ROTATION_COUNTER = r19
 
 ; The round counter
 .def ROUND_COUNTER = r20
@@ -138,12 +137,12 @@ schedule_key:
 ; apply last computed round key to the full 8-byte state in SRAM
 addRoundKey:
 	ldi KEY_INDEX, 8
-	ldi ITEMP, 8
 addRoundKey_byte:
 	ld STATE0, X
 	eor STATE0, KEY0
 	st X+, STATE0
 	; rotate key register to next byte
+	ldi ITEMP, 8
 	rcall rotate_left_i
 	dec KEY_INDEX
 	; loop over 8 bytes
@@ -157,8 +156,6 @@ addRoundKey_byte:
 
 ; rotate the 80-bit key register left by the number in ITEMP
 rotate_left_i:
-	clr ROTATION_COUNTER
-continue_rotate_left_i:
 	lsl KEY9
 	rol KEY8
 	rol KEY7
@@ -170,9 +167,8 @@ continue_rotate_left_i:
 	rol KEY1
 	rol KEY0
 	adc KEY9, ZERO
-	inc ROTATION_COUNTER
-	cp ROTATION_COUNTER, ITEMP
-	brne continue_rotate_left_i
+	dec ITEMP
+	brne rotate_left_i
 	ret
 
 ; sBoxByte
