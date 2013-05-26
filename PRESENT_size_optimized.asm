@@ -242,14 +242,15 @@ schedule_key:
 
 ; apply loaded s-box to the full 8-byte state in SRAM from back to front
 sBoxLayer:
+	ldi SBOX_BYTE, 8
+sBoxLayer_byte:
 	; apply s-box procedure
 	ld ITEMP, -X
 	rcall sBoxByte
 	st X, ITEMP
-	inc SBOX_BYTE
+	dec SBOX_BYTE
 	; loop over 8 bytes
-	cpi SBOX_BYTE, 8
-	brne sBoxLayer
+	brne sBoxLayer_byte
 	ret
 
 ; apply last computed round key to the full 8-byte state in SRAM
