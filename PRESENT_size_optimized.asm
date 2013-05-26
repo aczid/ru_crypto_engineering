@@ -22,7 +22,7 @@
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
-; After having called encrypt or decrypt X will point to the end of the input
+; After having called encrypt or decrypt X will point to the start of the input
 
 ; Comment out either to omit
 #define ENCRYPTION
