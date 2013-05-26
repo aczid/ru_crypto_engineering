@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           302 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           298 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption):  95449
-; Cycle count (decryption): 116119
+; Cycle count (encryption):  95232
+; Cycle count (decryption): 115692
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -153,6 +153,7 @@ addRoundKey_byte:
 	subi XL, 8
 	; rotate key register to align with the start of the block
 	ldi ITEMP, 16
+	; fall through
 
 ; rotate the 80-bit key register left by the number in ITEMP
 rotate_left_i:
@@ -185,7 +186,6 @@ sBoxHighNibble:
 	rjmp sBoxLowNibble    ; do the low nibble
 sBoxByte:
 	set                   ; set T flag
-	; fall through
 sBoxLowNibble:
 	; input (low nibble)
 	mov ZL, ITEMP         ; load s-box input
@@ -247,19 +247,6 @@ consecutive_input:
 	ld STATE3, X+
 	ret
 
-; save 4 interleaved output bytes to SRAM from back to front
-; leaves 1 byte untouched in between each saved byte
-interleaved_output:
-	dec XL
-	st -X, OUTPUT0
-	dec XL
-	st -X, OUTPUT1
-	dec XL
-	st -X, OUTPUT2
-	dec XL
-	st -X, OUTPUT3
-	ret
-
 ; apply half the p-layer from state to output registers
 pLayerHalf:
 	mov ITEMP, STATE3
@@ -269,6 +256,7 @@ pLayerHalf:
 	mov ITEMP, STATE1
 	rcall pLayerByte
 	mov ITEMP, STATE0
+	; fall through
 
 ; pLayerByte
 ; approach stolen from KULeuven implementation
@@ -311,14 +299,26 @@ pLayer:
 	rcall consecutive_input
 
 	; save SP-network output to SRAM
+	dec XL
 	rcall interleaved_output
+	adiw XL, 9
 
 	; apply p-layer
 	rcall pLayerHalf
 
 	; save SP-network output to SRAM
-	adiw XL, 9
-	rcall interleaved_output
+	; fall through
+
+; save 4 interleaved output bytes to SRAM from back to front
+; leaves 1 byte untouched in between each saved byte
+interleaved_output:
+	st -X, OUTPUT0
+	dec XL
+	st -X, OUTPUT1
+	dec XL
+	st -X, OUTPUT2
+	dec XL
+	st -X, OUTPUT3
 	dec XL
 	ret
 
