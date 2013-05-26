@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           366 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           362 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption):  96147
-; Cycle count (decryption): 106563
+; Cycle count (encryption):  96085
+; Cycle count (decryption): 106501
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -242,19 +242,16 @@ schedule_key:
 
 ; apply loaded s-box to the full 8-byte state in SRAM
 sBoxLayer:
-	subi XL, 8
 	clr SBOX_BYTE
 sBoxLayer_byte:
 	; apply s-box procedure
-	ld ITEMP, X
+	ld ITEMP, -X
 	rcall sBoxByte
-	st X+, ITEMP
+	st X, ITEMP
 	inc SBOX_BYTE
 	; loop over 8 bytes
 	cpi SBOX_BYTE, 8
 	brne sBoxLayer_byte
-	;
-	subi XL, 8
 	ret
 
 ; apply last computed round key to the full 8-byte state in SRAM
