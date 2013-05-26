@@ -379,8 +379,10 @@ encrypt:
 		; schedule next key
 		rcall schedule_key
 
+		; loop for ROUNDS
 		cpi ROUND_COUNTER, ROUNDS
 		brne encrypt_update
+	; add final round key
 	rjmp addRoundKey
 #endif
 
@@ -486,8 +488,9 @@ decrypt:
 			rcall rotate_left_i
 			; decrement round counter
 			dec ROUND_COUNTER
-
+		; loop for ROUNDS
 		cpi ROUND_COUNTER, 0
 		brne decrypt_update
+	; apply final round key
 	rjmp addRoundKey
 #endif
