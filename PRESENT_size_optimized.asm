@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           362 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           360 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption):  96085
-; Cycle count (decryption): 106501
+; Cycle count (encryption):  95830
+; Cycle count (decryption): 106246
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -240,10 +240,8 @@ schedule_key:
 	mov KEY0, ITEMP
 	ret
 
-; apply loaded s-box to the full 8-byte state in SRAM
+; apply loaded s-box to the full 8-byte state in SRAM from back to front
 sBoxLayer:
-	clr SBOX_BYTE
-sBoxLayer_byte:
 	; apply s-box procedure
 	ld ITEMP, -X
 	rcall sBoxByte
@@ -251,22 +249,22 @@ sBoxLayer_byte:
 	inc SBOX_BYTE
 	; loop over 8 bytes
 	cpi SBOX_BYTE, 8
-	brne sBoxLayer_byte
+	brne sBoxLayer
 	ret
 
 ; apply last computed round key to the full 8-byte state in SRAM
 addRoundKey:
-	clr KEY_INDEX
+	ldi KEY_INDEX, 8
+	ldi ITEMP, 8
 addRoundKey_byte:
 	ld STATE0, X
 	eor STATE0, KEY0
 	st X+, STATE0
-	inc KEY_INDEX
+	dec KEY_INDEX
 	; rotate key register to next byte
-	ldi ITEMP, 8
 	rcall rotate_left_i
 	; loop over 8 bytes
-	cpi KEY_INDEX, 8
+	cpi KEY_INDEX, 0
 	brne addRoundKey_byte
 
 	; rotate key register to align with the start of the block
