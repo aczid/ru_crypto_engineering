@@ -15,7 +15,7 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           292 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           290 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
 ; Cycle count (encryption):  90407
 ; Cycle count (decryption): 109968
@@ -132,6 +132,8 @@ schedule_key:
 	mov ITEMP, KEY0
 	rcall sBoxHighNibble
 	mov KEY0, ITEMP
+	; check if we are at ROUNDS
+	cpi ROUND_COUNTER, ROUNDS
 	ret
 
 ; apply last computed round key to the full 8-byte state in SRAM
@@ -368,7 +370,6 @@ encrypt:
 		rcall schedule_key
 
 		; loop for ROUNDS
-		cpi ROUND_COUNTER, ROUNDS
 		brne encrypt_update
 	; add final round key
 	rjmp addRoundKey
@@ -383,7 +384,6 @@ decrypt:
 	; schedule key for last round
 	schedule_last_key:
 		rcall schedule_key
-		cpi ROUND_COUNTER, ROUNDS
 		brne schedule_last_key
 
 	; initialize inv s-box
