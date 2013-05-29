@@ -38,11 +38,11 @@
 \textbf{This paper presents high-speed and low-size assembly implementations of the 80-bit version of the PRESENT cipher for the AVRtiny family of microcontrollers. We report new speed and size records for our implementation, with the speed-optimized version achieving a full encryption in 8721 clock cycles and the size-optimized version compressing the cipher down to 306 bytes; the previous state of the art for AVRtiny achieved 10723 clock cycles for encryption with a size of 936 bytes. Along with the two implementation extrema (speed \& size optimized versions), we offer insight into techniques and representations that utilize the time-memory tradeoff and provide intermediate solutions for various configurations.\\Keywords: PRESENT, AVR, tinyAVR, software implementation.}
 \end{abstract}
 \section{Introduction}
-Modern computer science is constantly witnessing an extensive and large scale deployment of tiny computing devices. Information processing and wireless communication is being thoroughly integrated into everyday objects and activities, developing a large distributed mobile infrastructure and ushering in the era of ubiquitous computing. RFID tags attached to products, cardiac pacemakers, fire-detecting sensor nodes and the like need to operate \emph{securely} under particularly \emph{restricted conditions}, namely low battery life, small processing power and bandwidth-demanding ad-hoc network protocols. To achieve sustainable security in this new landscape, researchers have developed new cryptographic primitives and techniques, namely lightweight cryptographic ciphers such as PRESENT~\cite{bogdanov2007present}, Klein~\cite{gong2012klein}, LED~\cite{guo2011led} and others.
+Modern computer science is constantly witnessing an extensive and large scale deployment of tiny computing devices. Information processing and wireless communication are being thoroughly integrated into everyday objects and activities, developing a large distributed mobile infrastructure and ushering in the era of ubiquitous computing. RFID tags attached to products, cardiac pacemakers, fire-detecting sensor nodes and the like need to operate \emph{securely} under particularly \emph{restricted conditions}, namely low battery life, small processing power and bandwidth-demanding ad-hoc network protocols. To achieve sustainable security in this new landscape, researchers have developed new cryptographic primitives and techniques, namely lightweight cryptographic ciphers such as PRESENT~\cite{bogdanov2007present}, Klein~\cite{gong2012klein}, LED~\cite{guo2011led} and others.
 
 The majority of these ciphers was designed with hardware performance in mind, thus most software implementations are still inefficient. For instance, the AVR-Crypto-Lib~\cite{avr_crypto_lib} often resorts to C language implementations, resulting in 100k clock cycles for a single encryption with PRESENT. AVR microcontrollers are encountered very often regarding the Internet of Things and ubiquitous computing, thus they are an interesting platform on which to enable and optimize lightweight ciphers.
 
-\textbf{Our contribution.} This paper describes a speed-optimized and a size-optimized implementation of the PRESENT cipher on the ATtiny45, with the aid of algorithmic improvements and efficient programming techniques. Our speed-optimized version improves the state of the art~\cite{eisenbarth2012compact} by 18\%, while the size-optimized version is 54\% smaller than the smallest known implementation~\cite{eisenbarth2012compact}.\\
+\textbf{Our contribution.} This paper describes a speed-optimized and a size-optimized implementation of the PRESENT cipher on the ATtiny45, with the aid of algorithmic improvements and efficient programming techniques. Our speed-optimized version improves the state of the art~\cite{eisenbarth2012compact} by 18\%, while the size-optimized version is 66\% smaller than the smallest known implementation~\cite{eisenbarth2012compact}.\\
 Algorithmic improvement:
 \begin{itemize}[nolistsep]
   \item A merged SP layer, \emph{i.e.} combining the substitution and permutation layer of the cipher in order to construct lookup tables that remove the time-consuming permutations~\cite{gong_code}. This improvement constitutes the core of the achieved speed improvement.
@@ -216,7 +216,7 @@ This section focuses on implementing the key scheduling/update process of the PR
 \subsubsection{Key rotation}
 The algorithm specifies that the key must be rotated by 61 bits to the left. Given the fact that rotations/shifts are computationally expensive in the AVR architecture, we transform 61 left rotations to 19 right rotations, which can be further reduced to 16 right rotations and 3 right rotations. The 16 right rotations can be easily performed by using the \texttt{mov} instructions on register level, i.e. rotate all the bits inside a register by moving the contents to the previous register used in our representation, an approach which is preferable to single rotations via the bit-level instructions. Only the 3 remaining rotations are carried out with the logical instructions for right rotation and shifting (\texttt{ror} and \texttt{shr}).
 \subsubsection{Key substitution}
-The highest 4 bits of the 80-bit key used by the PRESENT cipher, must go be substituted via the S-Box. To avoid 4-bit memory access or redundancy (section \ref{osbox}), we construct a special-purpose Squared S-Box that substitutes the 4 high bits of the 8-bit input, while the low 4 bits remain unchanged. The resulting table applies a substitution operation on the upper nibble which takes only a single lookup operation. Should we encounter space constraints, it is possible to replace the Squared S-Box with the original, unpacked one; the key substitution occurs only once per round, so the performance loss incurred by the unpacked S-Box is relatively small. 
+The highest 4 bits of the 80-bit key used by the PRESENT cipher, must be substituted via the S-Box. To avoid 4-bit memory access or redundancy (section \ref{osbox}), we construct a special-purpose Squared S-Box that substitutes the 4 high bits of the 8-bit input, while the low 4 bits remain unchanged. The resulting table applies a substitution operation on the upper nibble which takes only a single lookup operation. Should we encounter space constraints, it is possible to replace the Squared S-Box with the original, unpacked one; the key substitution occurs only once per round, so the performance loss incurred by the unpacked S-Box is relatively small. 
 
 %\begin{table}[h]
 %\footnotesize
@@ -334,9 +334,9 @@ This construct also allows the \textit{unpack\_sBox} code we just defined to be 
 We have used this construct in the procedures for both steps of applying the SP-network while retaining the property that these procedures can be called from two different offsets.
 
 The S-Box substitution procedure for example replaces only the high nibble when called from one offset, and the whole byte when called from another.
-The code to swap a byte simply re-uses a nibble-wise operation while swapping the nibbles before and after to complete an entire byte.
+The code to substitute a byte simply re-uses a nibble-wise operation while swapping the nibbles before and after the repetition of that operation to complete an entire byte.
 
-In the permutation procedure the operations on 4 input bits is done twice, to complete one output byte.
+In the permutation procedure the rotation operations on 4 input bits are done twice, to complete one output byte.
 
 \subsection{Keying and key scheduling}
 Because we have serialized part of the algorithm our key register needs to be rotated when changing the context between steps that apply to the higher and lower 4 bytes of the cipher's state.
@@ -345,12 +345,12 @@ Because we required a procedure to rotate the key register for key scheduling an
 The inverse key scheduling procedure is only needed in the decryption routine, so we were able to inline it into the decryption round and combine the operations for key scheduling and rotating the register to the appropriate position for the next round.
 
 \subsection{Reducing code size for specific applications}
-While the attained size of the implementation of PRESENT should suffice for use in real-world applications, some of the input and output procedures as well as the S-Box unpacking code can be omitted when only encryption or encryption is required in the application.
+While the attained size of our implementation of PRESENT should suffice for use in real-world applications, some of the input and output procedures as well as the S-Box unpacking code can be omitted when only encryption or encryption is required in the application.
 This is highlighted in the source code using comments.
 
 \section{Conclusion}
 We've compared our results to the existing AVR implementation by Eisenbarth et al \cite{eisenbarth2012compact} and the GNU AVR-Crypto-Lib \cite{avr_crypto_lib} (which was written in standard C and is only provided as a baseline reference).
-We are pleased to announce we were able to halve the code size and gain about 18\% speed increase. (Table~\ref{numbers}.)
+We are pleased to announce we were able to reduce the code size by two thirds and gain about 18\% speed increase. (Table~\ref{numbers}.)
 We note that having access to a larger SRAM could allow the lookup tables for the speed-optimized version to incur a lower overhead, and reduce an estimated 992 cycles per encryption (12\%). 
 Overall, we managed to push the limits of the PRESENT implementation and establish a wide spectrum of techniques to enable speed and size efficiency.
 \newcommand{\specialcell}[2][c]{%
