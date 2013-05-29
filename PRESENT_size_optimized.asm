@@ -30,7 +30,7 @@
 
 #ifdef DECRYPTION
 #define PACKED_SBOXES ; Use packed s-boxes (which need to be unpacked)
-                      ; This saves 4 bytes
+                      ; This saves 2 bytes
 #endif
 
 #ifdef PACKED_SBOXES
