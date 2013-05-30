@@ -80,7 +80,7 @@
 ; the index of the current round key byte being applied to the state in SRAM
 .def KEY_INDEX = r21
 ; the index of the current s-box input
-.def SBOX_BYTE = r21
+.def SBOX_INDEX = r21
 
 ; Low-byte offset to s-box in flash
 .def SBOX_DISPLACEMENT = r22
@@ -126,13 +126,14 @@ schedule_key:
 	; 3: xor key bits with round counter
 	; (as the 2 bytes align while rotating the key register)
 	eor KEY4, ROUND_COUNTER
+	; continue rotation
 	ldi ITEMP, 55
 	rcall rotate_left_i
 	; 2: s-box high nibble of key
 	mov ITEMP, KEY0
 	rcall sBoxHighNibble
 	mov KEY0, ITEMP
-	; check if we are at ROUNDS
+	; check if we are at ROUNDS for caller's loop
 	cpi ROUND_COUNTER, ROUNDS
 	ret
 
@@ -146,8 +147,8 @@ addRoundKey_byte:
 	; rotate key register to next byte
 	ldi ITEMP, 8
 	rcall rotate_left_i
-	dec KEY_INDEX
 	; loop over 8 bytes
+	dec KEY_INDEX
 	brne addRoundKey_byte
 
 	; point at the start of the block
@@ -223,26 +224,18 @@ unpack:
 
 ; apply loaded s-box to the full 8-byte state in SRAM
 sBoxLayer:
-	ldi SBOX_BYTE, 8
+	ldi SBOX_INDEX, 8
 sBoxLayer_byte:
 	; apply s-box procedure
 	ld ITEMP, X
 	rcall sBoxByte
 	st X+, ITEMP
-	dec SBOX_BYTE
 	; loop over 8 bytes
+	dec SBOX_INDEX
 	brne sBoxLayer_byte
 
 	; point at the start of the block
 	subi XL, 8
-	ret
-
-; load 4 consecutive input bytes from SRAM into state
-consecutive_input:
-	ld STATE0, X+
-	ld STATE1, X+
-	ld STATE2, X+
-	ld STATE3, X+
 	ret
 
 ; apply half the p-layer from state to output registers
@@ -284,6 +277,14 @@ setup_continue_pLayerByte:
 	clt                            ; clear T flag
 	rjmp continue_pLayerByte       ; do the second part
 
+; load 4 input bytes from SRAM into state registers
+consecutive_input:
+	ld STATE0, X+
+	ld STATE1, X+
+	ld STATE2, X+
+	ld STATE3, X+
+	ret
+
 ; apply the p-layer to the full 8-byte state in SRAM
 pLayer:
 	; get high/left 4 bytes as p-layer input 
@@ -295,7 +296,7 @@ pLayer:
 	; get low/right 4 bytes as next p-layer input
 	rcall consecutive_input
 
-	; save SP-network output to SRAM
+	; save p-layer output to SRAM
 	dec XL
 	rcall interleaved_output
 	adiw XL, 9
@@ -303,10 +304,10 @@ pLayer:
 	; apply p-layer
 	rcall pLayerHalf
 
-	; save SP-network output to SRAM
+	; save p-layer output to SRAM
 	; fall through
 
-; save 4 interleaved output bytes to SRAM from back to front
+; save 4 bytes from output registers into SRAM from back to front
 ; leaves 1 byte untouched in between each saved byte
 interleaved_output:
 	st -X, OUTPUT0
@@ -372,7 +373,7 @@ encrypt:
 		; loop for ROUNDS
 		brne encrypt_update
 	; add final round key
-	rjmp addRoundKey
+	rjmp addRoundKey ; can be inlined if only encryption or decryption is needed
 #endif
 
 #ifdef DECRYPTION
@@ -420,6 +421,7 @@ decrypt:
 			; 3: xor key bits with round counter
 			; (as the 2 bytes align while rotating the key register)
 			eor KEY5, ROUND_COUNTER
+			; continue rotation
 			ldi ITEMP, 2
 			rcall rotate_left_i
 			; decrement round counter
@@ -428,5 +430,5 @@ decrypt:
 		; loop for ROUNDS
 		brne decrypt_update
 	; apply final round key
-	rjmp addRoundKey
+	rjmp addRoundKey ; can be inlined if only encryption or decryption is needed
 #endif
