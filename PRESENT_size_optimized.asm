@@ -229,8 +229,8 @@ unpack:
 	swap ITEMP                ; swap nibbles back
 	ret
 
-.macro sBoxLayer_macro
 ; apply loaded s-box to the full 8-byte state in SRAM
+.macro sBoxLayer_macro
 	ldi SBOX_INDEX, 8
 sBoxLayer_byte:
 	; apply s-box
