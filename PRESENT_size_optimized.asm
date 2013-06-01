@@ -55,7 +55,7 @@
 .def KEY8 = r8
 .def KEY9 = r9
 
-; State (these hold the input on which the round key and s-box layer are applied)
+; State (these hold the p-layer input read from SRAM)
 .def STATE0 = r10
 .def STATE1 = r11
 .def STATE2 = r12
