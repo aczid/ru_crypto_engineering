@@ -25,22 +25,22 @@
 ; After having called encrypt or decrypt X will point to the start of the input
 
 ; Comment out either to omit
-#define ENCRYPTION ; (can save 26 bytes by omitting)
-#define DECRYPTION ; (can save 64 bytes by omitting)
+#define ENCRYPTION ; (can save 26 bytes if omitted)
+#define DECRYPTION ; (can save 64 bytes if omitted)
 
-;#define PRESENT_128 ; Use 128-bit keys
+;#define PRESENT_128 ; Use 128-bit keys (adds 24 bytes)
 
 #ifdef DECRYPTION
-#define PACKED_SBOXES ; Use packed s-boxes (which need to be unpacked)
-                      ; This saves 2 bytes
+#define PACKED_SBOXES ; Use packed s-boxes (saves 2 bytes)
 #endif
 
 #ifdef PACKED_SBOXES
-#define QUANTIZE_TIMING ; Avoid timing attacks when unpacking s-box values
+#define QUANTIZE_TIMING ; Avoid timing attacks (adds 6 bytes)
 #endif
 
 ;#define RELOCATABLE_SBOXES ; This makes s-boxes relocatable in flash
                             ; otherwise they are mapped at 0x100 and 0x200
+                            ; (adds 6 bytes)
 
 ; Number of rounds
 .equ ROUNDS = 31
