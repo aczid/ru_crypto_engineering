@@ -369,13 +369,13 @@ encrypt:
 		rcall pLayer
 
 		; schedule next key
-		; can be inlined if only encryption or decryption is needed
+		; can be inlined if only encryption is needed
 		rcall schedule_key
 
 		; loop for ROUNDS
 		brne encrypt_update
 	; add final round key
-	rjmp addRoundKey ; can be inlined if only encryption or decryption is needed
+	rjmp addRoundKey ; can be inlined if only encryption is needed
 #endif
 
 #ifdef DECRYPTION
@@ -386,7 +386,7 @@ decrypt:
 
 	; schedule key for last round
 	schedule_last_key:
-		; can be inlined if only encryption or decryption is needed
+		; can be inlined if only decryption is needed
 		rcall schedule_key
 		brne schedule_last_key
 
@@ -433,5 +433,5 @@ decrypt:
 		; loop for ROUNDS
 		brne decrypt_update
 	; apply final round key
-	rjmp addRoundKey ; can be inlined if only encryption or decryption is needed
+	rjmp addRoundKey ; can be inlined if only decryption is needed
 #endif
