@@ -38,9 +38,10 @@
 \textbf{This paper presents high-speed and low-size assembly implementations of the 80-bit version of the PRESENT cipher for the AVRtiny family of microcontrollers. We report new speed and size records for our implementation, with the speed-optimized version achieving a full encryption in 8721 clock cycles and the size-optimized version compressing the cipher down to 306 bytes; the previous state of the art for AVRtiny achieved 10723 clock cycles for encryption with a size of 936 bytes. Along with the two implementation extrema (speed \& size optimized versions), we offer insight into techniques and representations that utilize the time-memory tradeoff and provide intermediate solutions for various configurations.\\Keywords: PRESENT, AVR, tinyAVR, software implementation.}
 \end{abstract}
 \section{Introduction}
-Modern computer science is constantly witnessing an extensive and large scale deployment of tiny computing devices. Information processing and wireless communication are being thoroughly integrated into everyday objects and activities, developing a large distributed mobile infrastructure and ushering in the era of ubiquitous computing. RFID tags attached to products, cardiac pacemakers, fire-detecting sensor nodes and the like need to operate \emph{securely} under particularly \emph{restricted conditions}, namely low battery life, small processing power and bandwidth-demanding ad-hoc network protocols. To achieve sustainable security in this new landscape, researchers have developed new cryptographic primitives and techniques, namely lightweight cryptographic ciphers such as PRESENT~\cite{bogdanov2007present}, Klein~\cite{gong2012klein}, LED~\cite{guo2011led} and others.
+Modern society is constantly witnessing an extensive and large scale deployment of tiny computing devices. Information processing and wireless communication are being thoroughly integrated into everyday objects and activities, developing a large distributed mobile infrastructure and ushering in the era of ubiquitous computing. RFID tags attached to products, cardiac pacemakers, fire-detecting sensor nodes and the like need to operate \emph{securely} under particularly \emph{restricted conditions}, namely low battery life, small processing power and bandwidth-demanding ad-hoc network protocols. To achieve sustainable security in this new landscape, researchers have developed new cryptographic primitives and techniques, namely lightweight cryptographic ciphers such as PRESENT~\cite{bogdanov2007present}, Klein~\cite{gong2012klein}, LED~\cite{guo2011led} and others.
 
-The majority of these ciphers was designed with hardware performance in mind, thus most software implementations are still inefficient. For instance, the AVR-Crypto-Lib~\cite{avr_crypto_lib} often resorts to C language implementations, resulting in 100k clock cycles for a single encryption with PRESENT. AVR microcontrollers are encountered very often regarding the Internet of Things and ubiquitous computing, thus they are an interesting platform on which to enable and optimize lightweight ciphers.
+The majority of these ciphers was designed with hardware performance in mind, leaving most software implementations relatively inefficient. For instance, the AVR-Crypto-Lib~\cite{avr_crypto_lib} often resorts to C language implementations, resulting in 100k clock cycles for a single encryption with PRESENT. The University of Leuven has initiated a project to draft efficient assembly implementations of various lightweight ciphers on resource-constrained AVR devices to make fair comparisons about their relative efficiency. The contribution by Eisenbarth~\cite{eisenbarth2012compact} achieves an encryption in roughly 11k clock cycles.
+AVR microcontrollers are often encountered regarding the Internet of Things and ubiquitous computing, and moreover serve as a good model of a limited instruction set architecture, thus they are an interesting platform on which to enable and optimize lightweight ciphers.
 
 \textbf{Our contribution.} This paper describes a speed-optimized and a size-optimized implementation of the PRESENT cipher on the ATtiny45, with the aid of algorithmic improvements and efficient programming techniques. Our speed-optimized version improves the state of the art~\cite{eisenbarth2012compact} by 18\%, while the size-optimized version is 66\% smaller than the smallest known implementation~\cite{eisenbarth2012compact}.\\
 Algorithmic improvement:
@@ -175,6 +176,7 @@ In this direction, work by Hutter \& Schwabe~\cite{hutternacl} on ATmega\footnot
 Using these observations, they crafted four 256-byte lookup tables (1024 bytes in total) that \emph{merge} the S-Box and the permutation layer and as a result, the whole SP network is performed via table lookups.\\
 \textbf{Performance.} The 1024 byte lookup tables eliminate the need for an independent permutation layer, providing us with the fastest available solution. On the downside, we have to perform one lookup for every two bits, resulting in 32 lookups for a 64-bit state (compared to the Squared S-Box that required only 8 lookups for a 64-bit state). Moreover, we need 1024 bytes to store the tables, thus it is not possible to transfer them to the SRAM. The 33\% speedup obtained in section \ref{ssbox} is only possible in an AVR microcontroller with at least 1024 bytes of internal\footnote{Additional external SRAM is not an option, since it is at least as slow as flash memory.} SRAM, for instance ATtiny1634.\\
 \textbf{Time-memory tradeoff.} We conclude the discussion on the substitution/permutation techniques by presenting all the proposed solutions (original, squared or merged S-Box) in the form of a spectrum diagram. Depending on the requirements, resources or limitations induced, one may choose the most suitable representation, with the aid of the following spectrum diagram.
+% TODO reviewer suggested we replace this with a table
 \begin{figure}[h]
 \centering
 \includegraphics[scale=0.3]{spectrum}
@@ -207,7 +209,7 @@ mov ZH , high_part_of_address;
 mov ZL , low_part_of_address; 
 lpm register , Z ;
 \end{verbatim}
-The lookup operations consists of two \texttt{mov} and one \texttt{lpm} instruction. Memory is adresses by using 16 bits, so the first \texttt{mov} loads the high part, while the second \texttt{mov} loads the table index that will be accessed.\\
+The lookup operations consists of two \texttt{mov} and one \texttt{lpm} instruction. Memory is addressed using 16 bits pointers, so the first \texttt{mov} loads the high part, while the second \texttt{mov} loads the table index that will be accessed.\\
 \textbf{Table alignment.} We aim to keep the changes required in the high part (\texttt{ZH}) to a minimum. Thus, we align the four 256-byte tables required for the merged SP approach in section \ref{msbox} such that they can be accessed by using only the  low part (\texttt{ZL}) register as an index and keeping \texttt{ZH} unchanged. Elaborating, the four lookup tables start from \texttt{0x0600, 0x0700, 0x0800, 0x0900} respectively and thus, the 8 high bits of the address part (\texttt{0x06, 0x07, 0x08, 0x09}) remain the same while the 8 low bits are sufficient to act as the table index, ranging from 0 to 255 (\texttt{0x00} to \texttt{0xFF}). \\
 \textbf{Memory access grouping.} Performing two lookup operations in two different tables requires a total of 10 clock cycles (2 \texttt{mov} to change the high part of the operation, 2 \texttt{mov} to change the index and 2 \texttt{lpm} to perform the actual lookup). However, performing two lookup operations on the \emph{same table} requires a total of 8 clock cycles (2 \texttt{mov} for the index, 2 \texttt{lpm} for the lookup), since the high part of the memory address remains the same. Thus, we 
 we try to perform the maximum amount of grouped table lookups, given the limited number of registers, since within each group, \texttt{ZH} remains the same. For instance the following sequence of operations, \emph{ lookupTable1(i), lookupTable2(k), lookupTable1(j), lookupTable2(m)} will transform to \emph{ lookupTable1(i), lookupTable1(j), lookupTable2(k), lookupTable2(m)} in order to group memory access.
@@ -256,7 +258,7 @@ The algorithm specifies that the key bits 15, 16, 17, 18, 19 must be XORed with 
 
 Here we will list some of the size improvements we were able to apply to the PRESENT algorithm.
 While these modifications make the algorithm operate more slowly, the reduction in size would allow the cipher to be included in microcontrollers with smaller available code area.
-Our version requires 204 AVR instructions (408 bytes of code) for both the encryption and decryption routines, plus two times 8 bytes for packed tables of S-Box values at memory addresses \texttt{0x100} and \texttt{0x200}.
+Our version requires 145  AVR instructions (290 bytes of code) for both the encryption and decryption routines, plus two times 8 bytes for packed tables of S-Box values at memory addresses \texttt{0x100} and \texttt{0x200}.
 We believe this should be sufficiently small for the code to be included in an AVR machine with 1K of available Flash storage, while still allowing over half of the available area to be devoted to application-specific code.
 
 Unfortunately, every opcode in the AVR instruction set is 16-bits wide, so there is nothing to be gained from exchanging any instructions for equivalent smaller ones (such as for example \textit{add Rd, 1} being more concisely expressed as \textit{inc Rd} on x86 machines).
@@ -266,7 +268,7 @@ Finally we note there are no `bulk' instructions which operate on several regist
 However, we do have access to some instructions that are specific to the AVR architecture and are uniquely suited to making parts of the code more condensed by virtue of their expressiveness, such as the \textit{swap} and \textit{cbr} instructions.
 
 \subsection{Serialization}
-The greatest size optimization we have implemented is serialization of the algorithm, keeping part of the state in SRAM while we operate on fewer registers.
+The greatest size optimization we have implemented is serialization of the algorithm, keeping part or most of the state in SRAM while we operate on fewer registers.
 This reduces the instruction count on all parts of the round update procedure except for key scheduling.
 
 We have chosen to keep 4 bytes of state in registers at a time, as we believe it allows us to apply the permutation layer of the algorithm in software with the most size-efficiency.
@@ -304,7 +306,10 @@ This would save 8 bytes per S-Box table to start with, but we need 5 to 8 instru
 \subsection{Permutation layer}
 The code to apply permutations to the state in software borrows heavily from the AVR implementation of PRESENT drafted in Leuven by Eisenbarth et al.~\cite{eisenbarth2012compact}.
 Since the permutation follows a 4-bit period in the input it seems most efficient to use 4 bytes of I/O when rotating bits off of registers into corresponding new positions.
-In the Eisenbarth implementation one bit is rolled off from 4 state registers into one output register and this block is done twice, completing one output byte. It has made ingenious use of the side-effect that both the input and the output are being rotated, allowing the operation to be reversed depending on the offset at which the procedure is called.
+In the Eisenbarth implementation one bit is rolled off from 4 state registers into one output register and this block is done twice, completing one output byte.
+%It has made ingenious use of the side-effect that both the input and the output are being rotated, allowing the operation to be reversed depending on the offset at which the procedure is called.
+
+Rather than using extra code to invert the permutation layer, we use the PRESENT author's design of the bit permutation to undo it by applying it twice more (that is $P(P(P(i))) = i$ for each bit $i$).
 
 \subsection{Branching on SREG flags}
 A subtle but real size optimization we implemented focused on the code used to drive repeated operations.
@@ -339,14 +344,18 @@ The code to substitute a byte simply re-uses a nibble-wise operation while swapp
 In the permutation procedure the rotation operations on 4 input bits are done twice, to complete one output byte.
 
 \subsection{Keying and key scheduling}
-Because we have serialized part of the algorithm our key register needs to be rotated when changing the context between steps that apply to the higher and lower 4 bytes of the cipher's state.
-Because we required a procedure to rotate the key register for key scheduling anyway, that code can be reused for this purpose, and we can still apply the exclusive-or to part of the key register in the ideal position (i.e. where the bytes of the key register line up with the round counter register), as explained in Section~\ref{key_xor}.
+The round key is applied to the state in the SRAM by reading, XORing and writing one byte to/from a register at a time.
+Because we required a procedure to rotate the key register for key scheduling anyway, that code can be reused to align the first key register with byte this loaded byte.
+We still apply the exclusive-or to part of the key register in the ideal position (i.e. where the bytes of the key register line up with the round counter register), as explained in Section~\ref{key_xor}.
+This leads to smaller code than rotating once and shifting bits of the round counter back and forth.
 
-The inverse key scheduling procedure is only needed in the decryption routine, so we were able to inline it into the decryption round and combine the operations for key scheduling and rotating the register to the appropriate position for the next round.
+The inverse key scheduling procedure is only needed in the decryption routine, so we were able to inline it into the decryption round.
 
-\subsection{Reducing code size for specific applications}
+\subsection{Using the code for specific applications}
 While the attained size of our implementation of PRESENT should suffice for use in real-world applications, some of the input and output procedures as well as the S-Box unpacking code can be omitted when only encryption or encryption is required in the application.
-This is highlighted in the source code using comments.
+This is highlighted in the source code using comments and \textit{define} statements.
+
+The S-Boxes can be configured to be at addresses not aligned to 256-bytes at a cost of 3 more instructions (6 bytes), to allow all the code to fit in a consecutive block of flash storage.
 
 \section{Conclusion}
 We've compared our results to the existing AVR implementation by Eisenbarth et al \cite{eisenbarth2012compact} and the GNU AVR-Crypto-Lib \cite{avr_crypto_lib} (which was written in standard C and is only provided as a baseline reference).
