@@ -186,7 +186,7 @@ sBoxByte:
 sBoxHighNibble:
 	swap ITEMP
 	rcall sBoxLowNibble
-	swap ITEMP                ; swap nibbles back
+	swap ITEMP
 	ret
 
 sBoxLowNibble:
@@ -249,9 +249,9 @@ sBoxLayer:
 ; splice 1 input byte over 4 output bytes, which will then each hold 2 bits
 ; following a 4-bit period in the input
 pLayerNibble:
-	ror ITEMP                      ; move bit into carry
-	ror OUTPUT0                    ; move bit into output register
-	ror ITEMP                      ; etc
+	ror ITEMP   ; move bit into carry
+	ror OUTPUT0 ; move bit into output register
+	ror ITEMP   ; etc
 	ror OUTPUT1
 	ror ITEMP
 	ror OUTPUT2
@@ -259,11 +259,11 @@ pLayerNibble:
 	ror OUTPUT3
 	ret
 
-; apply the p-layer to the full 8-byte state in SRAM
+; apply the p-layer to the full 8-byte state in SRAM in two steps
 
-; reads 4 bytes from back to front and applies the pLayerByteprocedure to them,
-; resulting in 4 bytes of output which are pushed on the stack, and the output
-; is then saved to SRAM, where the two blocks are finally interleaved
+; reads 4 bytes from back to front and applies the pLayerNibble procedure to them
+; twice, resulting in 4 bytes of output which are pushed on the stack, the output
+; is then saved to SRAM, where two blocks become interleaved
 
 ; uses T (transfer) flag to re-do this block twice
 pLayer:
