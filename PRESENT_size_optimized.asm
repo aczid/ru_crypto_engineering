@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           284 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           280 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption):  90779
-; Cycle count (decryption): 110712
+; Cycle count (encryption):  94344
+; Cycle count (decryption): 116106
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -181,13 +181,14 @@ rotate_left_i:
 ; applying the s-box nibble-wise allows us to reuse the second half of the
 ; procedure as its own procedure when key scheduling
 ; reads from and writes to ITEMP
-; uses T (transfer) flag to re-do this block twice
-sBoxHighNibble:
-	clt                       ; clear T flag
-	swap ITEMP                ; swap nibbles
-	rjmp sBoxLowNibble        ; do the low nibble
 sBoxByte:
-	set                       ; set T flag
+	rcall sBoxLowNibble
+sBoxHighNibble:
+	swap ITEMP
+	rcall sBoxLowNibble
+	swap ITEMP                ; swap nibbles back
+	ret
+
 sBoxLowNibble:
 	; input (low nibble)
 	mov ZL, ITEMP             ; load s-box input
@@ -221,8 +222,6 @@ unpack:
 
 	cbr ITEMP, 0xf            ; clear low nibble in output
 	or ITEMP, SBOX_OUTPUT     ; save low nibble to output
-	brts sBoxHighNibble       ; do high nibble (if T flag set)
-	swap ITEMP                ; swap nibbles back
 	ret
 
 ; apply loaded s-box to the full 8-byte state in SRAM
@@ -247,6 +246,19 @@ sBoxLayer:
 	ret
 #endif
 
+; splice 1 input byte over 4 output bytes, which will then each hold 2 bits
+; following a 4-bit period in the input
+pLayerNibble:
+	ror ITEMP                      ; move bit into carry
+	ror OUTPUT0                    ; move bit into output register
+	ror ITEMP                      ; etc
+	ror OUTPUT1
+	ror ITEMP
+	ror OUTPUT2
+	ror ITEMP
+	ror OUTPUT3
+	ret
+
 ; apply the p-layer to the full 8-byte state in SRAM
 
 ; reads 4 bytes from back to front and applies the pLayerByteprocedure to them,
@@ -258,40 +270,27 @@ pLayer:
 	set
 	; point at end of block
 	adiw XL, 8
-continue_pLayerInput:
+continue_pLayerHalf:
 	; apply p-layer to 4 bytes at a time
 	ldi PLAYER_INDEX, 4
-pLayerInput_block:
+pLayerHalf_byte:
 	ld ITEMP, -X
 
-	; splice 1 input byte over 4 output bytes, which will then each hold 2 bits
-	; following a 4-bit period in the input
-	; uses H (half-carry) flag to re-do this block twice
-	pLayerByte:
-		seh                            ; set T flag
-	continue_pLayerByte:
-		ror ITEMP                      ; move bit into carry
-		ror OUTPUT0                    ; move bit into output register
-		ror ITEMP                      ; etc
-		ror OUTPUT1
-		ror ITEMP
-		ror OUTPUT2
-		ror ITEMP
-		ror OUTPUT3
-		brhs setup_continue_pLayerByte ; redo this block? (if T flag set)
+	rcall pLayerNibble
+	rcall pLayerNibble
 
 	; loop over 4 input bytes
 	dec PLAYER_INDEX
-	brne pLayerInput_block
+	brne pLayerHalf_byte
 
-	; save half p-layer output
+	; half p-layer output
 	push OUTPUT3
 	push OUTPUT2
 	push OUTPUT1
 	push OUTPUT0
 	
 	; do the next 4 bytes
-	brts setup_continue_pLayerInput
+	brts setup_continue_pLayerHalf
 
 ; interleave the two half blocks on the stack into SRAM from back to front
 ; uses T (transfer) flag to re-do this block twice
@@ -312,12 +311,9 @@ setup_continue_pLayerOutput:
 	clt
 	adiw XL, 9
 	rjmp continue_pLayerOutput
-setup_continue_pLayerByte:
-	clh
-	rjmp continue_pLayerByte
-setup_continue_pLayerInput:
+setup_continue_pLayerHalf:
 	clt
-	rjmp continue_pLayerInput
+	rjmp continue_pLayerHalf
 
 ; prepare for encryption or decryption
 .macro setup_macro
