@@ -356,6 +356,7 @@ setup:
 #ifdef ENCRYPTION
 
 ; encryption function: point X at 8 plaintext input bytes followed by 10 key input bytes
+; almost all procedure calls can be inlined if only encryption is needed
 encrypt:
 	rcall setup
 	encrypt_update:
@@ -369,24 +370,23 @@ encrypt:
 		rcall pLayer
 
 		; schedule next key
-		; can be inlined if only encryption is needed
 		rcall schedule_key
 
 		; loop for ROUNDS
 		brne encrypt_update
 	; add final round key
-	rjmp addRoundKey ; can be inlined if only encryption is needed
+	rjmp addRoundKey
 #endif
 
 #ifdef DECRYPTION
 
 ; decryption function: point X at 8 ciphertext input bytes followed by 10 key input bytes
+; almost all procedure calls can be inlined if only decryption is needed
 decrypt:
 	rcall setup
 
 	; schedule key for last round
 	schedule_last_key:
-		; can be inlined if only decryption is needed
 		rcall schedule_key
 		brne schedule_last_key
 
@@ -433,5 +433,5 @@ decrypt:
 		; loop for ROUNDS
 		brne decrypt_update
 	; apply final round key
-	rjmp addRoundKey ; can be inlined if only decryption is needed
+	rjmp addRoundKey
 #endif
