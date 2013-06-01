@@ -141,6 +141,7 @@ schedule_key:
 addRoundKey:
 	ldi KEY_INDEX, 8
 addRoundKey_byte:
+	; apply round key
 	ld STATE0, X
 	eor STATE0, KEY0
 	st X+, STATE0
@@ -180,35 +181,35 @@ rotate_left_i:
 ; reads from and writes to ITEMP
 ; uses T (transfer) flag to re-do this block twice
 sBoxHighNibble:
-	clt                   ; clear T flag
-	swap ITEMP            ; swap nibbles
-	rjmp sBoxLowNibble    ; do the low nibble
+	clt                       ; clear T flag
+	swap ITEMP                ; swap nibbles
+	rjmp sBoxLowNibble        ; do the low nibble
 sBoxByte:
-	set                   ; set T flag
+	set                       ; set T flag
 sBoxLowNibble:
 	; input (low nibble)
-	mov ZL, ITEMP         ; load s-box input
-	cbr ZL, 0xf0          ; clear high nibble in s-box input
+	mov ZL, ITEMP             ; load s-box input
+	cbr ZL, 0xf0              ; clear high nibble in s-box input
 #ifdef RELOCATABLE_SBOXES
-	add ZL, SBOX_DISPLACEMENT
+	add ZL, SBOX_DISPLACEMENT ; displacement for s-box pointer
 #endif
 #ifdef PACKED_SBOXES
-	asr ZL                ; halve input, take carry
+	asr ZL                    ; halve input, take carry
 #endif
 
 	; output (low nibble)
-	lpm SBOX_OUTPUT, Z    ; get s-box output
+	lpm SBOX_OUTPUT, Z        ; get s-box output
 
 #ifdef PACKED_SBOXES
-	brcs odd_unpack       ; 2 cycles if true, 1 if false
+	brcs odd_unpack           ; 2 cycles if true, 1 if false
 even_unpack:
-	swap SBOX_OUTPUT      ; 1 cycle
+	swap SBOX_OUTPUT          ; 1 cycle
   #ifdef QUANTIZE_TIMING
-	rjmp unpack           ; 2 cycles
+	rjmp unpack               ; 2 cycles
   #endif
 odd_unpack:                   ; avoid timing attacks
   #ifdef QUANTIZE_TIMING
-	nop                   ; 1 cycle
+	nop                       ; 1 cycle
 	nop
   #endif
 ; 4 cycles total
@@ -216,17 +217,17 @@ unpack:
 	cbr SBOX_OUTPUT, 0xf0
 #endif
 
-	cbr ITEMP, 0xf        ; clear low nibble in s-box input
-	or ITEMP, SBOX_OUTPUT ; save low nibble to output register
-	brts sBoxHighNibble   ; do high nibble (if T flag set)
-	swap ITEMP            ; swap nibbles back
+	cbr ITEMP, 0xf            ; clear low nibble in output
+	or ITEMP, SBOX_OUTPUT     ; save low nibble to output
+	brts sBoxHighNibble       ; do high nibble (if T flag set)
+	swap ITEMP                ; swap nibbles back
 	ret
 
 ; apply loaded s-box to the full 8-byte state in SRAM
 sBoxLayer:
 	ldi SBOX_INDEX, 8
 sBoxLayer_byte:
-	; apply s-box procedure
+	; apply s-box
 	ld ITEMP, X
 	rcall sBoxByte
 	st X+, ITEMP
@@ -368,6 +369,7 @@ encrypt:
 		rcall pLayer
 
 		; schedule next key
+		; can be inlined if only encryption or decryption is needed
 		rcall schedule_key
 
 		; loop for ROUNDS
@@ -384,6 +386,7 @@ decrypt:
 
 	; schedule key for last round
 	schedule_last_key:
+		; can be inlined if only encryption or decryption is needed
 		rcall schedule_key
 		brne schedule_last_key
 
