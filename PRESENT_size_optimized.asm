@@ -291,7 +291,7 @@ pLayer:
 	; get high/left 4 bytes as p-layer input 
 	rcall consecutive_input
 
-	; apply p-layer
+	; apply p-layer half
 	rcall pLayerHalf
 
 	; get low/right 4 bytes as next p-layer input
@@ -302,7 +302,7 @@ pLayer:
 	rcall interleaved_output
 	adiw XL, 9
 
-	; apply p-layer
+	; apply other p-layer half
 	rcall pLayerHalf
 
 	; save p-layer output to SRAM
