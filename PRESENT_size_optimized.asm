@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           286 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           284 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption):  90934
-; Cycle count (decryption): 111022
+; Cycle count (encryption):  90779
+; Cycle count (decryption): 110712
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -251,14 +251,14 @@ sBoxLayer:
 
 ; reads 4 bytes from back to front and applies the pLayerByteprocedure to them,
 ; resulting in 4 bytes of output which are pushed on the stack, and the output
-; is then saved to SRAM in two steps, where the two blocks are interleaved
+; is then saved to SRAM, where the two blocks are finally interleaved
 
 ; uses T (transfer) flag to re-do this block twice
 pLayer:
 	set
+	; point at end of block
+	adiw XL, 8
 continue_pLayerInput:
-	; point at middle or end of block
-	adiw XL, 4
 	; apply p-layer to 4 bytes at a time
 	ldi PLAYER_INDEX, 4
 pLayerInput_block:
@@ -290,14 +290,14 @@ pLayerInput_block:
 	push OUTPUT1
 	push OUTPUT0
 	
-	; point at middle or end of block
-	adiw XL, 4
+	; do the next 4 bytes
 	brts setup_continue_pLayerInput
 
 ; interleave the two half blocks on the stack into SRAM from back to front
 ; uses T (transfer) flag to re-do this block twice
 pLayerOutput:
 	set
+	adiw XL, 7
 continue_pLayerOutput:
 	ldi PLAYER_INDEX, 4
 pLayerOutput_block:
@@ -307,11 +307,10 @@ pLayerOutput_block:
 	dec PLAYER_INDEX
 	brne playerOutput_block
 	brts setup_continue_pLayerOutput
-	inc XL
 	ret
 setup_continue_pLayerOutput:
 	clt
-	adiw XL, 7
+	adiw XL, 9
 	rjmp continue_pLayerOutput
 setup_continue_pLayerByte:
 	clh
