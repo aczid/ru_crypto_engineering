@@ -25,8 +25,8 @@
 ; After having called encrypt or decrypt X will point to the start of the input
 
 ; Comment out either to omit
-#define ENCRYPTION
-#define DECRYPTION
+#define ENCRYPTION ; (can save 26 bytes by omitting)
+#define DECRYPTION ; (can save 32 bytes by omitting)
 
 #ifdef DECRYPTION
 #define PACKED_SBOXES ; Use packed s-boxes (which need to be unpacked)
@@ -117,7 +117,7 @@ INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
 #endif
 
 ; key scheduling
-schedule_key:
+.macro schedule_key_macro
 	; increment round counter
 	inc ROUND_COUNTER
 	; 1: rotate key register left by 61 positions
@@ -135,7 +135,13 @@ schedule_key:
 	mov KEY0, ITEMP
 	; check if we are at ROUNDS for caller's loop
 	cpi ROUND_COUNTER, ROUNDS
+.endmacro
+
+#if defined(ENCRYPTION) && defined(DECRYPTION)
+schedule_key:
+	schedule_key_macro
 	ret
+#endif
 
 ; apply last computed round key to the full 8-byte state in SRAM
 addRoundKey:
@@ -223,8 +229,8 @@ unpack:
 	swap ITEMP                ; swap nibbles back
 	ret
 
+.macro sBoxLayer_macro
 ; apply loaded s-box to the full 8-byte state in SRAM
-sBoxLayer:
 	ldi SBOX_INDEX, 8
 sBoxLayer_byte:
 	; apply s-box
@@ -237,7 +243,13 @@ sBoxLayer_byte:
 
 	; point at the start of the block
 	subi XL, 8
+.endmacro
+
+#if defined(ENCRYPTION) && defined(DECRYPTION)
+sBoxLayer:
+	sBoxLayer_macro
 	ret
+#endif
 
 ; apply half the p-layer from state to output registers
 pLayerHalf:
@@ -322,7 +334,7 @@ interleaved_output:
 	ret
 
 ; prepare for encryption or decryption
-setup:
+.macro setup_macro
 	; clear zero register
 	clr ZERO
 	; clear round counter
@@ -351,26 +363,43 @@ setup:
 	ld KEY9, X+
 	; point at the start of the input
 	subi XL, 18
+.endmacro
+
+#if defined(ENCRYPTION) && defined(DECRYPTION)
+setup:
+	setup_macro
 	ret
+#endif
 
 #ifdef ENCRYPTION
 
 ; encryption function: point X at 8 plaintext input bytes followed by 10 key input bytes
-; almost all procedure calls can be inlined if only encryption is needed
 encrypt:
+	#ifndef DECRYPTION
+	setup_macro
+	#else
 	rcall setup
+	#endif
 	encrypt_update:
 		; apply round key
 		rcall addRoundKey
 
 		; apply s-box layer
+		#ifndef DECRYPTION
+		sBoxLayer_macro
+		#else
 		rcall sBoxLayer
+		#endif
 
 		; apply p-layer
 		rcall pLayer
 
 		; schedule next key
+		#ifndef DECRYPTION
+		schedule_key_macro
+		#else
 		rcall schedule_key
+		#endif
 
 		; loop for ROUNDS
 		brne encrypt_update
@@ -381,13 +410,20 @@ encrypt:
 #ifdef DECRYPTION
 
 ; decryption function: point X at 8 ciphertext input bytes followed by 10 key input bytes
-; almost all procedure calls can be inlined if only decryption is needed
 decrypt:
+	#ifndef ENCRYPTION
+	setup_macro
+	#else
 	rcall setup
+	#endif
 
 	; schedule key for last round
 	schedule_last_key:
+		#ifndef ENCRYPTION
+		schedule_key_macro
+		#else
 		rcall schedule_key
+		#endif
 		brne schedule_last_key
 
 	; initialize inv s-box
@@ -410,7 +446,11 @@ decrypt:
 		rcall pLayer
 
 		; apply inverse s-box layer
+		#ifndef ENCRYPTION
+		sBoxLayer_macro
+		#else
 		rcall sBoxLayer
+		#endif
 
 		; schedule previous key
 		inv_schedule_key:
