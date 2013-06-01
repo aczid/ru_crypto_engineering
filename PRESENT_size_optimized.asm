@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           290 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           286 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption):  90407
-; Cycle count (decryption): 109968
+; Cycle count (encryption):  90934
+; Cycle count (decryption): 111022
 
 ; USE
 ; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
@@ -55,40 +55,36 @@
 .def KEY8 = r8
 .def KEY9 = r9
 
-; State (these hold the p-layer input read from SRAM)
-.def STATE0 = r10
-.def STATE1 = r11
-.def STATE2 = r12
-.def STATE3 = r13
-
 ; Output registers (these hold p-layer output to be saved to SRAM)
-.def OUTPUT0 = r14
-.def OUTPUT1 = r15
-.def OUTPUT2 = r16
-.def OUTPUT3 = r17
+.def OUTPUT0 = r10
+.def OUTPUT1 = r11
+.def OUTPUT2 = r12
+.def OUTPUT3 = r13
 
 ; Never used but needed for its 0 value to add carry bits with adc
-.def ZERO = r18
-
-; Register for s-box output
-.def SBOX_OUTPUT = r19
+.def ZERO = r14
 
 ; The round counter
-.def ROUND_COUNTER = r20
+.def ROUND_COUNTER = r16
+
+; Register for s-box output
+.def SBOX_OUTPUT = r17
 
 ; Shared register
 ; the index of the current round key byte being applied to the state in SRAM
-.def KEY_INDEX = r21
+.def KEY_INDEX = r18
 ; the index of the current s-box input
-.def SBOX_INDEX = r21
+.def SBOX_INDEX = r18
+; the index of the current p-layer input
+.def PLAYER_INDEX = r18
 
 ; Low-byte offset to s-box in flash
-.def SBOX_DISPLACEMENT = r22
+.def SBOX_DISPLACEMENT = r19
 
 ; Register we can use for immediate values
-.def ITEMP = r23
+.def ITEMP = r20
 
-; registers r24..r25 are unused
+; registers r21..r25 are unused
 ; registers r26..r31 are X, Y and Z
 
 ; the Z register is used to point to these s-box tables
@@ -148,9 +144,9 @@ addRoundKey:
 	ldi KEY_INDEX, 8
 addRoundKey_byte:
 	; apply round key
-	ld STATE0, X
-	eor STATE0, KEY0
-	st X+, STATE0
+	ld ITEMP, X
+	eor ITEMP, KEY0
+	st X+, ITEMP
 	; rotate key register to next byte
 	ldi ITEMP, 8
 	rcall rotate_left_i
@@ -251,16 +247,20 @@ sBoxLayer:
 	ret
 #endif
 
-; apply half the p-layer from state to output registers
-pLayerHalf:
-	mov ITEMP, STATE3
-	rcall pLayerByte
-	mov ITEMP, STATE2
-	rcall pLayerByte
-	mov ITEMP, STATE1
-	rcall pLayerByte
-	mov ITEMP, STATE0
-	; fall through
+; apply the p-layer to the full 8-byte state in SRAM
+
+; pLayerInput reads 4 bytes from back to front and applies the pLayerByte
+; procedure to them, resulting in 4 bytes of output which are pushed on the stack.
+; The output is then saved to SRAM in two steps, where the bytes are interleaved
+
+; uses T (transfer) flag to re-do this block twice
+pLayer:
+	set
+continue_pLayerInput:
+	adiw XL, 4
+	ldi PLAYER_INDEX, 4
+pLayerInput_block:
+	ld ITEMP, -X
 
 ; pLayerByte
 ; approach stolen from KULeuven implementation
@@ -272,9 +272,9 @@ pLayerHalf:
 ; after 4 calls from different input registers we will have collected 4
 ; completed output bytes following this 4-bit period
 
-; uses T (transfer) flag to re-do this block twice
+; uses H (half-carry) flag to re-do this block twice
 pLayerByte:
-	set                            ; set T flag
+	seh                            ; set T flag
 continue_pLayerByte:
 	ror ITEMP                      ; move bit into carry
 	ror OUTPUT0                    ; move bit into output register
@@ -284,54 +284,43 @@ continue_pLayerByte:
 	ror OUTPUT2
 	ror ITEMP
 	ror OUTPUT3
-	brts setup_continue_pLayerByte ; redo this block? (if T flag set)
+	brhs setup_continue_pLayerByte ; redo this block? (if T flag set)
+
+	dec PLAYER_INDEX
+	brne pLayerInput_block
+	push OUTPUT3
+	push OUTPUT2
+	push OUTPUT1
+	push OUTPUT0
+	
+	; read next input
+	adiw XL, 4
+	brts setup_continue_pLayerInput
+
+; interleave the two blocks
+pLayerOutput:
+	set
+continue_pLayerOutput:
+	ldi PLAYER_INDEX, 4
+pLayerOutput_block:
+	pop ITEMP
+	st -X, ITEMP
+	dec XL
+	dec PLAYER_INDEX
+	brne playerOutput_block
+	brts setup_continue_pLayerOutput
+	inc XL
 	ret
+setup_continue_pLayerOutput:
+	clt
+	adiw XL, 7
+	rjmp continue_pLayerOutput
 setup_continue_pLayerByte:
-	clt                            ; clear T flag
-	rjmp continue_pLayerByte       ; do the second part
-
-; load 4 input bytes from SRAM into state registers
-consecutive_input:
-	ld STATE0, X+
-	ld STATE1, X+
-	ld STATE2, X+
-	ld STATE3, X+
-	ret
-
-; apply the p-layer to the full 8-byte state in SRAM
-pLayer:
-	; get high/left 4 bytes as p-layer input 
-	rcall consecutive_input
-
-	; apply p-layer half
-	rcall pLayerHalf
-
-	; get low/right 4 bytes as next p-layer input
-	rcall consecutive_input
-
-	; save p-layer output to SRAM
-	dec XL
-	rcall interleaved_output
-	adiw XL, 9
-
-	; apply other p-layer half
-	rcall pLayerHalf
-
-	; save p-layer output to SRAM
-	; fall through
-
-; save 4 bytes from output registers into SRAM from back to front
-; leaves 1 byte untouched in between each saved byte
-interleaved_output:
-	st -X, OUTPUT0
-	dec XL
-	st -X, OUTPUT1
-	dec XL
-	st -X, OUTPUT2
-	dec XL
-	st -X, OUTPUT3
-	dec XL
-	ret
+	clh
+	rjmp continue_pLayerByte
+setup_continue_pLayerInput:
+	clt
+	rjmp continue_pLayerInput
 
 ; prepare for encryption or decryption
 .macro setup_macro
