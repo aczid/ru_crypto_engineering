@@ -28,7 +28,7 @@
 #define ENCRYPTION ; (can save 26 bytes by omitting)
 #define DECRYPTION ; (can save 64 bytes by omitting)
 
-#define PRESENT_128 ; Use 128-bit keys
+;#define PRESENT_128 ; Use 128-bit keys
 
 #ifdef DECRYPTION
 #define PACKED_SBOXES ; Use packed s-boxes (which need to be unpacked)
