@@ -186,7 +186,7 @@ addRoundKey_byte:
 	#endif
 	; fall through
 
-; rotate the 80-bit key register left by the number in ITEMP
+; rotate the 80 or 128-bit key register left by the number in ITEMP
 rotate_left_i:
 #ifdef PRESENT_128
 	lsl KEY15
