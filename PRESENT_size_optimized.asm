@@ -304,7 +304,7 @@ pLayerOutput_block:
 	st -X, ITEMP
 	dec XL
 	dec PLAYER_INDEX
-	brne playerOutput_block
+	brne pLayerOutput_block
 	brts setup_continue_pLayerOutput
 	ret
 setup_continue_pLayerOutput:
