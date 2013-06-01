@@ -28,6 +28,8 @@
 #define ENCRYPTION ; (can save 26 bytes by omitting)
 #define DECRYPTION ; (can save 64 bytes by omitting)
 
+#define PRESENT_128 ; Use 128-bit keys
+
 #ifdef DECRYPTION
 #define PACKED_SBOXES ; Use packed s-boxes (which need to be unpacked)
                       ; This saves 2 bytes
@@ -54,37 +56,42 @@
 .def KEY7 = r7
 .def KEY8 = r8
 .def KEY9 = r9
+.def KEY10 = r10
+.def KEY11 = r11
+.def KEY12 = r12
+.def KEY13 = r13
+.def KEY14 = r14
+.def KEY15 = r15
 
 ; Output registers (these hold p-layer output to be saved to SRAM)
-.def OUTPUT0 = r10
-.def OUTPUT1 = r11
-.def OUTPUT2 = r12
-.def OUTPUT3 = r13
+.def OUTPUT0 = r16
+.def OUTPUT1 = r17
+.def OUTPUT2 = r18
+.def OUTPUT3 = r19
 
 ; Never used but needed for its 0 value to add carry bits with adc
-.def ZERO = r14
+.def ZERO = r20
 
 ; The round counter
-.def ROUND_COUNTER = r16
+.def ROUND_COUNTER = r21
 
 ; Register for s-box output
-.def SBOX_OUTPUT = r17
+.def SBOX_OUTPUT = r22
 
 ; Shared register
 ; the index of the current round key byte being applied to the state in SRAM
-.def KEY_INDEX = r18
+.def KEY_INDEX = r23
 ; the index of the current s-box input
-.def SBOX_INDEX = r18
+.def SBOX_INDEX = r23
 ; the index of the current p-layer input
-.def PLAYER_INDEX = r18
+.def PLAYER_INDEX = r23
 
 ; Low-byte offset to s-box in flash
-.def SBOX_DISPLACEMENT = r19
+.def SBOX_DISPLACEMENT = r24
 
 ; Register we can use for immediate values
-.def ITEMP = r20
+.def ITEMP = r25
 
-; registers r15,r21..r25 are unused
 ; registers r26..r31 are X, Y and Z
 
 ; the Z register is used to point to these s-box tables
@@ -114,9 +121,25 @@ INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
 
 ; key scheduling
 .macro schedule_key_macro
+	
+.endmacro
+
+#if defined(ENCRYPTION) && defined(DECRYPTION)
+schedule_key:
+	schedule_key_macro
 	; increment round counter
 	inc ROUND_COUNTER
 	; 1: rotate key register left by 61 positions
+	#ifdef PRESENT_128
+	ldi ITEMP, 7
+	rcall rotate_left_i
+	; 3: xor key bits with round counter
+	; (as the 2 bytes align while rotating the key register)
+	eor KEY14, ROUND_COUNTER
+	; continue rotation
+	ldi ITEMP, 54
+	rcall rotate_left_i
+	#else
 	ldi ITEMP, 6
 	rcall rotate_left_i
 	; 3: xor key bits with round counter
@@ -125,17 +148,18 @@ INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
 	; continue rotation
 	ldi ITEMP, 55
 	rcall rotate_left_i
+	#endif
 	; 2: s-box high nibble of key
 	mov ITEMP, KEY0
+	#ifdef PRESENT_128
+	rcall sBoxByte
+	#else
 	rcall sBoxHighNibble
+	#endif
 	mov KEY0, ITEMP
 	; check if we are at ROUNDS for caller's loop
 	cpi ROUND_COUNTER, ROUNDS
-.endmacro
-
-#if defined(ENCRYPTION) && defined(DECRYPTION)
-schedule_key:
-	schedule_key_macro
+	
 	ret
 #endif
 
@@ -157,12 +181,26 @@ addRoundKey_byte:
 	; point at the start of the block
 	subi XL, 8
 	; rotate key register to align with the start of the block
+	#ifdef PRESENT_128
+	ldi ITEMP, 64
+	#else
 	ldi ITEMP, 16
+	#endif
 	; fall through
 
 ; rotate the 80-bit key register left by the number in ITEMP
 rotate_left_i:
+#ifdef PRESENT_128
+	lsl KEY15
+	rol KEY14
+	rol KEY13
+	rol KEY12
+	rol KEY11
+	rol KEY10
+	rol KEY9
+#else
 	lsl KEY9
+#endif
 	rol KEY8
 	rol KEY7
 	rol KEY6
@@ -172,7 +210,11 @@ rotate_left_i:
 	rol KEY2
 	rol KEY1
 	rol KEY0
+#ifdef PRESENT_128
+	adc KEY15, ZERO
+#else
 	adc KEY9, ZERO
+#endif
 	dec ITEMP
 	brne rotate_left_i
 	ret
@@ -299,12 +341,12 @@ pLayerOutput:
 	adiw XL, 7
 continue_pLayerOutput:
 	ldi PLAYER_INDEX, 4
-pLayerOutput_block:
+pLayerOutput_byte:
 	pop ITEMP
 	st -X, ITEMP
 	dec XL
 	dec PLAYER_INDEX
-	brne pLayerOutput_block
+	brne pLayerOutput_byte
 	brts setup_continue_pLayerOutput
 	ret
 setup_continue_pLayerOutput:
@@ -343,8 +385,18 @@ setup_continue_pLayerHalf:
 	ld KEY7, X+
 	ld KEY8, X+
 	ld KEY9, X+
+#ifdef PRESENT_128
+	ld KEY10, X+
+	ld KEY11, X+
+	ld KEY12, X+
+	ld KEY13, X+
+	ld KEY14, X+
+	ld KEY15, X+
+	subi XL, 24
+#else
 	; point at the start of the input
 	subi XL, 18
+#endif
 .endmacro
 
 #if defined(ENCRYPTION) && defined(DECRYPTION)
@@ -401,11 +453,7 @@ decrypt:
 
 	; schedule key for last round
 	schedule_last_key:
-		#ifndef ENCRYPTION
-		schedule_key_macro
-		#else
 		rcall schedule_key
-		#endif
 		brne schedule_last_key
 
 	; initialize inv s-box
@@ -438,8 +486,25 @@ decrypt:
 		inv_schedule_key:
 			; 2: inv s-box high nibble of key
 			mov ITEMP, KEY0
+			#ifdef PRESENT_128
+			rcall sBoxByte
+			#else
 			rcall sBoxHighNibble
+			#endif
+
 			mov KEY0, ITEMP
+
+			#ifdef PRESENT_128
+			; 1: rotate key register left by 67 positions
+			ldi ITEMP, 2
+			rcall rotate_left_i
+			; 3: xor key bits with round counter
+			; (as the 2 bytes align while rotating the key register)
+			eor KEY7, ROUND_COUNTER
+			; continue rotation
+			ldi ITEMP, 65
+			rcall rotate_left_i
+			#else
 			; 1: rotate key register left by 19 positions
 			ldi ITEMP, 17
 			rcall rotate_left_i
@@ -449,6 +514,8 @@ decrypt:
 			; continue rotation
 			ldi ITEMP, 2
 			rcall rotate_left_i
+			#endif
+
 			; decrement round counter
 			dec ROUND_COUNTER
 
