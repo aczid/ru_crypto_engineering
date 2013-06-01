@@ -207,7 +207,7 @@ even_unpack:
   #ifdef QUANTIZE_TIMING
 	rjmp unpack               ; 2 cycles
   #endif
-odd_unpack:                   ; avoid timing attacks
+odd_unpack:                       ; avoid timing attacks
   #ifdef QUANTIZE_TIMING
 	nop                       ; 1 cycle
 	nop
