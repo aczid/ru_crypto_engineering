@@ -84,7 +84,7 @@
 ; Register we can use for immediate values
 .def ITEMP = r20
 
-; registers r21..r25 are unused
+; registers r15,r21..r25 are unused
 ; registers r26..r31 are X, Y and Z
 
 ; the Z register is used to point to these s-box tables
@@ -249,55 +249,53 @@ sBoxLayer:
 
 ; apply the p-layer to the full 8-byte state in SRAM
 
-; pLayerInput reads 4 bytes from back to front and applies the pLayerByte
-; procedure to them, resulting in 4 bytes of output which are pushed on the stack.
-; The output is then saved to SRAM in two steps, where the bytes are interleaved
+; reads 4 bytes from back to front and applies the pLayerByteprocedure to them,
+; resulting in 4 bytes of output which are pushed on the stack, and the output
+; is then saved to SRAM in two steps, where the two blocks are interleaved
 
 ; uses T (transfer) flag to re-do this block twice
 pLayer:
 	set
 continue_pLayerInput:
+	; point at middle or end of block
 	adiw XL, 4
+	; apply p-layer to 4 bytes at a time
 	ldi PLAYER_INDEX, 4
 pLayerInput_block:
 	ld ITEMP, -X
 
-; pLayerByte
-; approach stolen from KULeuven implementation
+	; splice 1 input byte over 4 output bytes, which will then each hold 2 bits
+	; following a 4-bit period in the input
+	; uses H (half-carry) flag to re-do this block twice
+	pLayerByte:
+		seh                            ; set T flag
+	continue_pLayerByte:
+		ror ITEMP                      ; move bit into carry
+		ror OUTPUT0                    ; move bit into output register
+		ror ITEMP                      ; etc
+		ror OUTPUT1
+		ror ITEMP
+		ror OUTPUT2
+		ror ITEMP
+		ror OUTPUT3
+		brhs setup_continue_pLayerByte ; redo this block? (if T flag set)
 
-; splices 1 input byte over 4 output bytes, which will then each hold 2 bits
-; following a 4-bit period in the input
-
-; reads from ITEMP and saves to output registers
-; after 4 calls from different input registers we will have collected 4
-; completed output bytes following this 4-bit period
-
-; uses H (half-carry) flag to re-do this block twice
-pLayerByte:
-	seh                            ; set T flag
-continue_pLayerByte:
-	ror ITEMP                      ; move bit into carry
-	ror OUTPUT0                    ; move bit into output register
-	ror ITEMP                      ; etc
-	ror OUTPUT1
-	ror ITEMP
-	ror OUTPUT2
-	ror ITEMP
-	ror OUTPUT3
-	brhs setup_continue_pLayerByte ; redo this block? (if T flag set)
-
+	; loop over 4 input bytes
 	dec PLAYER_INDEX
 	brne pLayerInput_block
+
+	; save half p-layer output
 	push OUTPUT3
 	push OUTPUT2
 	push OUTPUT1
 	push OUTPUT0
 	
-	; read next input
+	; point at middle or end of block
 	adiw XL, 4
 	brts setup_continue_pLayerInput
 
-; interleave the two blocks
+; interleave the two half blocks on the stack into SRAM from back to front
+; uses T (transfer) flag to re-do this block twice
 pLayerOutput:
 	set
 continue_pLayerOutput:
