@@ -130,7 +130,7 @@ INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
 	; continue rotation
 	ldi ITEMP, 55
 	rcall rotate_left_i
-	; 2: s-box high nibble of key
+	; 2: s-box high nibble or first byte of key
 	mov ITEMP, KEY0
 #ifdef PRESENT_128
 	rcall sBoxByte
@@ -465,7 +465,7 @@ decrypt:
 
 		; schedule previous key
 		inv_schedule_key:
-			; 2: inv s-box high nibble of key
+			; 2: inv s-box high nibble or first byte of key
 			mov ITEMP, KEY0
 		#ifdef PRESENT_128
 			rcall sBoxByte
