@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           274 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           272 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption):  94396
-; Cycle count (decryption): 116158
+; Cycle count (encryption):  94395
+; Cycle count (decryption): 116157
 
 ; USE
 ; Point X at 8 input bytes followed by 10/16 key bytes and call encrypt or decrypt
@@ -69,29 +69,27 @@
 .def OUTPUT2 = r18
 .def OUTPUT3 = r19
 
-; Never used but needed for its 0 value to add carry bits with adc
-.def ZERO = r20
-
 ; The round counter
-.def ROUND_COUNTER = r21
+.def ROUND_COUNTER = r20
 
 ; Register for s-box output
-.def SBOX_OUTPUT = r22
+.def SBOX_OUTPUT = r21
 
 ; Shared register
 ; the index of the current round key byte being applied to the state in SRAM
-.def KEY_INDEX = r23
+.def KEY_INDEX = r22
 ; the index of the current s-box input
-.def SBOX_INDEX = r23
+.def SBOX_INDEX = r22
 ; the index of the current p-layer input
-.def PLAYER_INDEX = r23
+.def PLAYER_INDEX = r22
 
 ; Low-byte offset to s-box in flash
-.def SBOX_DISPLACEMENT = r24
+.def SBOX_DISPLACEMENT = r23
 
 ; Register for immediate values
-.def ITEMP = r25
+.def ITEMP = r24
 
+; r25 is unused
 ; registers r26..r31 are X, Y and Z
 
 ; the Z register is used to point to these s-box tables
@@ -198,9 +196,9 @@ rotate_left_i:
 	rol KEY1
 	rol KEY0
 #ifdef PRESENT_128
-	adc KEY15, ZERO
+	adc KEY15, YH
 #else
-	adc KEY9, ZERO
+	adc KEY9, YH
 #endif
 	dec ITEMP
 	brne rotate_left_i
@@ -348,8 +346,6 @@ setup_continue_pLayerHalf:
 
 ; prepare for encryption or decryption
 .macro setup_macro
-	; clear zero register
-	clr ZERO
 	; clear round counter
 	clr ROUND_COUNTER
 	; initialize s-box
