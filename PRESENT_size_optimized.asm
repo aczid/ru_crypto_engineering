@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           280 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           274 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption):  94344
-; Cycle count (decryption): 116106
+; Cycle count (encryption):  94396
+; Cycle count (decryption): 116158
 
 ; USE
 ; Point X at 8 input bytes followed by 10/16 key bytes and call encrypt or decrypt
@@ -364,27 +364,22 @@ setup_continue_pLayerHalf:
 	; point at the key bytes
 	adiw XL, 8
 	; load key from SRAM
-	ld KEY0, X+
-	ld KEY1, X+
-	ld KEY2, X+
-	ld KEY3, X+
-	ld KEY4, X+
-	ld KEY5, X+
-	ld KEY6, X+
-	ld KEY7, X+
-	ld KEY8, X+
-	ld KEY9, X+
+	clr YH
+	clr YL
 #ifdef PRESENT_128
-	ld KEY10, X+
-	ld KEY11, X+
-	ld KEY12, X+
-	ld KEY13, X+
-	ld KEY14, X+
-	ld KEY15, X+
+	ldi KEY_INDEX, 16
+#else
+	ldi KEY_INDEX, 10
+#endif
+	load_key:
+		ld ITEMP, X+
+		st Y+, ITEMP
+		dec KEY_INDEX
+		brne load_key
 	; point at the start of the input
+#ifdef PRESENT_128
 	subi XL, 24
 #else
-	; point at the start of the input
 	subi XL, 18
 #endif
 .endmacro
