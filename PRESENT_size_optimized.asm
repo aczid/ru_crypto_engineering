@@ -312,7 +312,7 @@ pLayerHalf_byte:
 	dec PLAYER_INDEX
 	brne pLayerHalf_byte
 
-	; half p-layer output
+	; push half p-layer output
 	push OUTPUT3
 	push OUTPUT2
 	push OUTPUT1
@@ -320,6 +320,7 @@ pLayerHalf_byte:
 	
 	; do the next 4 bytes
 	brts setup_continue_pLayerHalf
+	; fall through
 
 ; interleave the two half blocks on the stack into SRAM from back to front
 ; uses T (transfer) flag to re-do this block twice
