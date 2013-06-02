@@ -290,9 +290,11 @@ pLayerNibble:
 
 ; apply the p-layer to the full 8-byte state in SRAM in two steps
 
-; reads 4 bytes from back to front and applies the pLayerNibble procedure to them
-; twice, resulting in 4 bytes of output which are pushed on the stack, the output
-; is then saved to SRAM, where two blocks become interleaved
+; repeated half p-layer block:
+;   4 bytes are read from SRAM from back to front
+;   the pLayerNibble procedure is applied twice to each byte
+;   the resulting 4 bytes of output are pushed onto the stack
+; the output is saved to SRAM where the two half blocks become interleaved
 
 ; uses T (transfer) flag to re-do this block twice
 pLayer:
@@ -512,3 +514,4 @@ decrypt:
 	; apply final round key
 	rjmp addRoundKey
 #endif
+
