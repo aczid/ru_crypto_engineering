@@ -89,7 +89,7 @@
 ; Low-byte offset to s-box in flash
 .def SBOX_DISPLACEMENT = r24
 
-; Register we can use for immediate values
+; Register for immediate values
 .def ITEMP = r25
 
 ; registers r26..r31 are X, Y and Z
@@ -124,7 +124,7 @@ INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
 	; increment round counter
 	inc ROUND_COUNTER
 	; 1: rotate key register left by 61 positions
-	#ifdef PRESENT_128
+#ifdef PRESENT_128
 	ldi ITEMP, 7
 	rcall rotate_left_i
 	; 3: xor key bits with round counter
@@ -133,7 +133,7 @@ INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
 	; continue rotation
 	ldi ITEMP, 54
 	rcall rotate_left_i
-	#else
+#else
 	ldi ITEMP, 6
 	rcall rotate_left_i
 	; 3: xor key bits with round counter
@@ -142,14 +142,14 @@ INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
 	; continue rotation
 	ldi ITEMP, 55
 	rcall rotate_left_i
-	#endif
+#endif
 	; 2: s-box high nibble of key
 	mov ITEMP, KEY0
-	#ifdef PRESENT_128
+#ifdef PRESENT_128
 	rcall sBoxByte
-	#else
+#else
 	rcall sBoxHighNibble
-	#endif
+#endif
 	mov KEY0, ITEMP
 	; check if we are at ROUNDS for caller's loop
 	cpi ROUND_COUNTER, ROUNDS
@@ -179,11 +179,11 @@ addRoundKey_byte:
 	; point at the start of the block
 	subi XL, 8
 	; rotate key register to align with the start of the block
-	#ifdef PRESENT_128
+#ifdef PRESENT_128
 	ldi ITEMP, 64
-	#else
+#else
 	ldi ITEMP, 16
-	#endif
+#endif
 	; fall through
 
 ; rotate the 80 or 128-bit key register left by the number in ITEMP
@@ -390,6 +390,7 @@ setup_continue_pLayerHalf:
 	ld KEY13, X+
 	ld KEY14, X+
 	ld KEY15, X+
+	; point at the start of the input
 	subi XL, 24
 #else
 	; point at the start of the input
@@ -484,15 +485,15 @@ decrypt:
 		inv_schedule_key:
 			; 2: inv s-box high nibble of key
 			mov ITEMP, KEY0
-			#ifdef PRESENT_128
+		#ifdef PRESENT_128
 			rcall sBoxByte
-			#else
+		#else
 			rcall sBoxHighNibble
-			#endif
+		#endif
 
 			mov KEY0, ITEMP
 
-			#ifdef PRESENT_128
+		#ifdef PRESENT_128
 			; 1: rotate key register left by 67 positions
 			ldi ITEMP, 2
 			rcall rotate_left_i
@@ -502,7 +503,7 @@ decrypt:
 			; continue rotation
 			ldi ITEMP, 65
 			rcall rotate_left_i
-			#else
+		#else
 			; 1: rotate key register left by 19 positions
 			ldi ITEMP, 17
 			rcall rotate_left_i
@@ -512,7 +513,7 @@ decrypt:
 			; continue rotation
 			ldi ITEMP, 2
 			rcall rotate_left_i
-			#endif
+		#endif
 
 			; decrement round counter
 			dec ROUND_COUNTER
