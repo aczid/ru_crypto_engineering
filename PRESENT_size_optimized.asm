@@ -21,7 +21,7 @@
 ; Cycle count (decryption): 116106
 
 ; USE
-; Point X at 8 input bytes followed by 10 key bytes and call encrypt or decrypt
+; Point X at 8 input bytes followed by 10/16 key bytes and call encrypt or decrypt
 ; After having called encrypt or decrypt X will point to the start of the input
 
 ; Comment out either to omit
@@ -406,7 +406,7 @@ setup:
 
 #ifdef ENCRYPTION
 
-; encryption function: point X at 8 plaintext input bytes followed by 10 key input bytes
+; encryption function: point X at 8 plaintext input bytes followed by 10/16 key input bytes
 encrypt:
 	#ifndef DECRYPTION
 	setup_macro
@@ -442,7 +442,7 @@ encrypt:
 
 #ifdef DECRYPTION
 
-; decryption function: point X at 8 ciphertext input bytes followed by 10 key input bytes
+; decryption function: point X at 8 ciphertext input bytes followed by 10/16 key input bytes
 decrypt:
 	#ifndef ENCRYPTION
 	setup_macro
