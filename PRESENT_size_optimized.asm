@@ -28,7 +28,7 @@
 #define ENCRYPTION ; (can save 26 bytes if omitted)
 #define DECRYPTION ; (can save 64 bytes if omitted)
 
-;#define PRESENT_128 ; Use 128-bit keys (adds 24 bytes)
+#define PRESENT_128 ; Use 128-bit keys (adds 24 bytes)
 
 #ifdef DECRYPTION
 #define PACKED_SBOXES ; Use packed s-boxes (saves 2 bytes)
@@ -121,19 +121,15 @@ INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
 
 ; key scheduling
 .macro schedule_key_macro
+	
+.endmacro
+
+#if defined(ENCRYPTION) && defined(DECRYPTION)
+schedule_key:
+	schedule_key_macro
 	; increment round counter
 	inc ROUND_COUNTER
 	; 1: rotate key register left by 61 positions
-#ifdef PRESENT_128
-	ldi ITEMP, 7
-	rcall rotate_left_i
-	; 3: xor key bits with round counter
-	; (as the 2 bytes align while rotating the key register)
-	eor KEY14, ROUND_COUNTER
-	; continue rotation
-	ldi ITEMP, 54
-	rcall rotate_left_i
-#else
 	ldi ITEMP, 6
 	rcall rotate_left_i
 	; 3: xor key bits with round counter
@@ -142,7 +138,6 @@ INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
 	; continue rotation
 	ldi ITEMP, 55
 	rcall rotate_left_i
-#endif
 	; 2: s-box high nibble of key
 	mov ITEMP, KEY0
 #ifdef PRESENT_128
@@ -153,11 +148,6 @@ INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
 	mov KEY0, ITEMP
 	; check if we are at ROUNDS for caller's loop
 	cpi ROUND_COUNTER, ROUNDS
-.endmacro
-
-#if defined(ENCRYPTION) && defined(DECRYPTION)
-schedule_key:
-	schedule_key_macro
 	ret
 #endif
 
@@ -495,13 +485,13 @@ decrypt:
 
 		#ifdef PRESENT_128
 			; 1: rotate key register left by 67 positions
-			ldi ITEMP, 2
+			ldi ITEMP, 1
 			rcall rotate_left_i
 			; 3: xor key bits with round counter
 			; (as the 2 bytes align while rotating the key register)
-			eor KEY7, ROUND_COUNTER
+			eor KEY13, ROUND_COUNTER
 			; continue rotation
-			ldi ITEMP, 65
+			ldi ITEMP, 66
 			rcall rotate_left_i
 		#else
 			; 1: rotate key register left by 19 positions
