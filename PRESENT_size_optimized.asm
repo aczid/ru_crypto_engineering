@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):          272 bytes + 16 bytes for both packed s-boxes
+; Code size (total):          268 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                   18
-; Cycle count (encryption): 57307
-; Cycle count (decryption): 79069
+; Cycle count (encryption): 57274
+; Cycle count (decryption): 79036
 
 ; USE
 ; Point X at 8 input bytes followed by 10/16 key bytes and call encrypt or decrypt
@@ -76,8 +76,8 @@
 .def SBOX_OUTPUT = r21
 
 ; Shared register
-; the index of the current round key byte being applied to the state in SRAM
-.def KEY_INDEX = r22
+; the current round key byte
+.def KEY_BYTE = r22
 ; the index of the current s-box input
 .def SBOX_INDEX = r22
 ; the index of the current p-layer input
@@ -150,17 +150,16 @@ schedule_key:
 
 ; apply last computed round key to the full 8-byte state in SRAM
 .macro addRoundKey_macro
-	ldi KEY_INDEX, 8
 	clr YL
 addRoundKey_byte:
 	; apply round key
 	ld ITEMP, X
-	ld OUTPUT0, Y+
-	eor ITEMP, OUTPUT0
+	ld KEY_BYTE, Y+
+	eor ITEMP, KEY_BYTE
 	st X+, ITEMP
 	
 	; loop over 8 bytes
-	dec KEY_INDEX
+	cpi YL, 8
 	brne addRoundKey_byte
 	; point at the start of the block
 	subi XL, 8
@@ -361,15 +360,14 @@ setup_continue_pLayerHalf:
 	; load key from SRAM
 	clr YH
 	clr YL
-#ifdef PRESENT_128
-	ldi KEY_INDEX, 16
-#else
-	ldi KEY_INDEX, 10
-#endif
 	load_key:
 		ld ITEMP, X+
 		st Y+, ITEMP
-		dec KEY_INDEX
+	#ifdef PRESENT_128
+		cpi YL, 16
+	#else
+		cpi YL, 10
+	#endif
 		brne load_key
 	; point at the start of the input
 #ifdef PRESENT_128
@@ -520,3 +518,4 @@ decrypt:
 		rjmp addRoundKey
 	#endif
 #endif
+ 
