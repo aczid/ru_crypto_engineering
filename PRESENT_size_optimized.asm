@@ -163,13 +163,13 @@ addRoundKey_byte:
 .endmacro
 
 ; rotate the 80 or 128-bit key register left by the number in ITEMP
-#ifndef PERFORMANCE
 rotate_left_i:
-#ifdef PRESENT_128
+#ifndef PERFORMANCE
+  #ifdef PRESENT_128
 	ldi YL, 16
-#else
+  #else
 	ldi YL, 10
-#endif
+  #endif
 	clc
 rotate_left_i_bit:
 	dec YL
@@ -178,17 +178,8 @@ rotate_left_i_bit:
 	st Y, ROTATED_BITS
 	cpse YL, YH
 	rjmp rotate_left_i_bit
-#ifdef PRESENT_128
-	adc KEY15, YH
 #else
-	adc KEY9, YH
-#endif
-	dec ITEMP
-	brne rotate_left_i
-	ret
-#else
-rotate_left_i:
-#ifdef PRESENT_128
+  #ifdef PRESENT_128
 	lsl KEY15
 	rol KEY14
 	rol KEY13
@@ -196,9 +187,9 @@ rotate_left_i:
 	rol KEY11
 	rol KEY10
 	rol KEY9
-#else
+  #else
 	lsl KEY9
-#endif
+  #endif
 	rol KEY8
 	rol KEY7
 	rol KEY6
@@ -208,6 +199,7 @@ rotate_left_i:
 	rol KEY2
 	rol KEY1
 	rol KEY0
+#endif
 #ifdef PRESENT_128
 	adc KEY15, YH
 #else
@@ -216,7 +208,6 @@ rotate_left_i:
 	dec ITEMP
 	brne rotate_left_i
 	ret
-#endif
 
 ; sBoxByte
 ; applying the s-box nibble-wise allows us to reuse the second half of the
