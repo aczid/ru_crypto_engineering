@@ -142,12 +142,6 @@ INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
 	cpi ROUND_COUNTER, ROUNDS
 .endmacro
 
-#if defined(ENCRYPTION) && defined(DECRYPTION)
-schedule_key:
-	schedule_key_macro
-	ret
-#endif
-
 ; apply last computed round key to the full 8-byte state in SRAM
 .macro addRoundKey_macro
 	clr YL
@@ -164,12 +158,6 @@ addRoundKey_byte:
 	; point at the start of the block
 	subi XL, 8
 .endmacro
-
-#if defined(ENCRYPTION) && defined(DECRYPTION)
-addRoundKey:
-	addRoundKey_macro
-	ret
-#endif
 
 ; rotate the 80 or 128-bit key register left by the number in ITEMP
 rotate_left_i:
@@ -264,12 +252,6 @@ sBoxLayer_byte:
 	; point at the start of the block
 	subi XL, 8
 .endmacro
-
-#if defined(ENCRYPTION) && defined(DECRYPTION)
-sBoxLayer:
-	sBoxLayer_macro
-	ret
-#endif
 
 ; splice 1 input byte over 4 output bytes, which will then each hold 2 bits
 ; following a 4-bit period in the input
@@ -378,6 +360,15 @@ setup_continue_pLayerHalf:
 .endmacro
 
 #if defined(ENCRYPTION) && defined(DECRYPTION)
+schedule_key:
+	schedule_key_macro
+	ret
+addRoundKey:
+	addRoundKey_macro
+	ret
+sBoxLayer:
+	sBoxLayer_macro
+	ret
 setup:
 	setup_macro
 	ret
