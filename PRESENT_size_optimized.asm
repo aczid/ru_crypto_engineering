@@ -28,7 +28,7 @@
 #define ENCRYPTION ; (can save 28 bytes if omitted)
 #define DECRYPTION ; (can save 66 bytes if omitted)
 
-;#define PERFORMANCE ; Fast rotation (adds 2 bytes)
+;#define PERFORMANCE ; Fast rotation (adds 4 bytes)
 ;#define PRESENT_128 ; Use 128-bit keys (adds 6 bytes if PERFORMANCE set)
 
 #ifdef DECRYPTION

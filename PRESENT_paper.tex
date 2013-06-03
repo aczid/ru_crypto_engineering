@@ -258,7 +258,7 @@ The algorithm specifies that the key bits 15, 16, 17, 18, 19 must be XORed with 
 
 Here we will list some of the size improvements we were able to apply to the PRESENT algorithm.
 While these modifications make the algorithm operate more slowly, the reduction in size would allow the cipher to be included in microcontrollers with smaller available code area.
-Our version requires 134 AVR instructions (268 bytes of code) for both the encryption and decryption routines, plus two times 8 bytes for packed tables of S-Box values at memory addresses \texttt{0x100} and \texttt{0x200}.
+Our version requires 132 AVR instructions (264 bytes of code) for both the encryption and decryption routines, plus two times 8 bytes for packed tables of S-Box values at memory addresses \texttt{0x100} and \texttt{0x200}.
 We believe this should be sufficiently small for the code to be included in an AVR machine with 1K of available Flash storage, while still allowing over half of the available area to be devoted to application-specific code.
 
 Unfortunately, every opcode in the AVR instruction set is 16-bits wide, so there is nothing to be gained from exchanging any instructions for equivalent smaller ones (such as for example \textit{add Rd, 1} being more concisely expressed as \textit{inc Rd} on x86 machines).
@@ -367,11 +367,12 @@ Overall, we managed to push the limits of the PRESENT implementation and establi
 \begin{table}[h]
 \footnotesize
 	\begin{tabular}{ l | c | c | c | c }
-                & Crypto-lib~\cite{avr_crypto_lib} & Eisenbarth~\cite{eisenbarth2012compact} &\specialcell{Ours\\Speed optimized} & \specialcell{Ours\\Size optimized} \\
-        Size (bytes) & 1514 & 936 & 1794 & 284 \\
-        Encryption (cycles) & 105796 & 10723 & 8721 & 57274 \\
-        Decryption (cycles) & 151624 & 11239 & - &    79036 \\
+                & Crypto-lib~\cite{avr_crypto_lib} & Eisenbarth~\cite{eisenbarth2012compact} &\specialcell{Ours\\Speed optimized} & \specialcell{Ours\\Size optimized} & \specialcell{Ours\\Size optimized reconfigured} \\
+	Size (bytes) & 1514 & 936 & 1794 & 280 & 284 \\
+	Encryption (cycles) & 105796 & 10723 & 8721 & 210445 & 57274 \\
+	Decryption (cycles) & 151624 & 11239 & -    & 279916 & 79036 \\
         RAM (bytes) & 256 & 0 & 18 & 18
+
 	\end{tabular}
 	\caption{\footnotesize Speed and size comparisons to existing implementations of PRESENT for the AVR architecture.}
 	\label{numbers}
