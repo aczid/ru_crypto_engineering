@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):          268 bytes + 16 bytes for both packed s-boxes
-; RAM words:                   18
-; Cycle count (encryption): 57274
-; Cycle count (decryption): 79036
+; Code size (total):           264 bytes + 16 bytes for both packed s-boxes
+; RAM words:                    18
+; Cycle count (encryption): 210445
+; Cycle count (decryption): 279916
 
 ; USE
 ; Point X at 8 input bytes followed by 10/16 key bytes and call encrypt or decrypt
@@ -28,7 +28,8 @@
 #define ENCRYPTION ; (can save 28 bytes if omitted)
 #define DECRYPTION ; (can save 66 bytes if omitted)
 
-;#define PRESENT_128 ; Use 128-bit keys (adds 12 bytes)
+;#define PERFORMANCE ; Fast rotation (adds 2 bytes)
+;#define PRESENT_128 ; Use 128-bit keys (adds 6 bytes if PERFORMANCE set)
 
 #ifdef DECRYPTION
 #define PACKED_SBOXES ; Use packed s-boxes (saves 2 bytes)
@@ -89,7 +90,9 @@
 ; Register for immediate values
 .def ITEMP = r24
 
-; r25 is unused
+; Bit rotation register
+.def ROTATED_BITS = r25
+
 ; registers r26..r31 are X, Y and Z
 
 ; the Z register is used to point to these s-box tables
@@ -160,6 +163,30 @@ addRoundKey_byte:
 .endmacro
 
 ; rotate the 80 or 128-bit key register left by the number in ITEMP
+#ifndef PERFORMANCE
+rotate_left_i:
+#ifdef PRESENT_128
+	ldi YL, 16
+#else
+	ldi YL, 10
+#endif
+	clc
+rotate_left_i_bit:
+	dec YL
+	ld ROTATED_BITS, Y
+	rol ROTATED_BITS
+	st Y, ROTATED_BITS
+	cpse YL, YH
+	rjmp rotate_left_i_bit
+#ifdef PRESENT_128
+	adc KEY15, YH
+#else
+	adc KEY9, YH
+#endif
+	dec ITEMP
+	brne rotate_left_i
+	ret
+#else
 rotate_left_i:
 #ifdef PRESENT_128
 	lsl KEY15
@@ -189,6 +216,7 @@ rotate_left_i:
 	dec ITEMP
 	brne rotate_left_i
 	ret
+#endif
 
 ; sBoxByte
 ; applying the s-box nibble-wise allows us to reuse the second half of the
