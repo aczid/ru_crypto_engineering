@@ -378,31 +378,31 @@ setup:
 
 ; encryption function: point X at 8 plaintext input bytes followed by 10/16 key input bytes
 encrypt:
-	#ifndef DECRYPTION
+#ifndef DECRYPTION
 	setup_macro
-	#else
+#else
 	rcall setup
-	#endif
+#endif
 	encrypt_update:
 		; apply round key
 		rcall addRoundKey
 
 		; apply s-box layer
-		#ifndef DECRYPTION
+	#ifndef DECRYPTION
 		sBoxLayer_macro
-		#else
+	#else
 		rcall sBoxLayer
-		#endif
+	#endif
 
 		; apply p-layer
 		rcall pLayer
 
 		; schedule next key
-		#ifndef DECRYPTION
+	#ifndef DECRYPTION
 		schedule_key_macro
-		#else
+	#else
 		rcall schedule_key
-		#endif
+	#endif
 
 		; loop for ROUNDS
 		brne encrypt_update
@@ -420,19 +420,19 @@ encrypt:
 
 ; decryption function: point X at 8 ciphertext input bytes followed by 10/16 key input bytes
 decrypt:
-	#ifndef ENCRYPTION
+#ifndef ENCRYPTION
 	setup_macro
-	#else
+#else
 	rcall setup
-	#endif
+#endif
 
 	; schedule key for last round
 	schedule_last_key:
-		#ifndef ENCRYPTION
+	#ifndef ENCRYPTION
 		schedule_key_macro
-		#else
+	#else
 		rcall schedule_key
-		#endif
+	#endif
 		brne schedule_last_key
 
 	; initialize inv s-box
@@ -455,11 +455,11 @@ decrypt:
 		rcall pLayer
 
 		; apply inverse s-box layer
-		#ifndef ENCRYPTION
+	#ifndef ENCRYPTION
 		sBoxLayer_macro
-		#else
+	#else
 		rcall sBoxLayer
-		#endif
+	#endif
 
 		; schedule previous key
 		inv_schedule_key:
@@ -470,27 +470,22 @@ decrypt:
 		#else
 			rcall sBoxHighNibble
 		#endif
-
 			mov KEY0, ITEMP
 
-		#ifdef PRESENT_128
 			; 1: rotate key register left by 67 positions
-			ldi ITEMP, 1
-			rcall rotate_left_i
 			; 3: xor key bits with round counter
 			; (as the 2 bytes align while rotating the key register)
-			eor KEY13, ROUND_COUNTER
 			; continue rotation
+		#ifdef PRESENT_128
+			ldi ITEMP, 1
+			rcall rotate_left_i
+			eor KEY13, ROUND_COUNTER
 			ldi ITEMP, 66
 			rcall rotate_left_i
 		#else
-			; 1: rotate key register left by 19 positions
 			ldi ITEMP, 17
 			rcall rotate_left_i
-			; 3: xor key bits with round counter
-			; (as the 2 bytes align while rotating the key register)
 			eor KEY5, ROUND_COUNTER
-			; continue rotation
 			ldi ITEMP, 2
 			rcall rotate_left_i
 		#endif
