@@ -15,18 +15,18 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           272 bytes + 16 bytes for both packed s-boxes
-; RAM words:                    18
-; Cycle count (encryption):  94395
-; Cycle count (decryption): 116157
+; Code size (total):          272 bytes + 16 bytes for both packed s-boxes
+; RAM words:                   18
+; Cycle count (encryption): 57307
+; Cycle count (decryption): 79069
 
 ; USE
 ; Point X at 8 input bytes followed by 10/16 key bytes and call encrypt or decrypt
 ; After having called encrypt or decrypt X will point to the start of the input
 
 ; Comment out either to omit
-#define ENCRYPTION ; (can save 26 bytes if omitted)
-#define DECRYPTION ; (can save 64 bytes if omitted)
+#define ENCRYPTION ; (can save 28 bytes if omitted)
+#define DECRYPTION ; (can save 66 bytes if omitted)
 
 ;#define PRESENT_128 ; Use 128-bit keys (adds 12 bytes)
 
@@ -130,7 +130,7 @@ INVSBOX:.db 0x5,0xe,0xf,0x8,0xc,0x1,0x2,0xd,0xb,0x4,0x6,0x3,0x0,0x7,0x9,0xa
 	; continue rotation
 	ldi ITEMP, 55
 	rcall rotate_left_i
-	; 2: s-box high nibble or first byte of key
+	; 2: s-box high nibble of key
 	mov ITEMP, KEY0
 #ifdef PRESENT_128
 	rcall sBoxByte
@@ -149,29 +149,28 @@ schedule_key:
 #endif
 
 ; apply last computed round key to the full 8-byte state in SRAM
-addRoundKey:
+.macro addRoundKey_macro
 	ldi KEY_INDEX, 8
+	clr YL
 addRoundKey_byte:
 	; apply round key
 	ld ITEMP, X
-	eor ITEMP, KEY0
+	ld OUTPUT0, Y+
+	eor ITEMP, OUTPUT0
 	st X+, ITEMP
-	; rotate key register to next byte
-	ldi ITEMP, 8
-	rcall rotate_left_i
+	
 	; loop over 8 bytes
 	dec KEY_INDEX
 	brne addRoundKey_byte
-
 	; point at the start of the block
 	subi XL, 8
-	; rotate key register to align with the start of the block
-#ifdef PRESENT_128
-	ldi ITEMP, 64
-#else
-	ldi ITEMP, 16
+.endmacro
+
+#if defined(ENCRYPTION) && defined(DECRYPTION)
+addRoundKey:
+	addRoundKey_macro
+	ret
 #endif
-	; fall through
 
 ; rotate the 80 or 128-bit key register left by the number in ITEMP
 rotate_left_i:
@@ -312,7 +311,7 @@ pLayerHalf_byte:
 	dec PLAYER_INDEX
 	brne pLayerHalf_byte
 
-	; push half p-layer output
+	; half p-layer output
 	push OUTPUT3
 	push OUTPUT2
 	push OUTPUT1
@@ -320,7 +319,6 @@ pLayerHalf_byte:
 	
 	; do the next 4 bytes
 	brts setup_continue_pLayerHalf
-	; fall through
 
 ; interleave the two half blocks on the stack into SRAM from back to front
 ; uses T (transfer) flag to re-do this block twice
@@ -420,7 +418,13 @@ encrypt:
 		; loop for ROUNDS
 		brne encrypt_update
 	; add final round key
-	rjmp addRoundKey
+	#ifndef DECRYPTION
+	addRoundKey:
+		addRoundKey_macro
+		ret
+	#else
+		rjmp addRoundKey
+	#endif
 #endif
 
 #ifdef DECRYPTION
@@ -435,7 +439,11 @@ decrypt:
 
 	; schedule key for last round
 	schedule_last_key:
+		#ifndef ENCRYPTION
+		schedule_key_macro
+		#else
 		rcall schedule_key
+		#endif
 		brne schedule_last_key
 
 	; initialize inv s-box
@@ -466,7 +474,7 @@ decrypt:
 
 		; schedule previous key
 		inv_schedule_key:
-			; 2: inv s-box high nibble or first byte of key
+			; 2: inv s-box high nibble of key
 			mov ITEMP, KEY0
 		#ifdef PRESENT_128
 			rcall sBoxByte
@@ -504,6 +512,11 @@ decrypt:
 		; loop for ROUNDS
 		brne decrypt_update
 	; apply final round key
-	rjmp addRoundKey
+	#ifndef ENCRYPTION
+	addRoundKey:
+		addRoundKey_macro
+		ret
+	#else
+		rjmp addRoundKey
+	#endif
 #endif
-
