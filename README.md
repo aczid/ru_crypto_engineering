@@ -37,7 +37,7 @@ Support for 128-bit keys can be enabled by uncommenting the **PRESENT_128**
 define statement at no extra cost.
 
 Much (about 4x) better performance can be enabled by uncommenting the
-**FAST_ROTATE** define statement at a cost of 4/10 extra bytes (depending
+**FAST_ROTATE** define statement at a cost of 4/16 extra bytes (depending
 on key size).
 
 At a cost of 6 extra bytes the s-box tables can be located at addresses not
