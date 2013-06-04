@@ -26,10 +26,10 @@
 
 ; Comment out either to omit
 #define ENCRYPTION ; (can save 28 bytes if omitted)
-#define DECRYPTION ; (can save 66 bytes if omitted)
+#define DECRYPTION ; (can save 70 bytes if omitted)
 
-;#define PERFORMANCE ; Fast rotation (adds 4 bytes)
-;#define PRESENT_128 ; Use 128-bit keys (adds 6 bytes if PERFORMANCE set)
+;#define FAST_ROTATE ; Fast rotation (adds 4 bytes)
+;#define PRESENT_128 ; Use 128-bit keys (adds 6 bytes if FAST_ROTATE set)
 
 #ifdef DECRYPTION
 #define PACKED_SBOXES ; Use packed s-boxes (saves 2 bytes)
@@ -164,21 +164,7 @@ addRoundKey_byte:
 
 ; rotate the 80 or 128-bit key register left by the number in ITEMP
 rotate_left_i:
-#ifndef PERFORMANCE
-  #ifdef PRESENT_128
-	ldi YL, 16
-  #else
-	ldi YL, 10
-  #endif
-	clc
-rotate_left_i_bit:
-	dec YL
-	ld ROTATED_BITS, Y
-	rol ROTATED_BITS
-	st Y, ROTATED_BITS
-	cpse YL, YH
-	rjmp rotate_left_i_bit
-#else
+#ifdef FAST_ROTATE
   #ifdef PRESENT_128
 	lsl KEY15
 	rol KEY14
@@ -199,6 +185,20 @@ rotate_left_i_bit:
 	rol KEY2
 	rol KEY1
 	rol KEY0
+#else
+  #ifdef PRESENT_128
+	ldi YL, 16
+  #else
+	ldi YL, 10
+  #endif
+	clc
+rotate_left_i_bit:
+	dec YL
+	ld ROTATED_BITS, Y
+	rol ROTATED_BITS
+	st Y, ROTATED_BITS
+	cpse YL, YH
+	rjmp rotate_left_i_bit
 #endif
 #ifdef PRESENT_128
 	adc KEY15, YH
@@ -294,7 +294,7 @@ pLayerNibble:
 ; the output is saved to SRAM where the two half blocks become interleaved
 
 ; uses T (transfer) flag to re-do this block twice
-pLayer:
+.macro pLayer_macro
 	set
 	; point at end of block
 	adiw XL, 8
@@ -318,7 +318,9 @@ pLayerHalf_byte:
 	push OUTPUT0
 	
 	; do the next 4 bytes
-	brts setup_continue_pLayerHalf
+	brtc pLayerOutput
+	clt
+	rjmp continue_pLayerHalf
 
 ; interleave the two half blocks on the stack into SRAM from back to front
 ; uses T (transfer) flag to re-do this block twice
@@ -333,15 +335,12 @@ pLayerOutput_byte:
 	dec XL
 	dec PLAYER_INDEX
 	brne pLayerOutput_byte
-	brts setup_continue_pLayerOutput
-	ret
-setup_continue_pLayerOutput:
+	brtc pLayer_done
 	clt
 	adiw XL, 9
 	rjmp continue_pLayerOutput
-setup_continue_pLayerHalf:
-	clt
-	rjmp continue_pLayerHalf
+pLayer_done:
+.endmacro
 
 ; prepare for encryption or decryption
 .macro setup_macro
@@ -414,7 +413,11 @@ encrypt:
 	#endif
 
 		; apply p-layer
+	#ifndef DECRYPTION
+		pLayer_macro
+	#else
 		rcall pLayer
+	#endif
 
 		; schedule next key
 	#ifndef DECRYPTION
@@ -436,6 +439,9 @@ encrypt:
 #endif
 
 #ifdef DECRYPTION
+pLayer:
+	pLayer_macro
+	ret	
 
 ; decryption function: point X at 8 ciphertext input bytes followed by 10/16 key input bytes
 decrypt:
@@ -523,4 +529,4 @@ decrypt:
 		rjmp addRoundKey
 	#endif
 #endif
- 
+

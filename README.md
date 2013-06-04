@@ -37,7 +37,7 @@ Support for 128-bit keys can be enabled by uncommenting the **PRESENT_128**
 define statement at no extra cost.
 
 Much (about 4x) better performance can be enabled by uncomment the
-**PERFORMANCE** define statement at a cost of 4/10 extra bytes (depending
+**FAST_ROTATE** define statement at a cost of 4/10 extra bytes (depending
 on key size).
 
 At a cost of 6 extra bytes the s-box tables can be located at addresses not
@@ -66,19 +66,19 @@ Compiled AVR code (configured with relocatable s-boxes) in ASCII hexadecimal.
 
     s-boxes                                      decrypt (start+16)
     |                                            |
-    C56B90AD   3EF84712   5EF8C12    DB4630   79A74D0   57D0    F1F  7F0E070E1
-    5ED036D03  5D064D080  2D17D00   82E81E1   07D0542   682E0   04D  04A9591F7
-    50C0CAE08  894CA9598  81991F9   883CD13   FACF9D1   E8A95   A9F  7089504D0
+    C56B90AD   3EF84712   5EF8C12    DB4630   79A57D0   3AD0    F1F  7F0E070E1
+    41D05DD05  CD047D080  2D16D00   82E81E1   06D0542   682E0   03D  04A9591F7
+    33C0CAE08  894CA9598  81991F9   883CD13   FACF9D1   E8A95   A9F  7089504D0
     829   502  D08   295  089       5E8       2FE       F70E70  FE5     955
     491  10F0  529   502  C00       0000      000       5F7080  7F8     52B
-    089587950  795879517  9587952   795879    5379508   9568941 896     64E
-    08E91F2DF  F1DF6A95D  9F73F93   2F931F9   30F936E   F06 894 179     664
-    E08F918E   93AA956A   95D9F70     EF008   95E8941   996 F5CFE89     4E6
-    CF4        395 86E0   B9D          F442   687       E3B  6DF802     DC1
-    DF0        82E 4F310  895      CC   278   C91       699  186278     D93
-    C83        0D1  F7A8  5008956  8E08C91B   1DF8D93   6A9   5D9F7     A85
-    008        954   427F 0E070E0  1896DD27   CC278D9   189   93CA3     0E1
-    F7A        251   0895F2DFE0DF  E8DFB7D    FD2DFD9   F7D    BCF0     000
+    089587950  795879517  9587952   795879    5379508   9543958 6E0     D5D
+    F442687E3  D2DF802DD  DDF082E   4F31089   5CC278C   916 991 862     78D
+    93C830D1   F7A85008   9568E08     C91CD   DF8D936   A95 D9F7A85     008
+    954        427 F0E0   70E          0189   6DD       27C  C278D9     189
+    93C        A30 E1F7A  251      08   956   894       189  664E08     E91
+    CAD        FC9  DF6A  95D9F73  F932F931   F930F93   16F   4E894     F3C
+    F68        941   7966 4E08F91  8E93AA95   6A95D9F   71E   F4E89     419
+    96F        6CF   0895D7DFC5DF  CDDFE0D    FB7DFD9   F7C    0CF0     000
                          |
                          encrypt (end-16)
 
