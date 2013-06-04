@@ -76,5 +76,5 @@ ASCII art
     FF1        F7F   4E0D 8DFB0DF  AFDFDEDF   802D92D   F08   2E81E     182   
     DF5        426   82E07FDF4A95  91F7CAC    F000000   000    0000     000
 
-                      (Compiled AVR code as ascii-hex)
+                        (Compiled AVR code as ascii-hex)
 
