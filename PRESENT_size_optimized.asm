@@ -272,7 +272,7 @@ sBoxLayer_byte:
 	subi XL, 8
 .endmacro
 
-; splice 1 input byte over 4 output bytes, which will then each hold 2 bits
+; splice 1 input byte over 4 output bytes, which will then each hold 1 bit
 ; following a 4-bit period in the input
 pLayerNibble:
 	ror ITEMP   ; move bit into carry
