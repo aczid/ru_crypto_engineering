@@ -82,3 +82,6 @@ Compiled AVR code (configured with relocatable s-boxes) in ASCII hexadecimal.
                          |
                          encrypt (end-16)
 
+Echo this into
+    tr -d ' \n' | perl -ne 's/([0-9a-f]{2})/print chr hex $1/gie' | bin2hex.py -
+to get a programmable rom.
