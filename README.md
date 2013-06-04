@@ -38,7 +38,7 @@ Authors
  * Kostas Papagiannopoulos, kostaspap88@gmail.com
 
 ASCII art
-==================================
+=========
 
     C56B90AD   3EF84712   5EF8C12    DB4630   79ACAE0   8894    CA9  59881991F
     9883CD13F  ACF9D1E8A  95A9F70   89504D0   829502D   08295   089  5E82FEF70
