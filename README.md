@@ -51,8 +51,8 @@ To get a tiny bit more performance at the expense of 2 bytes the
 tables and omit the 14-byte unpacking code.
 
 Although it is unadvised, there is the option of not quantizing the timing of
-s-box application by commenting out the **QUANTIZE_TIMING** define statement
-to save 6 bytes.
+packed s-box application by commenting out the **QUANTIZE_TIMING** define
+statement to save 6 bytes.
 
 Authors
 =======
