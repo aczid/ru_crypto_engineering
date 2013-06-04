@@ -87,3 +87,5 @@ Echo this graphic into
     tr -d ' \n' | perl -ne 's/([0-9a-f]{2})/print chr hex $1/gie' | bin2hex.py -
 
 without the offset annotations to get a programmable rom.
+(I.e. strip newlines and spaces, decode ASCII hex to binary and convert to .hex
+format.)
