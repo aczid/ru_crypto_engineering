@@ -36,7 +36,7 @@ The code for either procedure can be easily omitted by commenting out the
 Support for 128-bit keys can be enabled by uncommenting the **PRESENT_128**
 define statement at no extra cost.
 
-Much (about 4x) better performance can be enabled by uncomment the
+Much (about 4x) better performance can be enabled by uncommenting the
 **FAST_ROTATE** define statement at a cost of 4/10 extra bytes (depending
 on key size).
 
