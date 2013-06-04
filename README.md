@@ -37,7 +37,7 @@ Authors
  * Aram Verstegen, aram.verstegen@gmail.com
  * Kostas Papagiannopoulos, kostaspap88@gmail.com
 
-Compiled AVR code in ascii-hex art
+ASCII art
 ==================================
 
     C56B90AD   3EF84712   5EF8C12    DB4630   79ACAE0   8894    CA9  59881991F
@@ -53,4 +53,6 @@ Compiled AVR code in ascii-hex art
     A25        108  95F4  DFE2DFE  ADFB9DFD   4DFD9F7   DDC   FEDDF     D0D   
     FF1        F7F   4E0D 8DFB0DF  AFDFDEDF   802D92D   F08   2E81E     182   
     DF5        426   82E07FDF4A95  91F7CAC    F000000   000    0000     000
+
+                      (Compiled AVR code as ascii-hex)
 
