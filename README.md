@@ -64,7 +64,7 @@ ASCII art
 Compiled AVR code (configured with relocatable s-boxes) in ASCII hexadecimal.
 (Created with [this script](https://gist.github.com/aczid/5703046).)
 
-    s-boxes                                      decrypt
+    s-boxes                                      decrypt (start+16)
     |                                            |
     C56B90AD   3EF84712   5EF8C12    DB4630   79A74D0   57D0    F1F  7F0E070E1
     5ED036D03  5D064D080  2D17D00   82E81E1   07D0542   682E0   04D  04A9591F7
@@ -80,5 +80,5 @@ Compiled AVR code (configured with relocatable s-boxes) in ASCII hexadecimal.
     008        954   427F 0E070E0  1896DD27   CC278D9   189   93CA3     0E1
     F7A        251   0895F2DFE0DF  E8DFB7D    FD2DFD9   F7D    BCF0     000
                          |
-                         encrypt
+                         encrypt (end-16)
 
