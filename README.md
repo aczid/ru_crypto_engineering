@@ -61,7 +61,7 @@ Authors
 
 ASCII art
 =========
-    s-boxes                                      encrypt
+    s-boxes                                      decrypt
     |                                            |
     C56B90AD   3EF84712   5EF8C12    DB4630   79A74D0   57D0    F1F  7F0E070E1
     5ED036D03  5D064D080  2D17D00   82E81E1   07D0542   682E0   04D  04A9591F7
@@ -77,7 +77,7 @@ ASCII art
     008        954   427F 0E070E0  1896DD27   CC278D9   189   93CA3     0E1
     F7A        251   0895F2DFE0DF  E8DFB7D    FD2DFD9   F7D    BCF0     000
                          |
-                         decrypt
+                         encrypt
 
              (Compiled AVR code with relocatable s-boxes as ascii-hex)
 
