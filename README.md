@@ -86,10 +86,11 @@ hexadecimal as a banner.
                          |
                          encrypt (end-16)
 
-Echo this graphic into
+Pipe this graphic (without offset annotations) into
 
     tr -d ' \n' | perl -ne 's/([0-9a-f]{2})/print chr hex $1/gie' | bin2hex.py -
 
-without the offset annotations to get a programmable rom.
+to get a programmable rom.
 (I.e. strip newlines and spaces, decode ASCII hex to binary and convert to
 programmable .hex format.)
+
