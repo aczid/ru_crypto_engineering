@@ -61,6 +61,9 @@ Authors
 
 ASCII art
 =========
+Compiled AVR code configured with relocatable s-boxes, as ascii-hex.
+(Created with [this script](https://gist.github.com/aczid/5703046)).
+
     s-boxes                                      decrypt
     |                                            |
     C56B90AD   3EF84712   5EF8C12    DB4630   79A74D0   57D0    F1F  7F0E070E1
@@ -78,6 +81,4 @@ ASCII art
     F7A        251   0895F2DFE0DF  E8DFB7D    FD2DFD9   F7D    BCF0     000
                          |
                          encrypt
-
-             (Compiled AVR code with relocatable s-boxes as ascii-hex)
 
