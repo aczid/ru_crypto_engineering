@@ -3,7 +3,7 @@ RU Cryptography Engineering
 This is the code repository for our assignments in
 [Cryptography Engineering](http://rucryptoengineering.wordpress.com) at the 
 [Radboud Universiteit in Nijmegen](http://www.ru.nl/) as part of the 
-[Kerckhoffs Institute](http://kerckhoffs-institute.org/) master's program in
+[Kerckhoffs Institute](http://www.kerckhoffs-institute.org/) master's program in
 computer security.
 
 PRESENT
