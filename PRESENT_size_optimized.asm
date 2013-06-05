@@ -21,8 +21,9 @@
 ; Cycle count (decryption): 279916
 
 ; USE
-; Point X at 8 input bytes followed by 10/16 key bytes and call encrypt or decrypt
-; After having called encrypt or decrypt X will point to the start of the input
+; Point X at 8 input bytes followed by 10/16 key bytes and call encrypt or
+; decrypt. After having called encrypt or decrypt X will point to the same
+; address, where the next 8 bytes constitute the output.
 
 ; Comment out either to omit
 #define ENCRYPTION ; (can save 28 bytes if omitted)
@@ -317,8 +318,9 @@ pLayerHalf_byte:
 	push OUTPUT1
 	push OUTPUT0
 	
-	; do the next 4 bytes
+	; go to output after 8 pushed bytes
 	brtc pLayerOutput
+	; do the next 4 bytes before output
 	clt
 	rjmp continue_pLayerHalf
 
