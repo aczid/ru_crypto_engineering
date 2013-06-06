@@ -169,6 +169,9 @@ addRoundKey_byte:
 ; rotate the 80 or 128-bit key register left by the number in ITEMP
 rotate_left_i:
 #ifdef FAST_ROTATE
+	; rotate a carry bit through every register
+	; but don't rotate the current carry bit into the register we will
+	; add the final carry bit to as the least significant bit
   #ifdef PRESENT_128
 	lsl KEY15
 	rol KEY14
@@ -190,25 +193,32 @@ rotate_left_i:
 	rol KEY1
 	rol KEY0
 #else
+	; load key size
   #ifdef PRESENT_128
 	ldi YL, 16
   #else
 	ldi YL, 10
   #endif
+	; clear carry bit
 	clc
 rotate_left_i_bit:
+	; rotate carry bit through each key register using indirect addressing
 	dec YL
 	ld ROTATED_BITS, Y
 	rol ROTATED_BITS
 	st Y, ROTATED_BITS
+	; cpse doesn't affect the C (carry) flag
 	cpse YL, ZERO
+	; loop over all the key bytes
 	rjmp rotate_left_i_bit
 #endif
+	; add the last carry bit to the lowest/rightmost key register as LSB
 #ifdef PRESENT_128
 	adc KEY15, ZERO
 #else
 	adc KEY9, ZERO
 #endif
+	; loop over ITEMP bytes
 	dec ITEMP
 	brne rotate_left_i
 	ret
@@ -331,17 +341,23 @@ pLayerHalf_byte:
 ; uses T (transfer) flag to re-do this block twice
 pLayerOutput:
 	set
+	; point at last odd state bytes
 	adiw XL, 7
 continue_pLayerOutput:
 	ldi PLAYER_INDEX, 4
 pLayerOutput_byte:
+	; load p-layer output from stack and store into SRAM
 	pop ITEMP
 	st -X, ITEMP
+	; interleave bytes
 	dec XL
+	; loop over 4 bytes
 	dec PLAYER_INDEX
 	brne pLayerOutput_byte
+	; 2x4 bytes have been interleaved from the stack to SRAM
 	brtc pLayer_done
 	clt
+	; point at last even state bytes
 	adiw XL, 9
 	rjmp continue_pLayerOutput
 pLayer_done:
