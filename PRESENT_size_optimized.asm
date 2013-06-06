@@ -96,6 +96,9 @@
 
 ; registers r26..r31 are X, Y and Z
 
+; YH is always at zero
+.def ZERO = r29
+
 ; the Z register is used to point to these s-box tables
 #ifdef PACKED_SBOXES
   #ifndef RELOCATABLE_SBOXES
@@ -198,13 +201,13 @@ rotate_left_i_bit:
 	ld ROTATED_BITS, Y
 	rol ROTATED_BITS
 	st Y, ROTATED_BITS
-	cpse YL, YH
+	cpse YL, ZERO
 	rjmp rotate_left_i_bit
 #endif
 #ifdef PRESENT_128
-	adc KEY15, YH
+	adc KEY15, ZERO
 #else
-	adc KEY9, YH
+	adc KEY9, ZERO
 #endif
 	dec ITEMP
 	brne rotate_left_i
