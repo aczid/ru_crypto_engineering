@@ -35,7 +35,7 @@
 \maketitle
 
 \begin{abstract}
-\textbf{This paper presents high-speed and low-size assembly implementations of the 80-bit version of the PRESENT cipher for the AVRtiny family of microcontrollers. We report new speed and size records for our implementation, with the speed-optimized version achieving a full encryption in 8721 clock cycles and the size-optimized version compressing the cipher down to 280 bytes; the previous state of the art for AVRtiny achieved 10723 clock cycles for encryption with a size of 936 bytes. Along with the two implementation extrema (speed \& size optimized versions), we offer insight into techniques and representations that utilize the time-memory tradeoff and provide intermediate solutions for various configurations.\\Keywords: PRESENT, AVR, tinyAVR, software implementation.}
+\textbf{This paper presents high-speed and low-size assembly implementations of the 80-bit version of the PRESENT cipher for the AVRtiny family of microcontrollers. We report new speed and size records for our implementation, with the speed-optimized version achieving a full encryption in 8721 clock cycles and the size-optimized version compressing the cipher down to 280 bytes; the previous state of the art for AVRtiny achieved 10723 clock cycles for encryption with a size of 936 bytes. Along with the two implementation extrema (speed \& size optimized versions), we offer insight into techniques and representations that show the speed/area tradeoffs and provide intermediate solutions for various configurations.\\Keywords: PRESENT, AVR, tinyAVR, software implementation.}
 \end{abstract}
 \section{Introduction}
 Modern society is constantly witnessing an extensive and large scale deployment of tiny computing devices. Information processing and wireless communication are being thoroughly integrated into everyday objects and activities, developing a large distributed mobile infrastructure and ushering in the era of ubiquitous computing. RFID tags attached to products, cardiac pacemakers, fire-detecting sensor nodes and the like need to operate \emph{securely} under particularly \emph{restricted conditions}, namely low battery life, small processing power and bandwidth-demanding ad-hoc network protocols. To achieve sustainable security in this new landscape, researchers have developed new cryptographic primitives and techniques, namely lightweight cryptographic ciphers such as PRESENT~\cite{bogdanov2007present}, Klein~\cite{gong2012klein}, LED~\cite{guo2011led} and others.
@@ -53,13 +53,14 @@ Programming improvements:
 \begin{itemize}[nolistsep]
   \item Squared S-Box representations, \emph{i.e.} S-Boxes which are custom-made for fast access in the AVR 8-bit architecture, also used by Eisenbarth~\cite{eisenbarth2012compact}.
   \item Compact S-Box representations, \emph{i.e.} minimal footprint S-Boxes that reduce the implementation size.
+  \item Minimal key register rotations, allowing the key update procedure to complete in fewer instructions.
   \item Memory access optimizations, grouping memory transactions to improve speed.
   \item Algorithm serialization, by keeping part of the state in SRAM while we operate on fewer registers.
   \item Indirect register access to let loops drive repeated operations on CPU registers.
   \item Use of the stack to store intermediate values to avoid more dedicated registers.
   \item Code restructuring and efficient procedure callings.
 \end{itemize}
-We note that several of the improvements are interoperable and can be combined to provide the ``golden ratio" between speed and size, depending on the external requirements.\\
+We note that some of the improvements are interoperable and can be combined to provide the ``golden ratio" between speed and size, depending on the external requirements.\\
 \textbf{Paper organization.} The organization of the paper follows. Section 2 provides an introduction to the AVR architecture, including the capabilities and limitations of AVRtiny microcontrollers. Section 3 focuses on high-speed implementation of the PRESENT cipher, regarding efficient S-Box representations and lookup tables. Section 4 describes various techniques that produce a very compact version of the cipher. Section 5 provides the final benchmarking results and conclusions.
 
 \section{Background}
@@ -93,7 +94,13 @@ There is a total of 31 such rounds and finally the round key is applied one last
 Atmel offers a wide range of 8-bit microcontrollers, including high performance devices (ATxmega), mid-range devices (ATmega) and low-end devices with limited memory, storage and processing power (ATtiny). Common applications of AVR microcontrollers include smart cards, motor control systems, medical applications et cetera. 
 
 Our focus is on the resource-constrained ATtiny architecture, which typically features less than 1 kilobyte of static RAM (SRAM) and flash storage ranging from 1 to 8 kilobytes. The architecture uses 32 general-purpose registers, \textit{R0}-\textit{R31}.
-Several registers have special characteristics, namely registers \textit{R0} through \textit{R15} can only be accessed by instructions that provide an immediate value as an operand, \emph{e.g.} you cannot perform memory access from these registers. In addition, registers \textit{R27:R26} (denoted as \emph{X}) and registers \textit{R29:R28} (denoted as\emph{Y}) can be used for accessing the SRAM and indirect register addressing, while registers \textit{R31:R30} (denoted as \emph{Z}) can access the flash storage. At all times, special memory registers can be utilized as general-purpose registers.
+
+Several registers have special characteristics, namely registers \textit{R0} through \textit{R15} can only be accessed by instructions that provide an immediate value as an operand, \emph{e.g.} you cannot perform memory access from these registers.
+In addition, registers \textit{R27:R26} (denoted as \emph{X}), registers \textit{R29:R28} (denoted as\emph{Y}) , and registers \textit{R31:R30} (denoted as \emph{Z}) can access the SRAM.
+The \emph{Y} register can be used for indirect register addressing, and the \emph{Z} register can access the flash storage as well as be used for indirect jumps and calls.
+Instructions using these 3 pointer registers also allow post-increment and pre-decrement of the pointer.
+At all times, the 6 special registers can be utilized as general-purpose registers.
+
 The ATtiny instruction set consists of the basic 90 instructions, found in all AVR architectures. However, due to the limited size of its core, it does not support the extended instruction set which includes multiplication, in contrast with the ATmega architecture.\\
 \textbf{ATtiny configuration.} We perform all simulations on ATtiny45, which has a maximum clock frequency of 20 MHz, 256 bytes of SRAM and 4 KB of flash storage.\\
 \textbf{Radix-$2^8$ representation.} The PRESENT cipher requires representing integers of size 64 and 80 bits. Thus, we split the number into 8-bit components, using radix-$2^8$ and an $m$-bit integer is represented as $n=\lceil{m/8}\rceil$ bytes $(x_0,x_1,\dots,x_{n-1})$ such that $x=\sum_{i=0}^n{x_i 2^{8*i}}$.
@@ -376,7 +383,7 @@ Fast (inlined) rotation makes the implementation about 4 times faster and requir
 
 \subsection{Round key application and key scheduling}
 The round key is applied to the state in the SRAM by reading, XORing and writing one byte to/from a register at a time.
-The use of indirect register access allows us to iterate through the key bytes in registers while iterating the state bytes in SRAM.
+The use of indirect register access allows us to iterate through the key bytes in CPU registers while iterating the state bytes in SRAM.
 
 %Because we required a procedure to rotate the key register for key scheduling anyway, that code can be reused to align the first key register with byte this loaded byte.
 When scheduling keys, we still apply the exclusive-or to part of the key register in the ideal position (i.e. where the bytes of the key register line up with the round counter register), as explained in Section~\ref{key_xor}.
