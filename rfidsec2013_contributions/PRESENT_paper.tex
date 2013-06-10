@@ -218,7 +218,7 @@ The instruction to load from flash (\texttt{lpm}) takes 3 clock cycles, whereas 
 %since ATtiny45 possesses only 256 bytes of SRAM and it will reduce the lookup cost by 33\%, \emph{i.e.} to perform a lookup, the software will use the \texttt{ld} instruction (load from SRAM - 2 clock cycles), instead of  the \texttt{lpm} instruction (load from flash memory - 3 clock cycles) and thus, each lookup will cost 1 cycle less.
 Given the fact that the block size of the PRESENT cipher is 64 bits, it requires $64/8=8$ S-Box lookups per round.
 The cipher consists of 31 rounds so a full encryption requires $8 \cdot 31=248$ S-Box applications.
-If an application would singularly encrypt or decrypt, we could save 248 cycles per encryption after an initial $3 \cdot 248 = 744$ clock cycles.
+If an application would singularly encrypt or decrypt, we could save 248 cycles per encryption after an initial $3 \cdot 256 = 768$ clock cycles.
 That means that for the general case of intermixed encryption and decryption the processing penalty to load a 256 byte table from flash storage to SRAM would not be compensated until about 3 encryptions or decryptions were computed sequentially.
 
 \subsubsection{Merged SP Lookup Table}\label{msbox}
