@@ -79,7 +79,7 @@ As of 2012, PRESENT (among other ciphers) was adopted by ISO as a standard for a
 PRESENT uses exclusive-or as its round key operation, a 4-bit substitution layer, a 4-bit period bit position permutation network in 31 rounds and a final round key operation.
 Key scheduling is a combination of bit rotation, S-Box application and exclusive-or with the round counter.
 %We chose PRESENT as a cipher to work on within a project to write and optimize AVR crypto code %because we deemed it extremely well-suited for a simple microcontroller, and felt it was within our %grasp to implement and optimize correctly within the allotted time.
-Constructs found in PRESENT are also encountered in SPONGENT~\cite{bogdanov2011spongent}, in hash function constructs based on block ciphers proposed by Hirose \cite{bogdanov2008hash,hirose2005provably,hirose2006some} (H-PRESENT) and in the similar Maya \cite{gomathisankaran2009maya} or derivative SMALLPRESENT \cite{leander2010small}, so the optimizations presented here can also be of interest with respect to the implementations of these ciphers. In our approach, we have implemented PRESENT for the recommended 80-bit key size in AVR assembly in two versions, optimized for maximal speed and minimal size.
+Constructs found in PRESENT are also encountered in SPONGENT~\cite{bogdanov2011spongent}, in hash function constructs based on block ciphers proposed by Hirose~\cite{bogdanov2008hash,hirose2005provably,hirose2006some} (H-PRESENT) and in the similar Maya~\cite{gomathisankaran2009maya} or derivative SMALLPRESENT~\cite{leander2010small}, so the optimizations presented here can also be of interest with respect to the implementations of these ciphers. In our approach, we have implemented PRESENT for the recommended 80-bit key size in AVR assembly in two versions, optimized for maximal speed and minimal size.
 (Support for 128-bit keys was also added to the size-optimized implementation as the required extra registers became available through optimizations, but we will focus on the implementation of the variant with 80-bit keys.)
 
 \subsection{PRESENT Algorithm}
@@ -298,7 +298,7 @@ The highest 4 bits of the 80-bit key used by the PRESENT cipher, must be substit
 %\end{table}
 
 \subsubsection{Key Exclusive-OR Operation} \label{key_xor}
-The algorithm specifies that the key bits 15, 16, 17, 18, 19 must be XORed with the round counter. The issue is that -under the current representation- bits 0$\dots$7 will be stored in register0, bits 8$\dots$15 will be stored in register1 and bits 16$\dots$23 will be stored in register2. As a result parts of the round counter need to be XORed with different parts of two separate registers, namely the counter needs to be XORed with both register1 and register2. Similarly to \cite{eisenbarth2012compact}, we perform the XOR operation before the key rotation, thus the bits that are operated on are bits 34,35,36,37,38 which span a single register (using the previous representation, they are located in register4 ). This restructuring, \emph{i.e.} performing the XOR operation before the key rotation does not affect the outcome or security of the algorithm. 
+The algorithm specifies that the key bits 15, 16, 17, 18, 19 must be XORed with the round counter. The issue is that -under the current representation- bits 0$\dots$7 will be stored in register0, bits 8$\dots$15 will be stored in register1 and bits 16$\dots$23 will be stored in register2. As a result parts of the round counter need to be XORed with different parts of two separate registers, namely the counter needs to be XORed with both register1 and register2. Similarly to Eisenbarth~\cite{eisenbarth2012compact}, we perform the XOR operation before the key rotation, thus the bits that are operated on are bits 34,35,36,37,38 which span a single register (using the previous representation, they are located in register4 ). This restructuring, \emph{i.e.} performing the XOR operation before the key rotation does not affect the outcome or security of the algorithm. 
 
 
 % NOTE: This is not a valid/verified section yet - we only present thoughts on the possibility of bitslicing. %To be reconsidered.\\
@@ -444,7 +444,7 @@ The S-Boxes can be configured to be located at addresses not aligned to 256-byte
 As mentioned in \ref{indirect}, the key register rotation procedure can be configured to either use indirect register addressing, or be inlined at a cost of 4/10 extra bytes depending on configured key size.
 
 \section{Conclusion}
-We've compared our results to the existing AVR implementation by Eisenbarth et al \cite{eisenbarth2012compact} and the GNU AVR-Crypto-Lib \cite{avr_crypto_lib} (which was written in standard C and is only provided as a baseline reference).
+We've compared our results to the existing AVR implementation by Eisenbarth et al~\cite{eisenbarth2012compact} and the GNU AVR-Crypto-Lib~\cite{avr_crypto_lib} (which was written in standard C and is only provided as a baseline reference).
 We are pleased to announce we were able to reduce the code size by two thirds and gain about 18\% speed increase. (Table~\ref{numbers}.)
 We note that having access to a larger SRAM could allow the lookup tables for the speed-optimized version to incur a lower overhead, and reduce an estimated 992 cycles per encryption (12\%). 
 Overall, we managed to push the limits of the PRESENT implementation and establish a wide spectrum of techniques to enable speed and size efficiency.
@@ -474,14 +474,14 @@ Overall, we managed to push the limits of the PRESENT implementation and establi
 	AVR Crypto-lib~\cite{avr_crypto_lib} & 105796 & 151624 & 1514 \\
 	Eisenbarth~\cite{eisenbarth2012compact} & 10723 & 11239 & 936 \\
 	\textbf{Verstegen} & & & \\
-	\hspace{1em} Inlined rotation, unpacked S-Boxes (128-bit) & 65934 & 121238 & 292 \\
-	\hspace{1em} Inlined rotation (128-bit) & 69282	& 124958 & 290 \\
-	\hspace{1em} Inlined rotation, unpacked S-Boxes & 54112 & 75688 & 286 \\
-	\hspace{1em} Inlined rotation & 57274 & 79036 & 284 \\
-	\hspace{1em} Unpacked s-boxes & 207283 & 276568 & 282 \\
-	\hspace{1em} Unpacked s-boxes (128-bit) & 309873 & 633110 & 282 \\
-	\hspace{1em} Default & 210445 & 279916 & 280 \\
-	\hspace{1em} Default (128-bit) & 313221 & 636830 & 280 \\
+	\hspace{0.4em} Inlined rotation, unpacked S-Boxes (128-bit) & 65934 & 121238 & 292 \\
+	\hspace{0.4em} Inlined rotation (128-bit) & 69282	& 124958 & 290 \\
+	\hspace{0.4em} Inlined rotation, unpacked S-Boxes & 54112 & 75688 & 286 \\
+	\hspace{0.4em} Inlined rotation & 57274 & 79036 & 284 \\
+	\hspace{0.4em} Unpacked s-boxes & 207283 & 276568 & 282 \\
+	\hspace{0.4em} Unpacked s-boxes (128-bit) & 309873 & 633110 & 282 \\
+	\hspace{0.4em} Default & 210445 & 279916 & 280 \\
+	\hspace{0.4em} Default (128-bit) & 313221 & 636830 & 280 \\
 	\end{tabular}
 	\caption{\footnotesize Speed (in clockcycles) and size (in bytes) comparisons to existing implementations of PRESENT for the AVR architecture, ordered by size, speed.}
 	\label{numbers}
