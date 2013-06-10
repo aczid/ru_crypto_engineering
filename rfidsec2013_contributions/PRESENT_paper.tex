@@ -10,6 +10,7 @@
 \usepackage{hyperref}
 
 \usepackage{graphicx}
+\usepackage{tikz}
 \usepackage{url}
 \usepackage{sidecap}
 \usepackage{epstopdf}
@@ -48,7 +49,7 @@ Modern society is constantly witnessing an extensive and large scale deployment 
 
 The majority of these ciphers was designed with hardware performance in mind, leaving most software implementations relatively inefficient. For instance, the AVR-Crypto-Lib~\cite{avr_crypto_lib} often resorts to C language implementations, resulting in 100.000 clock cycles for a single encryption with PRESENT.
 AVR microcontrollers are often encountered regarding the Internet of Things and ubiquitous computing, and moreover serve as a good model of a limited instruction set architecture, thus they are an interesting platform on which to enable and optimize lightweight ciphers.
-The University of Leuven has initiated a project to draft efficient assembly implementations of various lightweight ciphers on resource-constrained AVR devices to make fair comparisons about their relative efficiency. The contribution by Eisenbarth~\cite{eisenbarth2012compact} achieves an encryption with PRESENT in roughly 11.000 clock cycles.
+The University of Leuven has initiated a project to draft efficient assembly implementations of various lightweight ciphers on resource-constrained AVR devices to make fair comparisons about their relative efficiency. The state of the art in this direction, a contribution by Eisenbarth~\cite{eisenbarth2012compact}, achieves an encryption with PRESENT in roughly 11.000 clock cycles in 936 bytes.
 
 \textbf{Our contribution.} This paper describes a speed-optimized and a size-optimized implementation of the PRESENT cipher on the ATtiny45, with the aid of algorithmic improvements and efficient programming techniques. Our speed-optimized version improves the state of the art~\cite{eisenbarth2012compact} by 18\%, while the size-optimized version is 70\% smaller than the smallest known implementation~\cite{eisenbarth2012compact}.\\
 Algorithmic improvement:
@@ -89,11 +90,29 @@ Key scheduling is done by rotating the key register 61 bit positions to the left
 There is a total of 31 such rounds and finally the round key is applied one last time 
 (Figure~\ref{present_schematic}.).
 
+\tikzstyle{cloud} = [ellipse, draw, fill=blue!30, node distance=40pt,minimum height=20pt]
+\tikzstyle{state} = [ellipse, draw, fill=violet!30, node distance=40pt,minimum height=20pt]
+\tikzstyle{subbyte} = [rectangle, draw, text width=100pt, text centered, rounded corners=10pt, minimum height=20pt, fill=red!30]
+\tikzstyle{shiftrow} = [rectangle, draw, text width=100pt, text centered, rounded corners=10pt, minimum height=20pt, fill=orange!30]
+\tikzstyle{mixcolumn} = [rectangle, draw, text width=100pt, text centered, rounded corners=10pt, minimum height=20pt, fill=yellow!30]
+\tikzstyle{roundkey} = [rectangle, draw, text width=100pt, text centered, rounded corners=10pt, minimum height=20pt, fill=green!30]
+\tikzstyle{line} = [draw, -latex']
+
+\tikzstyle{node} = [rectangle, draw, text width=80pt, text centered]
 
 \begin{figure}[H]
 	\label{present_schematic}
 	\centering
 	 \includegraphics [width=0.6\textwidth]{present.eps}
+	 \\
+	 %\begin{tikzpicture}[node distance = 30pt, auto]
+		 %\node [node] (plaintext) {plaintext};
+		 %\node [node, below of = plaintext, node distance=40pt] (sboxone)   {sBoxLayer};
+		 %\node [node, below of = sboxone, node distance=14pt]   (playerone)   {pLayer};
+		 %\node [node, right of = plaintext, node distance=120pt] (keyregister) {key register};
+		 %\node [node, below of = keyregister, minimum size=28pt, node distance=48pt] (updateone) {update};
+	 %\end{tikzpicture}
+	 %\includegraphics{present_page3-crop.pdf}
 \caption{\footnotesize Schematic of the PRESENT cipher. It consists of 31 rounds, including substitution, permutation and key update.}
 \end{figure}
 \subsection{The 8-bit Family of TinyAVR Microcontrollers}
@@ -470,7 +489,7 @@ Overall, we managed to push the limits of the PRESENT implementation and establi
 
 %\section{References}
 \bibliography{PRESENT_paper}{}
-\bibliographystyle{plain}
+\bibliographystyle{unsrt}
 
 \end{document}
-
+\bibliographystyle{plain
