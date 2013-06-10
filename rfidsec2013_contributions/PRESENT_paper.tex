@@ -24,7 +24,7 @@
 \lstset{basicstyle=\scriptsize\sffamily}
 %\lstset{language=Assembler}[avr8avra] % not standard
 \lstdefinestyle{customasm}{
-  morekeywords={adc,adiw,asr,brts,brcs,brhs,brne,cbr,clh,clr,clt,cp,cpi,dec,eor,ldi,lpm,lsl,nop,mov,or,rcall,ret,seh,set,subi,swap,rjmp},
+  morekeywords={adc,adiw,asr,brtc,brcs,brhs,brne,cbr,clh,clr,clt,cp,cpi,dec,eor,ldi,lpm,lsl,nop,mov,or,rcall,ret,seh,set,subi,swap,rjmp},
   morecomment=[l][\color{blue}]{;}
 }
 \lstset{style=customasm}
@@ -78,7 +78,7 @@ As of 2012, PRESENT (among other ciphers) was adopted by ISO as a standard for a
 PRESENT uses exclusive-or as its round key operation, a 4-bit substitution layer, a 4-bit period bit position permutation network in 31 rounds and a final round key operation.
 Key scheduling is a combination of bit rotation, S-Box application and exclusive-or with the round counter.
 %We chose PRESENT as a cipher to work on within a project to write and optimize AVR crypto code %because we deemed it extremely well-suited for a simple microcontroller, and felt it was within our %grasp to implement and optimize correctly within the allotted time.
-Constructs found in PRESENT are also encountered in SPONGENT~\cite{bogdanov2011spongent}, in hash function constructs based on block ciphers proposed by Hirose \cite{bogdanov2008hash,hirose2005provably,hirose2006some} (H-PRESENT) and in the derivative SMALLPRESENT \cite{leander2010small}, so the optimizations presented here can also be of interest with respect to the implementations of these ciphers. In our approach, we have implemented PRESENT for the recommended 80-bit key size in AVR assembly in two versions, optimized for maximal speed and minimal size.
+Constructs found in PRESENT are also encountered in SPONGENT~\cite{bogdanov2011spongent}, in hash function constructs based on block ciphers proposed by Hirose \cite{bogdanov2008hash,hirose2005provably,hirose2006some} (H-PRESENT) and in the derivatives Maya \cite{gomathisankaran2009maya} SMALLPRESENT \cite{leander2010small}, so the optimizations presented here can also be of interest with respect to the implementations of these ciphers. In our approach, we have implemented PRESENT for the recommended 80-bit key size in AVR assembly in two versions, optimized for maximal speed and minimal size.
 (Support for 128-bit keys was also added to the size-optimized implementation as the required extra registers became available through optimizations, but we will focus on the implementation of the variant with 80-bit keys.)
 
 \subsection{PRESENT Algorithm}
@@ -231,9 +231,9 @@ All the aforementioned solutions with respect to substitution and/or permutation
 \begin{figure}[h]
 \centering
 	\begin{lstlisting}
-	mov ZH , high_part_of_address
-	mov ZL , low_part_of_address
-	lpm register , Z
+	mov ZH, high    ; load high part of Z address
+	mov ZL, low     ; load low part of Z address
+	lpm register, Z ; load from Z addresses into register
 	\end{lstlisting}
 	\caption{\footnotesize Flash memory is addressed through 16-bit pointers. We aim to keep changes in the high byte to a minimum.}
 \label{unpacking_code}
@@ -366,16 +366,16 @@ Rather than using dedicated code to invert the permutation layer, we use the PRE
 \begin{figure}[H]
 \centering
 	\begin{lstlisting}
-	setup_redo_block:
-		clt                   ; clear T flag
-		rjmp redo_block       ; do the second part
 	block:
-		set                   ; set T flag
+		set             ; set T flag
 		; fall through
 	redo_block:
 		; instructions here happen twice when called from block
 
-		brts setup_redo_block ; redo this block? (if T flag set)
+		brtc continue   ; break if T flag cleared
+		clt             ; clear T flag
+		rjmp redo_block ; redo this block
+	continue:
 		ret
 	\end{lstlisting}
 	\caption{\footnotesize A construct that uses the state register to re-do a block twice with code executing before, after and in between, allowing 2 executions of the block without requiring access to the stack.}
