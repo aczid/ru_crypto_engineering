@@ -57,7 +57,7 @@ Our speed-optimized version improves the state of the art~\cite{eisenbarth2012co
 
 Algorithmic improvement:
 \begin{itemize}[nolistsep]
-  \item A merged SP layer, \emph{i.e.} combining the substitution and permutation layer of the cipher in order to construct lookup tables that remove the time-consuming permutations~\cite{gong_code}. This improvement constitutes the core of the achieved speed improvement.
+  \item A merged SP layer, \emph{i.e.} combining the substitution and permutation layer of the cipher in order to construct lookup tables that remove the time-consuming permutations~\cite{gong_code,gong2009towards}. This improvement constitutes the core of the achieved speed improvement.
 \end{itemize}
 Programming improvements:
 \begin{itemize}[nolistsep]
@@ -118,7 +118,7 @@ There is a total of 31 such rounds and finally the round key is applied one last
 		 %\node [node, below of = keyregister, minimum size=28pt, node distance=48pt] (updateone) {update};
 	 %\end{tikzpicture}
 	 %\includegraphics{present_page3-crop.pdf}
-\caption{\footnotesize Schematic of the PRESENT cipher. It consists of 31 rounds, including substitution, permutation and key update.}
+\caption{\footnotesize Schematic of the PRESENT cipher. It consists of 31 rounds, including XOR round key application, nibble-wise substitution, bit position permutation and key update.}
 \end{figure}
 \subsection{The 8-bit Family of TinyAVR Microcontrollers}
 Atmel offers a wide range of 8-bit microcontrollers, including high performance devices (ATxmega), mid-range devices (ATmega) and low-end devices with limited memory, storage and processing power (ATtiny). Common applications of AVR microcontrollers include smart cards, motor control systems, medical applications et cetera. 
@@ -127,18 +127,18 @@ Our focus is on the resource-constrained ATtiny architecture, which typically fe
 
 Several registers have special characteristics, namely registers \textit{R0} through \textit{R15} can only be accessed by instructions that provide an immediate value as an operand, \emph{e.g.} you cannot perform memory access from these registers.
 In addition, registers \textit{R27:R26} (denoted as \emph{X}), registers \textit{R29:R28} (denoted as\emph{Y}) , and registers \textit{R31:R30} (denoted as \emph{Z}) can access the SRAM.
-The \emph{Y} register can be used for indirect register addressing, and the \emph{Z} register can access the flash storage as well as be used for indirect jumps and calls.
+The \emph{Y} register can also be used for indirect register addressing, the \emph{Z} register can also access the flash storage and be used for indirect jumps and calls.
 Instructions using these 3 pointer registers also allow post-increment and pre-decrement of the pointer.
 At all times, the 6 special registers can be utilized as general-purpose registers.
 
 The ATtiny instruction set consists of the basic 90 instructions, found in all AVR architectures. However, due to the limited size of its core, it does not support the extended instruction set which includes multiplication, in contrast with the ATmega architecture.\\
-\textbf{ATtiny configuration.} We perform all simulations on ATtiny45, which has a maximum clock frequency of 20 MHz, 256 bytes of SRAM and 4 KB of flash storage.\\
+\textbf{ATtiny configuration.} We perform all simulations on the ATtiny45, which has a maximum clock frequency of 20 MHz, 256 bytes of SRAM and 4 KB of flash storage.\\
 \textbf{Radix-$2^8$ representation.} The PRESENT cipher requires representing integers of size 64 and 80 bits. Thus, we split the number into 8-bit components, using radix-$2^8$ and an $m$-bit integer is represented as $n=\lceil{m/8}\rceil$ bytes $(x_0,x_1,\dots,x_{n-1})$ such that $x=\sum_{i=0}^n{x_i 2^{8*i}}$.
 
 \section{High-Speed Implementation}
 
 \subsection{PRESENT S-Box \& P-Layer Implementation}\label{sbox}
-In this section we examine the S-Box of the PRESENT cipher from the speed perspective, using lookup tables, and we offer several variations, utilizing the time-area trade-off. We analyze the \emph{original S-Box}, identify its performance issues (section \ref{osbox}) and suggest two possible lookup table representations (with 8 and 16 bytes respectively). Subsequently, we expand it to the faster, yet space-demanding (256 bytes) \emph{Squared S-Box} (section \ref{ssbox}). In the last section, we examine the \emph{combination of the S-Box and the permutation layer}, resulting in a very large lookup table (1024 bytes) that substantially boosts performance (section \ref{msbox}).
+In this section we examine the S-Box of the PRESENT cipher from the speed perspective, using lookup tables, and we offer several variations, utilizing the speed-area trade-off. We analyze the \emph{original S-Box}, identify its performance issues and suggest two possible lookup table representations (with 8 and 16 bytes respectively). Subsequently, we expand it to the faster, yet space-demanding (256 bytes) \emph{Squared S-Box}. In the last section, we examine the \emph{combination of the S-Box and the permutation layer}, resulting in a very large lookup table (1024 bytes) that substantially boosts performance.
 
 \subsubsection{Original S-Box}\label{osbox}
 The original S-Box, presented by Bogdanov et al.~\cite{bogdanov2007present} consists of 16 different substitutions, each with a 4-bit input and a 4-bit output, as shown in Table~\ref{original_sbox}.
@@ -224,12 +224,16 @@ That means that for the general case of intermixed encryption and decryption the
 \subsubsection{Merged SP Lookup Table}\label{msbox}
 Although the Squared S-Box lookup table solution is viable for the PRESENT cipher, we need a speed optimization for the most complex part of the PRESENT algorithm: the permutation layer.
 In contrast to hardware implementations, where it is a trivial rewiring of outputs, most software implementations require a large number of bit rotation and move operations.
-The AVR architecture is not capable of performing fast shifts and rotations (compared for instance with the ARM11 processors which can do shifts and rotations for free), \emph{i.e.} an $n$-bit shift requires $n$ clock cycles, and thusly we have to look for alternatives.
+The AVR architecture is not capable of performing fast shifts and rotations (compared to for instance the ARM11 processors, which can do shifts and rotations for free), \emph{i.e.} an $n$-bit shift requires $n$ clock cycles, and thusly we have to look for alternatives.
 In this direction, work by Hutter \& Schwabe~\cite{hutternacl} on ATmega\footnote{Benchmarking was performed on ATmega2560.} suggested the usage of multiplications instead of rotations/shifts, however this is not viable on ATtiny due to the fact that they do not possess native multiplication instructions.
 
 \textbf{Representation.} The fastest approach that we identified for the permutation layer is the idea developed by Zheng Gong and Bo Zhu~\cite{gong_code,gong2009towards}.
 Due to the adaptation of this novel approach in the AVR architecture, we are able to improve performance over the state of the art~\cite{eisenbarth2012compact}.
-Specifically, Gong \& Zhu exploited the internal structure of the permutation layer, \emph{i.e.} the fact that every output of a 4-bit S-Box will contribute one bit to the cipher (the underlying pattern for the permutation is the following: $for$ $k:old$ $position,$ $l:new$ $position,$ $l=f(k)=16(k mod 4)+(k div 4)$ ).
+Specifically, Gong \& Zhu exploited the internal structure of the permutation layer, \emph{i.e.} the fact that every output of a 4-bit S-Box will contribute one bit to the cipher.
+The underlying pattern for the permutation is the following:\\
+
+$for$ $k:old$ $position,$ $l:new$ $position,$ $l=f(k)=16 \cdot (k \bmod 4)+(k \div 4)$ \\
+
 Thus, the first 2 bits of the output are derived from the first two 4-bit S-Boxes, i.e. from the first byte of the previous state.
 Using these observations, they crafted four 256-byte lookup tables (1024 bytes in total) that \emph{merge} the S-Box and the permutation layer and as a result, the whole SP network is performed via table lookups.
 
@@ -237,7 +241,7 @@ Using these observations, they crafted four 256-byte lookup tables (1024 bytes i
 The 1024 byte lookup tables eliminate the need for an independent permutation layer, providing us with the fastest available solution.
 On the downside, we have to perform one lookup for every two bits, resulting in 32 lookups for a 64-bit state (compared to the Squared S-Box that required only 8 lookups for a 64-bit state).
 Moreover, we need 1024 bytes to store the tables, thus it is not possible to transfer them to the SRAM on our test platform.
-The theorized 33\% speedup considered in section \ref{ssbox} is only possible in an AVR microcontroller with at least 1024 bytes of internal\footnote{Additional external SRAM is not an option, since it is at least as slow as flash memory.} SRAM, for instance ATtiny1634.
+The theorized 33\% speedup considered with using SRAM in stead of flash storage is only possible in an AVR microcontroller with at least 1024 bytes of internal\footnote{Additional external SRAM is not an option, since it is at least as slow as flash memory.} SRAM, for instance ATtiny1634.
 
 %\textbf{Speed/area tradeoff.} We conclude the discussion on the substitution/permutation techniques by presenting all the proposed solutions (original, squared or merged S-Box) in the form of a spectrum diagram. Depending on the requirements, resources or limitations induced, one may choose the most suitable representation, with the aid of the following spectrum diagram.
 %% TODO reviewer suggested we replace this with a table
@@ -382,7 +386,7 @@ We can call this code starting from step 2 to apply the S-box to only the high n
         unpack:
                 cbr SBOX_OUTPUT, 0xf0 ; clear high nibble in S-Box output
 	\end{lstlisting}
-	\caption{\footnotesize Unpacking bytes into nibbles in a constant cycle count takes us 8 instructions whereas unpacking unpacked nibbles takes us only 1. The net gain is only 2 bytes of code.}
+	\caption{\footnotesize Loading and unpacking bytes into nibbles in a constant cycle count takes us 8 instructions whereas loading unpacked nibbles takes us only 1. The net gain is only 2 bytes of code.}
 \label{unpacking_code}
 \end{figure}
 
@@ -400,7 +404,7 @@ As you can see this takes 4 instructions, whereas a \textit{rcall}, \textit{ret}
 %In our implementation this construct has been applied to the permutation layer procedure (which requires intermediate storage) to save a few instructions while arranging its temporary state into its final state, and make use of fewer dedicated registers.
 
 %Using fewer dedicated registers also requires fewer dedicated instructions to directly interact with them, which means reduced code size.
-The 4 extra registers that became available through this use of the construct allowed us to implement 128-bit keys while keeping the scheduled round keys entirely in CPU registers at no extra size cost.
+The 4 extra registers that became available through this approach allowed us to implement support for 128-bit keys while keeping the scheduled round keys entirely in CPU registers at no extra size cost.
 This construct does not affect the cycle count relative to the state or input.
 
 Rather than using dedicated code to invert the permutation layer, we use the PRESENT author's design of the bit permutation to undo it by applying it twice more (that is $P(P(P(i))) = i$ for each bit position $i$).
@@ -421,7 +425,7 @@ Rather than using dedicated code to invert the permutation layer, we use the PRE
 	continue:
 		ret
 	\end{lstlisting}
-	\caption{\footnotesize A construct that uses the state register to re-do a block twice with code executing before, after and in between, allowing 2 executions of the block without requiring access to the stack.}
+	\caption{\footnotesize A construct that uses the state register to re-do a block twice with code executing before, after and in between, allowing 2 executions of the block without requiring access to the stack to store return addresses.}
 \label{sreg_redo}
 \end{figure}
 
@@ -434,7 +438,7 @@ Rather than using dedicated code to invert the permutation layer, we use the PRE
 
 \subsection{Indirect Register Access}
 \label{indirect}
-The AVR platform allows the CPU registers to be addressed \textit{indirectly}, meaning we can use a pointer (Y register) in memory space to interact with them.
+The AVR platform allows the CPU registers to be addressed \textit{indirectly}, meaning we can use a pointer (\textit{Y} register) in memory space to interact with them.
 We use the feature to load all 10 or 16 of the dedicated key registers in a loop, to iterate over them while applying the round key to the state in SRAM, and to rotate the key registers.
 This last optimization proved to be devastating to performance compared to inlined rotation of the registers, which is why we added an option to configure either approach.
 
@@ -452,18 +456,19 @@ This leads to smaller code than rotating once and shifting bits of the round cou
 The inverse key scheduling procedure is only needed in the decryption routine, so we were able to inline it into the decryption round.
 
 \subsection{Limits Encountered}
-Although S-Box application and round key application always happen close to each other and have the same SRAM access pattern, the varying order in which they are applied, or the possible omission of the S-Box application makes it impossible to combine the two procedures into one procedure that is smaller.
+Although S-Box application and round key application always happen close to each other and have the same SRAM access pattern, the varying order in which they are applied in encryption/decryption rounds, or the omission of the S-Box application in the final step makes it impossible to combine the two steps into one procedure that makes PRESENT smaller.
 
 While it's possible to save a few more instructions for either the encryption or decryption code by iterating through the state in SRAM from wherever the X pointer is located rather than rewinding it to the start of the block in every round procedure of the algorithm, the varying order in which they are applied in the encryption/decryption rounds makes it impossible to do so for the general case in smaller code.
 
-The choice to rewind to the start of the block places the SRAM pointer back to the same address as before encryption or decryption, which also seems like a good default for real-life use.
+The choice to rewind to the start of the block places the SRAM pointer back to the same address as before encryption or decryption, which seems like a good default for real-life use.
 This also allows all round procedures to be callable from external applications, which seemed more desirable than having them rely on `hidden' state which affects their behaviour.
 
 \subsection{Using the Code for Specific Applications}
-While the attained size of our implementation of PRESENT should suffice for use in real-world applications, most of the return instructions as well as the S-Box unpacking code can be omitted when only encryption or encryption is required in the application.
-This is highlighted in the source code using comments and \textit{define} statements.
+While the attained size of our implementation of PRESENT should suffice for use in real-world applications, most of the procedure calls can be inlined when only encryption or decryption is required in the application.
+If only encryption is required, the inverse S-Box and  S-Box unpacking code can be omitted as well.
+This is highlighted in the source code using comments and is configurable using \textit{define} statements.
 
-The S-Boxes can be configured to be located at addresses not aligned to 256-bytes at a cost of 3 more instructions (6 bytes), to allow all the code to fit in a consecutive block of flash storage.
+%The S-Boxes can be configured to be located at addresses not aligned to 256-bytes at a cost of 3 more instructions (6 bytes), to allow all the code to fit in a consecutive block of flash storage.
 
 As mentioned in \ref{indirect}, the key register rotation procedure can be configured to either use indirect register addressing, or be inlined at a cost of 4/10 extra bytes depending on configured key size.
 
