@@ -84,7 +84,7 @@ As of 2012, PRESENT (among other ciphers) was adopted by ISO as a standard for a
 PRESENT uses exclusive-or as its round key operation, a 4-bit substitution layer, a 4-bit period bit position permutation network in 31 rounds and a final round key operation.
 Key scheduling is a combination of bit rotation, S-Box application and exclusive-or with the round counter.
 %We chose PRESENT as a cipher to work on within a project to write and optimize AVR crypto code %because we deemed it extremely well-suited for a simple microcontroller, and felt it was within our %grasp to implement and optimize correctly within the allotted time.
-Constructs found in PRESENT are also encountered in SPONGENT~\cite{bogdanov2011spongent}, in hash function constructs based on block ciphers proposed by Hirose~\cite{bogdanov2008hash,hirose2005provably,hirose2006some} (H-PRESENT) and in the similar Maya~\cite{gomathisankaran2009maya} or derivative SMALLPRESENT~\cite{leander2010small}, so the optimizations presented here can also be of interest with respect to the implementations of these ciphers. In our approach, we have implemented PRESENT for the recommended 80-bit key size in AVR assembly in two versions, optimized for maximal speed and minimal size.
+Constructs found in PRESENT are also encountered in SPONGENT~\cite{bogdanov2011spongent}, in hash function constructs based on block ciphers proposed by Hirose~\cite{bogdanov2008hash,hirose2005provably,hirose2006some} (H-PRESENT) and in the similar Maya~\cite{gomathisankaran2009maya} or generalized SMALLPRESENT~\cite{leander2010small}, so the optimizations presented here can also be of interest with respect to the implementations of these ciphers. In our approach, we have implemented PRESENT for the recommended 80-bit key size in AVR assembly in two versions, optimized for maximal speed and minimal size.
 Support for 128-bit keys was also added to the size-optimized implementation as the required extra registers became available through optimizations, but we will focus on the implementation of the variant with 80-bit keys.
 
 \subsection{PRESENT Algorithm}
@@ -214,12 +214,12 @@ A solution to the aforementioned performance problem is to construct a new looku
 \textbf{Performance.} The Squared S-Box described is an efficient and viable solution with respect to the cipher's substitution layer. It is custom made for the 8-bit AVR architecture and allows us to perform byte substitutions with a single flash memory lookup. Furthermore, it is relatively size-efficient, consisting of 256 bytes.
 We consider it could almost be transfered to ATtiny45 SRAM from flash memory during the initialization process of the algorithm, but we would be left without any stack space and therefore it would certainly be a special purpose implementation.
 That memory transfer \emph{is} viable for applications that do dedicated encryption or decryption (provided we are left with some stack space for the workings of the rest of the algorithm).
-The instruction to load from flash (\texttt{lpm}) takes 3 clock cycles, whereas loading from SRAM (\texttt{ld}) takes only 2.
+The instruction to load from flash (\texttt{lpm}) takes 3 clock cycles, whereas loading from or saving to SRAM (\texttt{ld}) takes only 2.
 %since ATtiny45 possesses only 256 bytes of SRAM and it will reduce the lookup cost by 33\%, \emph{i.e.} to perform a lookup, the software will use the \texttt{ld} instruction (load from SRAM - 2 clock cycles), instead of  the \texttt{lpm} instruction (load from flash memory - 3 clock cycles) and thus, each lookup will cost 1 cycle less.
 Given the fact that the block size of the PRESENT cipher is 64 bits, it requires $64/8=8$ S-Box lookups per round.
 The cipher consists of 31 rounds so a full encryption requires $8 \cdot 31=248$ S-Box applications.
-If an application would singularly encrypt or decrypt, we could save 248 cycles per encryption after an initial $3 \cdot 256 = 768$ clock cycles.
-That means that for the general case of intermixed encryption and decryption the processing penalty to load a 256 byte table from flash storage to SRAM would not be compensated until about 3 encryptions or decryptions were computed sequentially.
+If an application would singularly encrypt or decrypt, we could save 248 cycles per encryption after an initial $(3+2) \cdot 256 = 1280$ clock cycles.
+That means that the processing penalty to load a 256 byte table from flash storage to SRAM would not be compensated until over 5 encryptions or decryptions were computed sequentially, so this approach is not feasible for the general case of intermixed encryption and decryption.
 
 \subsubsection{Merged SP Lookup Table}\label{msbox}
 Although the Squared S-Box lookup table solution is viable for the PRESENT cipher, we need a speed optimization for the most complex part of the PRESENT algorithm: the permutation layer.
@@ -272,7 +272,8 @@ The theorized 33\% speedup considered with using SRAM in stead of flash storage 
 %\caption{\footnotesize Comparison of S-Box representations. Note that all representations are viable on ATtiny45 when implemented with flash storage. In the case that the tables are transfered to SRAM for faster %lookups, only packed, unpacked and squared are viable on ATtiny45 due its SRAM size (256 bytes). Merged SP on SRAM is viable on ATtiny1634 (featuring 1KB of SRAM). }
 %\end{table}
 \subsubsection{Memory Optimizations for Lookup Tables}
-All the aforementioned solutions with respect to substitution and/or permutation rely heavily on lookup tables. In order to decrease the computational penalty of the table lookups, we performed several code-level optimizations. Below, we demonstrate the code required to perform a single table lookup from flash memory.
+All the aforementioned solutions with respect to substitution and/or permutation rely heavily on lookup tables. In order to decrease the computational penalty of the table lookups, we performed several code-level optimizations.
+In Figure~\ref{loading_code} we demonstrate the code required to perform a single table lookup from flash memory.
 
 \begin{figure}[h]
 \centering
@@ -282,10 +283,10 @@ All the aforementioned solutions with respect to substitution and/or permutation
 	lpm register, Z ; load from Z addresses into register
 	\end{lstlisting}
 	\caption{\footnotesize Flash memory is addressed through 16-bit pointers. We aim to keep changes in the high byte to a minimum.}
-\label{unpacking_code}
+\label{loading_code}
 \end{figure}
 
-The lookup operations consists of two \texttt{mov} and one \texttt{lpm} instruction. Memory is addressed using 16-bit pointers, so the first \texttt{mov} loads the high part, while the second \texttt{mov} loads the table index that will be accessed.\\
+The lookup operation consists of two \texttt{mov} and one \texttt{lpm} instruction. Memory is addressed using 16-bit pointers, so the first \texttt{mov} loads the high part, while the second \texttt{mov} loads the table index that will be accessed.\\
 \textbf{Table alignment.} We aim to keep the changes required in the high part (\texttt{ZH}) to a minimum. Thus, we align the four 256-byte tables required for the merged SP approach in section \ref{msbox} such that they can be accessed by using only the  low part (\texttt{ZL}) register as an index and keeping \texttt{ZH} unchanged. Elaborating, the four lookup tables start from \texttt{0x0600, 0x0700, 0x0800, 0x0900} respectively and thus, the 8 high bits of the address part (\texttt{0x06, 0x07, 0x08, 0x09}) remain the same while the 8 low bits are sufficient to act as the table index, ranging from 0 to 255 (\texttt{0x00} to \texttt{0xFF}). \\
 \textbf{Memory access grouping.} Performing two lookup operations in two different tables requires a total of 10 clock cycles (2 \texttt{mov} to change the high part of the operation, 2 \texttt{mov} to change the index and 2 \texttt{lpm} to perform the actual lookup). However, performing two lookup operations on the \emph{same table} requires a total of 8 clock cycles (2 \texttt{mov} for the index, 2 \texttt{lpm} for the lookup), since the high part of the memory address remains the same. Thus, we 
 we try to perform the maximum amount of grouped table lookups, given the limited number of registers, since within each group, \texttt{ZH} remains the same. For instance the following sequence of operations, \emph{ lookupTable1(i), lookupTable2(k), lookupTable1(j), lookupTable2(m)} will transform to \emph{ lookupTable1(i), lookupTable1(j), lookupTable2(k), lookupTable2(m)} in order to group memory access.
