@@ -29,7 +29,7 @@
 #define ENCRYPTION ; (can save 26 bytes if omitted)
 #define DECRYPTION ; (can save 68 bytes if omitted)
 
-;#define FAST_ROTATE ; Fast rotation (adds 4 bytes)
+;#define FAST_ROTATE ; Fast rotation (adds 4 bytes, 4x speedup)
 ;#define PRESENT_128 ; Use 128-bit keys (adds 6 bytes if FAST_ROTATE set)
 
 #ifdef DECRYPTION
@@ -39,10 +39,12 @@
 #ifdef PACKED_SBOXES
 #define QUANTIZE_TIMING ; Avoid timing attacks (adds 6 bytes)
 #endif
+;#define ZERO_KEY ; Zeroise key in SRAM (adds 2 bytes)
 
 ;#define RELOCATABLE_SBOXES ; This makes s-boxes relocatable in flash
                             ; otherwise they are mapped at 0x100 and 0x200
                             ; (adds 6 bytes)
+
 
 ; Number of rounds
 .equ ROUNDS = 31
@@ -382,7 +384,12 @@ pLayer_done:
 	clr YH
 	clr YL
 	load_key:
+	#ifdef SCRUB_KEY
+		ld ITEMP, X
+		st X+, ZERO
+	#else
 		ld ITEMP, X+
+	#endif
 		st Y+, ITEMP
 	#ifdef PRESENT_128
 		cpi YL, 16

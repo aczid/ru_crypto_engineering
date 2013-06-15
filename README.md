@@ -53,6 +53,8 @@ tables and omit the 14-byte unpacking code.
 Although it is unadvised, there is the option of not quantizing the timing of
 packed s-box application by commenting out the **QUANTIZE_TIMING** define
 statement to save 6 bytes.
+Zeroisation of the key in SRAM can be enabled by uncommenting the **ZERO_KEY**
+define statement at a cost of 2 extra bytes.
 
 Authors
 =======
