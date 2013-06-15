@@ -17,10 +17,10 @@ The current version requires 264 code bytes for the encryption and decryption
 routines, and 16 bytes for s-box tables at addresses 0x100 and 0x200.
 
 * Size optimized version 2 - May 2013
-* Code size (total):           264 bytes + 16 bytes for both packed s-boxes
+* Code size (total):           262 bytes + 16 bytes for both packed s-boxes
 * RAM words:                    18
-* Cycle count (encryption): 210445 (57274 for 2 extra instructions)
-* Cycle count (decryption): 279916 (79036 for 2 extra instructions)
+* Cycle count (encryption): 210443
+* Cycle count (decryption): 279916
 
 The speed-optimized version of the algorithm can be found at
 [my co-author's github browsable repository](

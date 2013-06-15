@@ -15,9 +15,9 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           264 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           262 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption): 210445
+; Cycle count (encryption): 210443
 ; Cycle count (decryption): 279916
 
 ; USE
@@ -26,8 +26,8 @@
 ; address, where the next 8 bytes constitute the output.
 
 ; Comment out either to omit
-#define ENCRYPTION ; (can save 28 bytes if omitted)
-#define DECRYPTION ; (can save 70 bytes if omitted)
+#define ENCRYPTION ; (can save 26 bytes if omitted)
+#define DECRYPTION ; (can save 68 bytes if omitted)
 
 ;#define FAST_ROTATE ; Fast rotation (adds 4 bytes)
 ;#define PRESENT_128 ; Use 128-bit keys (adds 6 bytes if FAST_ROTATE set)
@@ -402,9 +402,6 @@ pLayer_done:
 schedule_key:
 	schedule_key_macro
 	ret
-addRoundKey:
-	addRoundKey_macro
-	ret
 sBoxLayer:
 	sBoxLayer_macro
 	ret
@@ -450,13 +447,9 @@ encrypt:
 		; loop for ROUNDS
 		brne encrypt_update
 	; add final round key
-	#ifndef DECRYPTION
-	addRoundKey:
-		addRoundKey_macro
-		ret
-	#else
-		rjmp addRoundKey
-	#endif
+addRoundKey:
+	addRoundKey_macro
+	ret
 #endif
 
 #ifdef DECRYPTION
