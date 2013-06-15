@@ -13,7 +13,7 @@ paper, the C version by Zhu/Gong and the Leuven AVR implementation.
 
 This AVR assembly version was optimized for small code size at the expense of
 speed.
-The current version requires 264 code bytes for the encryption and decryption
+The current version requires 262 code bytes for the encryption and decryption
 routines, and 16 bytes for s-box tables at addresses 0x100 and 0x200.
 
 * Size optimized version 2 - May 2013
