@@ -25,7 +25,7 @@
 ; decrypt. After having called encrypt or decrypt X will point to the same
 ; address, where the next 8 bytes constitute the output.
 
-; Comment out either to omit
+; CONFIGURATION
 #define ENCRYPTION          ; (can save 26 bytes if omitted)
 #define DECRYPTION          ; (can save 68 bytes if omitted)
 
