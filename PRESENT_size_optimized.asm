@@ -384,7 +384,7 @@ pLayer_done:
 	clr YH
 	clr YL
 	load_key:
-	#ifdef SCRUB_KEY
+	#ifdef ZERO_KEY
 		ld ITEMP, X
 		st X+, ZERO
 	#else
