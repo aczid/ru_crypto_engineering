@@ -362,7 +362,7 @@ This means support for 128-bit keys was able to be added to the implementation a
 
 \subsection{S-Box Packing}\label{sbox_packing}
 The PRESENT S-Boxes work on 4-bit nibbles, but defining a table of nibbles in the code at first seemed less size-efficient than packing the nibbles into bytes to be unpacked.
-This would save 8 bytes per S-Box table to start with, but we need 5 to 8 instructions in stead of a \textbf{ld} (load) depending on whether or not we care about timing attacks to unpack the nibbles which diminishes the size benefit to 2 bytes of code. See Figure~\ref{unpacking_code} and Table~\ref{packed_sbox}.
+This would save 8 bytes per S-Box table to start with, but we need 4 to 7 extra instructions depending on whether or not we care about timing attacks to unpack the nibbles which diminishes the size benefit to 2 bytes of code. See Figure~\ref{unpacking_code} and Table~\ref{packed_sbox}.
 
 The S-box construct replaces a single low nibble in the output.
 The simplest and most size-efficient way to apply it to a byte in code consists of 1) calling it, 2) swapping the resulting nibbles, 3) calling it again for the other nibble and then 4) swapping the nibbles back.
@@ -475,7 +475,7 @@ As mentioned in \ref{indirect}, the key register rotation procedure can be confi
 
 \section{Conclusion}
 We've compared our results to the existing AVR implementation by Eisenbarth et al~\cite{eisenbarth2012compact} and the GNU AVR-Crypto-Lib~\cite{avr_crypto_lib} (which was written in standard C and is only provided as a baseline reference).
-We are pleased to announce we were able to reduce the code size by two thirds and gain about 18\% speed increase. (Table~\ref{numbers}.)
+We are pleased to announce we were able to reduce the code size by 70\% and gain 18\% speed increase. (Table~\ref{numbers}.)
 We note that having access to a larger SRAM could allow the lookup tables for the speed-optimized version to incur a lower overhead, and reduce an estimated 992 cycles per encryption (12\%). 
 Overall, we managed to push the limits of the PRESENT implementation and establish a wide spectrum of techniques to enable speed and size efficiency.
 \newcommand{\specialcell}[2][c]{%
