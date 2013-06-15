@@ -26,20 +26,20 @@
 ; address, where the next 8 bytes constitute the output.
 
 ; Comment out either to omit
-#define ENCRYPTION ; (can save 26 bytes if omitted)
-#define DECRYPTION ; (can save 68 bytes if omitted)
+#define ENCRYPTION          ; (can save 26 bytes if omitted)
+#define DECRYPTION          ; (can save 68 bytes if omitted)
 
-;#define FAST_ROTATE ; Fast rotation (adds 4 bytes, 4x speedup)
-;#define PRESENT_128 ; Use 128-bit keys (adds 6 bytes if FAST_ROTATE set)
+;#define FAST_ROTATE        ; Fast rotation (adds 4 bytes, 4x speedup)
+;#define PRESENT_128        ; Use 128-bit keys (adds 6 bytes if FAST_ROTATE set)
 
 #ifdef DECRYPTION
-#define PACKED_SBOXES ; Use packed s-boxes (saves 2 bytes)
+#define PACKED_SBOXES       ; Use packed s-boxes (saves 2 bytes)
 #endif
 
 #ifdef PACKED_SBOXES
-#define QUANTIZE_TIMING ; Avoid timing attacks (adds 6 bytes)
+#define QUANTIZE_TIMING     ; Avoid timing attacks (adds 6 bytes)
 #endif
-;#define ZERO_KEY ; Zeroise key in SRAM (adds 2 bytes)
+;#define ZERO_KEY           ; Zeroise key in SRAM (adds 2 bytes)
 
 ;#define RELOCATABLE_SBOXES ; This makes s-boxes relocatable in flash
                             ; otherwise they are mapped at 0x100 and 0x200
@@ -67,39 +67,26 @@
 .def KEY14 = r14
 .def KEY15 = r15
 
-; Output registers (these hold p-layer output to be saved to SRAM)
+; Output registers (these hold p-layer output)
 .def OUTPUT0 = r16
 .def OUTPUT1 = r17
 .def OUTPUT2 = r18
 .def OUTPUT3 = r19
 
-; The round counter
 .def ROUND_COUNTER = r20
-
-; Register for s-box output
 .def SBOX_OUTPUT = r21
+                             ; Shared register:
+.def KEY_BYTE = r22          ; the current round key byte
+.def SBOX_INDEX = r22        ; the index of the current s-box input
+.def PLAYER_INDEX = r22      ; the index of the current p-layer input
 
-; Shared register
-; the current round key byte
-.def KEY_BYTE = r22
-; the index of the current s-box input
-.def SBOX_INDEX = r22
-; the index of the current p-layer input
-.def PLAYER_INDEX = r22
+.def SBOX_DISPLACEMENT = r23 ; Low-byte offset to s-box in flash
+.def ITEMP = r24             ; Register for immediate values
+.def ROTATED_BITS = r25      ; Bit rotation register
 
-; Low-byte offset to s-box in flash
-.def SBOX_DISPLACEMENT = r23
-
-; Register for immediate values
-.def ITEMP = r24
-
-; Bit rotation register
-.def ROTATED_BITS = r25
+.def ZERO = r29              ; YH is always at zero
 
 ; registers r26..r31 are X, Y and Z
-
-; YH is always at zero
-.def ZERO = r29
 
 ; the Z register is used to point to these s-box tables
 #ifdef PACKED_SBOXES
