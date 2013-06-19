@@ -13,14 +13,14 @@ paper, the C version by Zhu/Gong and the Leuven AVR implementation.
 
 This AVR assembly version was optimized for small code size at the expense of
 speed.
-The current version requires 262 code bytes for the encryption and decryption
+The current version requires 260 code bytes for the encryption and decryption
 routines, and 16 bytes for s-box tables at addresses 0x100 and 0x200.
 
 * Size optimized version 2 - May 2013
-* Code size (total):           262 bytes + 16 bytes for both packed s-boxes
+* Code size (total):           260 bytes + 16 bytes for both packed s-boxes
 * RAM words:                    18
-* Cycle count (encryption): 210443
-* Cycle count (decryption): 279916
+* Cycle count (encryption): 208986
+* Cycle count (decryption): 278242
 
 The speed-optimized version of the algorithm can be found at
 [my co-author's github browsable repository](
@@ -44,7 +44,7 @@ At a cost of 6 extra bytes the s-box tables can be located at addresses not
 aligned to 256 bytes when the **RELOCATABLE_SBOXES** define statement is
 uncommented, provided the tables do not span a 256-byte address boundary.
 This allows the encryption and decryption code + packed s-box tables to fit in
-284 consecutive bytes of flash.
+282 consecutive bytes of flash.
 
 To get a tiny bit more performance at the expense of 2 bytes the
 **PACKED_SBOXES** define statement can be commented out to use 16-byte s-box

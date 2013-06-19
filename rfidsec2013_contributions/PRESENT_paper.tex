@@ -41,7 +41,7 @@
 \maketitle
 
 \begin{abstract}
-This paper presents high-speed and low-size assembly implementations of the 80-bit version of the PRESENT cipher for the (Tiny)AVR family of microcontrollers. We report new speed and size records for our implementations, with the speed-optimized version achieving a full encryption in 8721 clock cycles and the size-optimized version compressing the cipher down to 274 bytes; the previous state of the art for (Tiny)AVR achieved 10723 clock cycles for encryption with a size of 936 bytes. Along with the two implementation extrema (speed \& size optimized versions), we offer insight into techniques and representations that show the speed/area tradeoffs and provide intermediate solutions for various configurations.\\
+This paper presents high-speed and low-size assembly implementations of the 80-bit version of the PRESENT cipher for the (Tiny)AVR family of microcontrollers. We report new speed and size records for our implementations, with the speed-optimized version achieving a full encryption in 8721 clock cycles and the size-optimized version compressing the cipher down to 276 bytes; the previous state of the art for (Tiny)AVR achieved 10723 clock cycles for encryption with a size of 936 bytes. Along with the two implementation extrema (speed \& size optimized versions), we offer insight into techniques and representations that show the speed/area tradeoffs and provide intermediate solutions for various configurations.\\
 \textbf{Key words}: PRESENT, AVR, ATtiny, Assembly, Software Implementation
 \end{abstract}
 \section{Introduction}
@@ -338,7 +338,7 @@ Similarly to Eisenbarth~\cite{eisenbarth2012compact}, we perform the XOR operati
 
 Here we will list some of the size improvements we were able to apply to the PRESENT algorithm.
 While these modifications make the algorithm operate more slowly, the reduction in size would allow the cipher to be included in microcontrollers with smaller available code area.
-Our version requires 129 AVR instructions (258 bytes of code) for both the encryption and decryption routines, plus two times 8 bytes for packed tables of S-Box values at memory addresses \texttt{0x100} and \texttt{0x200}.
+Our version requires 130 AVR instructions (260 bytes of code) for both the encryption and decryption routines, plus two times 8 bytes for packed tables of S-Box values at memory addresses \texttt{0x100} and \texttt{0x200}.
 We believe this should be sufficiently small for the code to be included in an AVR machine with 1K of available Flash storage, while still allowing almost three quarters of the available area to be devoted to application-specific code.
 
 Unfortunately, every opcode in the AVR instruction set is 16-bits wide, so there is nothing to be gained from exchanging any instructions for equivalent smaller ones (such as for example \textit{add Rd, 1} being more concisely expressed as \textit{inc Rd} on x86 machines).
@@ -365,10 +365,15 @@ This means support for 128-bit keys was able to be added to the implementation a
 The PRESENT S-Boxes work on 4-bit nibbles, but defining a table of nibbles in the code at first seemed less size-efficient than packing the nibbles into bytes to be unpacked.
 This would save 8 bytes per S-Box table to start with, but we need 4 to 7 extra instructions depending on whether or not we care about timing attacks to unpack the nibbles which diminishes the size benefit to 2 bytes of code. See Figure~\ref{unpacking_code} and Table~\ref{packed_sbox}.
 
-The S-box procedure we constructed replaces a single high nibble in the output.
-The most size-efficient way to apply it to a byte consists of 1) swapping the input nibbles, 2) calling it, 3) swapping the nibbles back and 4) calling it again for the other nibble.
-We can call this code starting from step 4 to apply the S-box to only the high nibble of a byte, as is required when scheduling new round keys.
-(Applying it this way instead of the other way around allows the procedure to apply the S-Box to a high nibble to be inlined into the procedure that applies it to a byte, saving 2 more instructions.)
+% TODO
+%The S-box procedure we constructed replaces a single high nibble in the output.
+%The most size-efficient way to apply it to a byte consists of 1) swapping the input nibbles, 2) calling it, 3) swapping the nibbles back and 4) calling it again for the other nibble.
+%We can call this code starting from step 4 to apply the S-box to only the high nibble of a byte, as is required when scheduling new round keys.
+%(Applying it this way instead of the other way around allows the procedure to apply the S-Box to a high nibble to be inlined into the procedure that applies it to a byte, saving 2 more instructions.)
+
+The S-box construct replaces a single low nibble in the output.
+The simplest and most size-efficient way to apply it to a byte in code consists of 1) calling it, 2) swapping the resulting nibbles, 3) calling it again for the other nibble and then 4) swapping the nibbles back.
+We can call this code starting from step 2 to apply the S-box to only the high nibble of a byte, as is required when scheduling new round keys.
 %We consider this a fair loss for our optimization strategy, and also see an upside: having the S-Boxes unpacked as data improves throughput and makes the encryption and decryption code smaller to distribute separately.
 %We decided 2 bytes of area reduction just wasn't worth the other losses.
 %The packed table approach is therefore only beneficial when we require encryption and decryption routines in the target application, in which case it would save the remaining 6 bytes.
@@ -499,6 +504,7 @@ Overall, we managed to push the limits of the PRESENT implementation and establi
 
 \begin{table}[h]
 \centering
+% TODO update numbers
 \footnotesize
 	\begin{tabular}{ l r r r }
 		& Encryption & Decryption & Size \\
@@ -507,13 +513,13 @@ Overall, we managed to push the limits of the PRESENT implementation and establi
 	Eisenbarth~\cite{eisenbarth2012compact} & 10723 & 11239 & 936 \\
 	\textbf{Verstegen}~\cite{aram_code} & & & \\
 	\hspace{0.4em} Inlined rotation, unpacked S-Boxes (128-bit) & 65932 & 121238 & 290 \\
-	\hspace{0.4em} Inlined rotation (128-bit) & 69280	& 124958 & 288 \\
-	\hspace{0.4em} Inlined rotation, unpacked S-Boxes & 54110 & 75688 & 284 \\
+	\hspace{0.4em} Inlined rotation (128-bit) & 69280	& 124958 & 286 \\
+	\hspace{0.4em} Inlined rotation, unpacked S-Boxes & 54110 & 75688 & 282 \\
 	\hspace{0.4em} Inlined rotation & 57272 & 79036 & 282 \\
-	\hspace{0.4em} Unpacked s-boxes & 207281 & 276568 & 280 \\
-	\hspace{0.4em} Unpacked s-boxes (128-bit) & 309871 & 633110 & 280 \\
-	\hspace{0.4em} Default & 210445 & 279914 & 274 \\
-	\hspace{0.4em} Default (128-bit) & 313219 & 636830 & 278 \\
+	\hspace{0.4em} Unpacked s-boxes & 207281 & 276568 & 278 \\
+	\hspace{0.4em} Unpacked s-boxes (128-bit) & 309871 & 633110 & 278 \\
+	\hspace{0.4em} Default & 210445 & 279914 & 276 \\
+	\hspace{0.4em} Default (128-bit) & 313219 & 636830 & 276 \\
 	\end{tabular}
 	\caption{\footnotesize Speed (in clock cycles) and size (in bytes) comparisons to existing implementations of PRESENT for the AVR architecture, ordered by size, speed.}
 	\label{numbers}

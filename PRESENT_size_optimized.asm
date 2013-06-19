@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           262 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           260 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption): 210443
-; Cycle count (decryption): 279916
+; Cycle count (encryption): 208986
+; Cycle count (decryption): 278242
 
 ; USE
 ; Point X at 8 input bytes followed by 10/16 key bytes and call encrypt or
@@ -215,14 +215,11 @@ rotate_left_i_bit:
 ; procedure as its own procedure when key scheduling
 ; reads from and writes to ITEMP
 sBoxByte:
-	rcall sBoxLowNibble
+	rcall sBoxLowNibbleAndSwap
+	rjmp sBoxLowNibbleAndSwap
 sBoxHighNibble:
 	swap ITEMP
-	rcall sBoxLowNibble
-	swap ITEMP
-	ret
-
-sBoxLowNibble:
+sBoxLowNibbleAndSwap:
 	; input (low nibble)
 	mov ZL, ITEMP             ; load s-box input
 	cbr ZL, 0xf0              ; clear high nibble in s-box input
@@ -243,7 +240,7 @@ even_unpack:
   #ifdef QUANTIZE_TIMING
 	rjmp unpack               ; 2 cycles
   #endif
-odd_unpack:                       ; avoid timing attacks
+odd_unpack:                   ; avoid timing attacks
   #ifdef QUANTIZE_TIMING
 	nop                       ; 1 cycle
 	nop
@@ -255,6 +252,8 @@ unpack:
 
 	cbr ITEMP, 0xf            ; clear low nibble in output
 	or ITEMP, SBOX_OUTPUT     ; save low nibble to output
+
+	swap ITEMP
 	ret
 
 ; apply loaded s-box to the full 8-byte state in SRAM
