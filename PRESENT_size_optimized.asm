@@ -215,45 +215,45 @@ rotate_left_i_bit:
 ; procedure as its own procedure when key scheduling
 ; reads from and writes to ITEMP
 sBoxByte:
-	rcall sBoxLowNibbleAndSwap
-	rjmp sBoxLowNibbleAndSwap
+	rcall sBoxLowNibbleAndSwap ; apply s-box to low nibble and swap nibbles
+	rjmp sBoxLowNibbleAndSwap  ; do it again and return
 sBoxHighNibble:
-	swap ITEMP
+	swap ITEMP                 ; swap nibbles in IO register
 sBoxLowNibbleAndSwap:
 	; input (low nibble)
-	mov ZL, ITEMP             ; load s-box input
-	cbr ZL, 0xf0              ; clear high nibble in s-box input
+	mov ZL, ITEMP              ; load s-box input from IO register
+	cbr ZL, 0xf0               ; clear high nibble in s-box input
 #ifdef RELOCATABLE_SBOXES
-	add ZL, SBOX_DISPLACEMENT ; displacement for s-box pointer
+	add ZL, SBOX_DISPLACEMENT  ; displacement for s-box pointer
 #endif
 #ifdef PACKED_SBOXES
-	asr ZL                    ; halve input, take carry
+	asr ZL                     ; halve input, take carry
 #endif
 
 	; output (low nibble)
-	lpm SBOX_OUTPUT, Z        ; get s-box output
+	lpm SBOX_OUTPUT, Z         ; get s-box output
 
 #ifdef PACKED_SBOXES
-	brcs odd_unpack           ; 2 cycles if true, 1 if false
+	brcs odd_unpack            ; 2 cycles if true, 1 if false
 even_unpack:
-	swap SBOX_OUTPUT          ; 1 cycle
+	swap SBOX_OUTPUT           ; 1 cycle
   #ifdef QUANTIZE_TIMING
-	rjmp unpack               ; 2 cycles
+	rjmp unpack                ; 2 cycles
   #endif
-odd_unpack:                       ; avoid timing attacks
+odd_unpack:                        ; avoid timing attacks
   #ifdef QUANTIZE_TIMING
-	nop                       ; 1 cycle
+	nop                        ; 1 cycle
 	nop
   #endif
 ; 4 cycles total
 unpack:
-	cbr SBOX_OUTPUT, 0xf0
+	cbr SBOX_OUTPUT, 0xf0      ; clear high nibble in s-box output
 #endif
 
-	cbr ITEMP, 0xf            ; clear low nibble in output
-	or ITEMP, SBOX_OUTPUT     ; save low nibble to output
+	cbr ITEMP, 0xf             ; clear low nibble in IO register
+	or ITEMP, SBOX_OUTPUT      ; save low nibble to IO register
 
-	swap ITEMP
+	swap ITEMP                 ; swap nibbles in IO register (back)
 	ret
 
 ; apply loaded s-box to the full 8-byte state in SRAM
