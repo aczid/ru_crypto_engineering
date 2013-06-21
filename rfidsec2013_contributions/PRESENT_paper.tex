@@ -48,7 +48,7 @@ This paper presents high-speed and low-size assembly implementations of the 80-b
 Modern society is constantly witnessing an extensive and large scale deployment of tiny computing devices. Information processing and wireless communication are being thoroughly integrated into everyday objects and activities, developing a large distributed mobile infrastructure and ushering in the era of ubiquitous computing. RFID tags attached to products, cardiac pacemakers, fire-detecting sensor nodes and the like need to operate \emph{securely} under particularly \emph{restricted conditions}, namely low battery life, small processing power and bandwidth-demanding ad-hoc network protocols. To achieve sustainable security in this new landscape, researchers have developed new cryptographic primitives and techniques, namely lightweight cryptographic ciphers such as PRESENT~\cite{bogdanov2007present}, Klein~\cite{gong2012klein}, LED~\cite{guo2011led} and others.
 
 The majority of these ciphers was designed with hardware performance in mind, leaving most software implementations relatively inefficient. For instance, the AVR-Crypto-Lib~\cite{avr_crypto_lib} often resorts to C language implementations, resulting in 100.000 clock cycles for a single encryption with PRESENT.
-AVR microcontrollers are often encountered regarding the Internet of Things and ubiquitous computing, and moreover serve as a good model of a limited instruction set architecture, thus they are an interesting platform on which to enable and optimize lightweight ciphers.
+AVR microcontrollers are often encountered regarding the Internet of Things and ubiquitous computing, thus they are an interesting platform on which to enable and optimize lightweight ciphers.
 The University of Leuven has initiated a project to draft efficient assembly implementations of various lightweight ciphers on resource-constrained AVR devices to make fair comparisons about their relative efficiency.
 Resulting from this project is the state of the art in both speed and size: an implementation~\cite{eisenbarth2012compact} which achieves an encryption with PRESENT in 10723 clock cycles in 936 bytes.
 
@@ -512,17 +512,18 @@ Overall, we managed to push the limits of the PRESENT implementation and establi
 	AVR Crypto-lib~\cite{avr_crypto_lib} & 105796 & 151624 & 1514 \\
 	Eisenbarth~\cite{eisenbarth2012compact} & 10723 & 11239 & 936 \\
 	\textbf{Verstegen}~\cite{aram_code} & & & \\
-	\hspace{0.4em} Inlined rotation, unpacked S-Boxes (128-bit) & 65932 & 121238 & 290 \\
-	\hspace{0.4em} Inlined rotation (128-bit) & 69280	& 124958 & 286 \\
-	\hspace{0.4em} Inlined rotation, unpacked S-Boxes & 54110 & 75688 & 282 \\
-	\hspace{0.4em} Inlined rotation & 57272 & 79036 & 282 \\
-	\hspace{0.4em} Unpacked s-boxes & 207281 & 276568 & 278 \\
-	\hspace{0.4em} Unpacked s-boxes (128-bit) & 309871 & 633110 & 278 \\
-	\hspace{0.4em} Default & 210445 & 279914 & 276 \\
-	\hspace{0.4em} Default (128-bit) & 313219 & 636830 & 276 \\
+	\hspace{0.4em} Inlined rotation, unpacked S-Boxes (128-bit) & 64537 & 119688 & 288 \\
+	\hspace{0.4em} Inlined rotation (128-bit) & 67885	& 123408 & 286 \\
+	\hspace{0.4em} Inlined rotation, unpacked S-Boxes & 52653 & 74014 & 282 \\
+	\hspace{0.4em} Inlined rotation & 55815 & 77362 & 280 \\
+	\hspace{0.4em} Unpacked s-boxes & 205824 & 274894 & 278 \\
+	\hspace{0.4em} Unpacked s-boxes (128-bit) & 308476 & 631560 & 278 \\
+	\hspace{0.4em} Default & 208986 & 278242 & 276 \\
+	\hspace{0.4em} Default (128-bit) & 311824 & 635280 & 276 \\
 	\end{tabular}
 	\caption{\footnotesize Speed (in clock cycles) and size (in bytes) comparisons to existing implementations of PRESENT for the AVR architecture, ordered by size, speed.}
 	\label{numbers}
+
 \end{table}
 
 %\section{References}
