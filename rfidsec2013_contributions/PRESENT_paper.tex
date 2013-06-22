@@ -478,7 +478,7 @@ This is highlighted in the source code using comments and is configurable using 
 
 %The S-Boxes can be configured to be located at addresses not aligned to 256-bytes at a cost of 3 more instructions (6 bytes), to allow all the code to fit in a consecutive block of flash storage.
 
-As mentioned in \ref{indirect}, the key register rotation procedure can be configured to either use indirect register addressing, or be inlined at a cost of 4/10 extra bytes depending on configured key size.
+As mentioned in \ref{indirect}, the key register rotation procedure can be configured to either use indirect register addressing, or be inlined at a cost of 4/16 extra bytes depending on configured key size.
 
 \section{Conclusion}
 We've compared our results to the existing AVR implementation by Eisenbarth et al~\cite{eisenbarth2012compact} and the GNU AVR-Crypto-Lib~\cite{avr_crypto_lib} (which was written in standard C and is only provided as a baseline reference).
