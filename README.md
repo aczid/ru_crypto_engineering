@@ -89,11 +89,16 @@ hexadecimal as a banner.
                          |
                          encrypt (end-16)
 
-Pipe this graphic (without offset annotations) into
+To get a programmable rom, pipe this graphic (without offset annotations) into:
 
     tr -d ' \n' | perl -ne 's/([0-9a-f]{2})/print chr hex $1/gie' | bin2hex.py -
 
-to get a programmable rom.
 (I.e. strip newlines and spaces, decode ASCII hex to binary and convert to
 programmable .hex format.)
+To inspect the code:
 
+    avr-objdump -mavr -D <hex file>
+
+Or if you have [Radare](http://radare.org/) you can pipe the banner directly into:
+
+    tr -d ' \n' | rasm2 -a avr -d -f -
