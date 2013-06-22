@@ -30,7 +30,7 @@
 #define DECRYPTION          ; (can save 68 bytes if omitted)
 
 ;#define FAST_ROTATE        ; Fast rotation (adds 4 bytes, 4x speedup)
-;#define PRESENT_128        ; Use 128-bit keys (adds 6 bytes if FAST_ROTATE set)
+;#define PRESENT_128        ; Use 128-bit keys (adds 12 bytes if FAST_ROTATE set)
 ;#define ZERO_KEY           ; Zeroise key in SRAM (adds 2 bytes)
 ;#define RELOCATABLE_SBOXES ; This makes s-boxes relocatable in flash
                             ; otherwise they are mapped at 0x100 and 0x200
