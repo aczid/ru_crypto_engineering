@@ -95,10 +95,11 @@ To get a programmable rom, pipe this graphic (without offset annotations) into:
 
 (I.e. strip newlines and spaces, decode ASCII hex to binary and convert to
 programmable .hex format.)
+
 To inspect the code:
 
     avr-objdump -mavr -D <hex file>
 
-Or if you have [radare2](http://radare.org/) you can pipe the banner directly into:
+Or if you have [radare2](http://radare.org/) you can pipe the banner into:
 
     tr -d ' \n' | rasm2 -a avr -d -f -
