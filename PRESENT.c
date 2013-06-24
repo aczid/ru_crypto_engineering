@@ -27,7 +27,6 @@ const unsigned char *active_sbox = NULL;
 
 unsigned int round_counter;
 key_t 	key;
-block_t roundkey;
 block_t state;
 
 void rotate_left_i(int i){
@@ -53,12 +52,11 @@ void schedule_key(void){
 	/* sbox(high nibble) | low nibble */
 	key.bytes[0] = (active_sbox[key.bytes[0] >> 4] << 4) | (key.bytes[0] & 0xf);
 	/* Zhu/Gong eliminated the left shift by making their s-box produce upper nibbles */
-
-	/* Ki = K63K62..K0 = k79k78..k16 */
-	memcpy(roundkey.bytes, key.bytes, 8);
 }
 
 void addRoundKey(void){
+	block_t roundkey;
+	memcpy(roundkey.bytes, key.bytes, 8);
 	state.value ^= roundkey.value;
 }
 
@@ -84,13 +82,14 @@ void pLayer(void){
 	state.value = newstate.value;
 }
 
-void setup(void){
+void setup(unsigned char *statebytes, unsigned char *keybytes){
 	active_sbox = sbox;
-	memcpy(roundkey.bytes, key.bytes, 8);
+	memcpy(state.bytes, statebytes, 8);
+	memcpy(key.bytes, keybytes, 10);
 }
 
-void encrypt(void){
-	setup();
+void encrypt(unsigned char *statebytes, unsigned char *keybytes){
+	setup(statebytes, keybytes);
 	for(round_counter = 1; round_counter < 32; round_counter++){
 		addRoundKey();
 		sBoxLayer();
@@ -98,11 +97,11 @@ void encrypt(void){
 		schedule_key();
 	}
 	addRoundKey();
+	memcpy(statebytes, state.bytes, 8);
 }
 
-void decrypt(void){
-	setup();
-schedule_last_key:
+void decrypt(unsigned char *statebytes, unsigned char *keybytes){
+	setup(statebytes, keybytes);
 	for(round_counter = 1; round_counter < 32; round_counter++){
 		schedule_key();
 	}
@@ -117,9 +116,9 @@ schedule_last_key:
 		key.bytes[0] = (active_sbox[key.bytes[0] >> 4] << 4) | (key.bytes[0] & 0xf);
 		rotate_left_i(19);
 		key.bytes[5] ^= round_counter << 2;
-		memcpy(roundkey.bytes, key.bytes, 8);
 	}
 	addRoundKey();
+	memcpy(statebytes, state.bytes, 8);
 }
 
 void print_block(block_t block){
@@ -138,19 +137,25 @@ void print_key(key_t key){
 }
 
 void test(int keyval, int input){
-	memset(key.bytes, keyval, 10);
-	state.value = input;
+	block_t test_state;
+	key_t   test_key;
+	memset(test_key.bytes, keyval, 10);
+	test_state.value = input;
+
 	printf("Key:        ");
-	print_key(key);
+	print_key(test_key);
 	printf("Plaintext:  ");
-	print_block(state);
-	encrypt();
+	print_block(test_state);
+
+	encrypt(test_state.bytes, test_key.bytes);
+
 	printf("Ciphertext: ");
-	print_block(state);
-	memset(key.bytes, keyval, 10);
-	decrypt();
+	print_block(test_state);
+
+	decrypt(test_state.bytes, test_key.bytes);
+
 	printf("Plaintext:  ");
-	print_block(state);
+	print_block(test_state);
 	printf("\n");
 }
 
