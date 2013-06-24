@@ -129,9 +129,19 @@ void print_block(block_t block){
 	);
 }
 
+void print_key(key_t key){
+	printf("%02x%02x%02x%02x %02x%02x%02x%02x\n",
+		key.bytes[0], key.bytes[1], key.bytes[2], key.bytes[3],
+		key.bytes[4], key.bytes[5], key.bytes[6], key.bytes[7],
+		key.bytes[8], key.bytes[9]
+	);
+}
+
 void test(int keyval, int input){
 	memset(key.bytes, keyval, 10);
 	state.value = input;
+	printf("Key:        ");
+	print_key(key);
 	printf("Plaintext:  ");
 	print_block(state);
 	encrypt();
