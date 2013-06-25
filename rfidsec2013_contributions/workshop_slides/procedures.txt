@@ -1,0 +1,13 @@
+sBoxByte 10
+encrypt 12
+sBoxes 16
+sBoxLayer 16
+addRndKey 18
+pNibble 18
+nextKey 22
+setup 22
+rotateLeft 24
+sNibble 24
+decrypt 38
+pLayer 54
+
