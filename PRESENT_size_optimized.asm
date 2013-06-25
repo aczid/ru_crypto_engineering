@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           260 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           258 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption): 208986
-; Cycle count (decryption): 278242
+; Cycle count (encryption): 208955
+; Cycle count (decryption): 278180
 
 ; USE
 ; Point X at 8 input bytes followed by 10/16 key bytes and call encrypt or
@@ -326,7 +326,6 @@ pLayerHalf_byte:
 ; interleave the two half blocks on the stack into SRAM from back to front
 ; uses T (transfer) flag to re-do this block twice
 pLayerOutput:
-	set
 	; point at last odd state bytes
 	adiw XL, 7
 continue_pLayerOutput:
@@ -341,8 +340,8 @@ pLayerOutput_byte:
 	dec PLAYER_INDEX
 	brne pLayerOutput_byte
 	; 2x4 bytes have been interleaved from the stack to SRAM
-	brtc pLayer_done
-	clt
+	brts pLayer_done
+	set
 	; point at last even state bytes
 	adiw XL, 9
 	rjmp continue_pLayerOutput
