@@ -4,13 +4,14 @@
 \usepackage{graphicx,hyperref,ru}
 \usepackage{listings}
 \usepackage{fancyvrb}
+\usepackage{soul}
 \usepackage{framed}
 \usepackage{xcolor}
 \usepackage{gnuplottex}
 \lstset{basicstyle=\scriptsize\sffamily}
 %\lstset{language=Assembler}[avr8avra] % not standard
 \lstdefinestyle{customasm}{
-  morekeywords={adc,adiw,asr,brts,brcs,brhs,brne,cbr,clh,clr,clt,cp,cpi,dec,eor,ld,ldi,lpm,lsl,mov,or,rcall,ret,seh,set,st,subi,swap,rjmp},
+  morekeywords={adc,adiw,asr,brts,brcs,brhs,brne,cbr,clh,clr,clt,cp,cpi,dec,eor,ld,ldi,lpm,lsl,mov,or,rcall,ret,seh,set,st,subi,swap,rjmp,nop},
   morecomment=[l][\color{blue}]{;}
 }
 \lstset{style=customasm}
@@ -65,14 +66,37 @@ Aram Verstegen
 
 \begin{frame}[fragile]
 \frametitle{ATtiny Platform}
+\begin{tabular}{c c c c}
+         & Flash ROM (KiloBytes) & SRAM (Bytes) & Clock speed \\
+ATtiny25 & 2 & 128 & 20 \\
+ATtiny45 & 4 & 256 & 20 \\
+ATtiny85 & 8 & 512 & 20 \\
+ATtiny1634 & 16 & 1024 & 12 \\
+\end{tabular}
 \begin{itemize}
 \item Basic 90 AVR instructions
-\item 8-bit registers
-\item 32 general purpose registers
-\item 4Kbytes flash
-\item 256 bytes SRAM
-\item 20 MHz
+\item 32 8-bit general purpose registers
 \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Quick AVR Recap}
+\begin{footnotesize}
+\begin{tabular}{l l}
+Load register from immediate & \textbf{ldi} \textit{Rd}, \textit{42} \\
+Load register from SRAM pointer (X) & \textbf{ld} \textit{Rd}, \textit{X} \\
+Load register from ROM pointer (Z) & \textbf{lpm} \textit{Rd}, \textit{Z} \\
+XOR output with input & \textbf{eor} \textit{Ro}, \textit{Ri} \\
+Swap nibbles in byte & \textbf{swap} \textit{Rd} \\
+Rotate left (highest bit goes into carry flag) & \textbf{rol} \textit{Rd} \\
+Save to SRAM from register (and increment) & \textbf{st} \textit{X+}, \textit{Rd} \\
+Well-known mnemonics & \textbf{and}, \textbf{or}, \textbf{rcall}, \textbf{ret}, \\
+                     & \textbf{rjmp}, \textbf{push}, \textbf{pop}, \textbf{inc}, \\
+                     & \textbf{dec}, \textbf{add}, \textbf{sub} \\
+\end{tabular}
+\end{footnotesize}
+
+The 32 general purpose registers are mapped at the start of memory and can be accessed through the \textit{Y} register.
 \end{frame}
 
 \begin{frame}[fragile]
@@ -118,15 +142,15 @@ Tricks & Algorithmic & Device-specific \\
 \begin{lstlisting}
 ; state ^= roundkey (first 8 bytes of key register)
 addRoundKey:
-        eor STATE0, KEY0
-        eor STATE1, KEY1
-        eor STATE2, KEY2
-        eor STATE3, KEY3
-        eor STATE4, KEY4
-        eor STATE5, KEY5
-        eor STATE6, KEY6
-        eor STATE7, KEY7
-        ret
+    eor STATE0, KEY0
+    eor STATE1, KEY1
+    eor STATE2, KEY2
+    eor STATE3, KEY3
+    eor STATE4, KEY4
+    eor STATE5, KEY5
+    eor STATE6, KEY6
+    eor STATE7, KEY7
+    ret
 \end{lstlisting}
 \end{frame}
 
@@ -183,6 +207,91 @@ addRoundKey:
 \end{itemize}
 \end{frame}
 
+\begin{frame}[fragile]
+\frametitle{S-Box and P-Layer}
+%\begin{itemize}
+%\item
+\emph{Idea: Combine the SBox and PLayer in lookup tables} [Bo Zhu \& Zheng Gong]
+%\end{itemize}
+\includegraphics[width=\textwidth]{spnet.png}
+\begin{itemize}
+\item 1024 bytes of lookup tables, 32 lookups per round
+\item Works well on AVR compared to on-the-fly calculation
+  \begin{itemize}
+    \item Reached \emph{8700cc} for encryption
+  \end{itemize}
+\item Because of many lookups, consider larger SRAM
+  \begin{itemize}
+    \item \textit{lpm} instruction: 3cc
+    \item \textit{ld} instruction: 2cc, could reduce ~2000cc more
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Lookup tables}
+\begin{minipage}[t]{0.48\textwidth}
+
+\begin{itemize}
+\item Table 1 at \textit{0x600}, Table 2 at \textit{0x800}
+\item Lookup table 1
+\begin{lstlisting}
+    ldi ZH, 0x06
+    mov ZL, STATE0
+    lpm OUTPUT0, Z
+\end{lstlisting}
+\item Lookup table 2
+\begin{lstlisting}
+    ldi ZH, 0x08
+    mov ZL, STATE1
+    lpm OUTPUT1, Z
+\end{lstlisting}
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\begin{itemize}
+\item \st{Lookup table 1, table 2, table 1, table 2}
+\item Lookup table 1, table 1, table 2, table 2
+\begin{lstlisting}
+    ldi ZH, 0x06
+    mov ZL, STATE0
+    lpm OUTPUT0, Z
+    mov ZL, STATE2
+    lpm OUTPUT2, Z
+
+    ldi ZH, 0x08
+    mov ZL, STATE1
+    lpm OUTPUT1, Z
+    mov ZL, STATE3
+    lpm OUTPUT3, Z
+\end{lstlisting}
+\item Fewer changes in \textit{ZH}
+\end{itemize}
+\end{minipage}
+\end{frame}
+
+\begin{frame}
+\frametitle{Key Update}
+\begin{enumerate}
+\item Rotate 80-bit key register 61 bits to the left
+  \begin{itemize}
+  \item Rotate 19 bits to the right in stead
+  \item Use 2 \textit{mov} instructions to rotate $2\cdot8=16$ bits
+  \item Use \textit{ror} only for the last 3 bits
+  \end{itemize}
+\item S-Box the top 4 bits of 80-bit key register
+  \begin{itemize}
+  \item Use a \textbf{byte} lookup table
+  \end{itemize}
+\item XOR key bits with round counter
+  \begin{itemize}
+  \item XOR needs to span 2 registers
+  \item Do step 3 before step 1 then XOR spans only 1 register
+  \end{itemize}
+\end{enumerate}
+\end{frame}
+
 \begin{frame}
 \frametitle{AVR Architecture}
         \begin{itemize}
@@ -211,30 +320,31 @@ addRoundKey:
 \begin{frame}[fragile]
 \frametitle{Serialization of the Algorithm}
 \begin{lstlisting}
-; state ^= roundkey (full state in registers)
+; state ^= roundkey
 addRoundKey:
-        eor STATE0, KEY0
-        eor STATE1, KEY1
-        eor STATE2, KEY2
-        eor STATE3, KEY3
-        eor STATE4, KEY4
-        eor STATE5, KEY5
-        eor STATE6, KEY6
-        eor STATE7, KEY7
-        ret
+    eor STATE0, KEY0
+    eor STATE1, KEY1
+    eor STATE2, KEY2
+    eor STATE3, KEY3
+    eor STATE4, KEY4
+    eor STATE5, KEY5
+    eor STATE6, KEY6
+    eor STATE7, KEY7
+    ret
 \end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]
 \frametitle{Serialization of the algorithm}
+\begin{minipage}[t]{0.48\textwidth}
 \begin{lstlisting}
-; state ^= roundkey (half state in registers)
+; half state ^= roundkey
 addRoundKey:
-        eor STATE0, KEY0
-        eor STATE1, KEY1
-        eor STATE2, KEY2
-        eor STATE3, KEY3
-        ret
+    eor STATE0, KEY0
+    eor STATE1, KEY1
+    eor STATE2, KEY2
+    eor STATE3, KEY3
+    ret
 \end{lstlisting}
 
 This helps with:
@@ -244,7 +354,29 @@ This helps with:
         \item applying S-Boxes
         \item applying P-layer
 \end{itemize}
-
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+But we need I/O:
+\begin{lstlisting}
+consecutive_input:
+    ld STATE0, X+
+    ld STATE1, X+
+    ld STATE2, X+
+    ld STATE3, X+
+    ret
+interleaved_output:
+    st STATE3, X-
+    dec X
+    st STATE2, X-
+    dec X
+    st STATE1, X-
+    dec X
+    st STATE0, X-
+    dec X
+    ret
+\end{lstlisting}
+\end{minipage}
 \end{frame}
 
 \begin{frame}[fragile]
@@ -264,23 +396,6 @@ addRoundKey_byte:
 
       subi XL, 8           ; point at the start of the block
       ret
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]
-\frametitle{Using SREG Flags}
-\begin{lstlisting}
-setup_redo_block:
-        clt                   ; clear T flag
-        rjmp redo_block       ; do the second part
-block:
-        set                   ; set T flag
-        ; fall through
-redo_block:
-        ; instructions here happen twice when called from block
-
-        brts setup_redo_block ; redo this block? (if T flag set)
-        ret
 \end{lstlisting}
 \end{frame}
 
@@ -305,14 +420,51 @@ redo_block:
 
 \begin{lstlisting}
 unpack_sBox:
-        asr ZL                ; halve input, take carry
-        lpm SBOX_OUTPUT, Z    ; get s-box output
-        brcs odd_unpack       ; branch depending on carry
+    asr ZL                ; halve input, take carry
+    lpm SBOX_OUTPUT, Z    ; get s-box output
+    brcs odd_unpack       ; branch depending on carry
 even_unpack:
-        swap SBOX_OUTPUT      ; swap nibbles in s-box output
+    swap SBOX_OUTPUT      ; swap nibbles in s-box output
 odd_unpack:
-        cbr SBOX_OUTPUT, 0xf0 ; clear high nibble in s-box output
-        ret
+    cbr SBOX_OUTPUT, 0xf0 ; clear high nibble in s-box output
+    ret
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Packing S-Boxes and unpacking in constant time}
+	\footnotesize{
+	Before: \\
+	\begin{tabular}{ | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | }
+	  \hline                        
+	  C & 5 & 6 & B & 9 & 0 & A & D & 3 & E & F & 8 & 4 & 7 & 1 & 2 \\
+	  \hline  
+	\end{tabular}
+	\\
+
+	After: \\
+	\begin{tabular}{ | c | c | c | c | c | c | c | c | }
+	  \hline                        
+	  C5 & 6B & 90 & AD & 3E & F8 & 47 & 12 \\
+	  \hline  
+	\end{tabular}
+	}
+
+\begin{lstlisting}
+unpack_sBox:
+    asr ZL
+    lpm SBOX_OUTPUT, Z
+    brcs odd_unpack       ; 2 cycles if true
+even_unpack:
+    swap SBOX_OUTPUT      ; 1 cycle
+    rjmp unpack           ; 2 cycles
+odd_unpack:
+    nop                   ; 1 cycle
+    nop
+; 4 cycles total
+unpack:
+    cbr SBOX_OUTPUT, 0xf0
+    ret
 \end{lstlisting}
 \end{frame}
 
@@ -320,107 +472,146 @@ odd_unpack:
 \frametitle{S-Box Optimization}
 \begin{lstlisting}
 sBoxByte:
-        ; input (low nibble)
-        mov ZL, ITEMP         ; load s-box input
-        cbr ZL, 0xf0          ; clear high nibble in input
-        rcall unpack_sBox     ; get output in SBOX_OUTPUT
+    ; input (low nibble)
+    mov ZL, ITEMP         ; load s-box input
+    cbr ZL, 0xf0          ; clear high nibble in input
+    rcall unpack_sBox     ; get output in SBOX_OUTPUT
 
-        cbr ITEMP, 0xf        ; clear low nibble in output
-        or ITEMP, SBOX_OUTPUT ; save low nibble to output
+    cbr ITEMP, 0xf        ; clear low nibble in output
+    or ITEMP, SBOX_OUTPUT ; save low nibble to output
 
-        ; fall through
+    ; fall through
 sBoxHighNibble:
-        mov ZL, ITEMP         ; load s-box input
-        cbr ZL, 0xf           ; clear low nibble in input
-        swap ZL               ; move high nibble to low nibble
+    mov ZL, ITEMP         ; load s-box input
+    cbr ZL, 0xf           ; clear low nibble in input
+    swap ZL               ; move high nibble to low nibble
 
-        rcall unpack_sBox     ; get output in SBOX_OUTPUT
-        swap SBOX_OUTPUT      ; move low nibble to high nibble
+    rcall unpack_sBox     ; get output in SBOX_OUTPUT
+    swap SBOX_OUTPUT      ; move low nibble to high nibble
 
-        cbr ITEMP, 0xf0       ; clear high nibble in output
-        or ITEMP, SBOX_OUTPUT ; save high nibble to output
+    cbr ITEMP, 0xf0       ; clear high nibble in output
+    or ITEMP, SBOX_OUTPUT ; save high nibble to output
 
-        ret
+    ret
 \end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]
 \frametitle{S-Box Optimization}
 \begin{lstlisting}
-sBoxHighNibble:
-        clh
-        swap ITEMP            ; swap nibbles
-        rjmp sBoxLowNibble    ; do low nibble
 sBoxByte:
-        seh                   ; set H flag to re-do this block
-        ; fall through
-sBoxLowNibble:
-        mov ZL, ITEMP         ; load s-box input
-        cbr ZL, 0xf0          ; clear high nibble in s-box input
+    rcall sBoxLowNibbleAndSwap ; apply s-box to low nibble
+                               ; and swap nibbles
+    rjmp sBoxLowNibbleAndSwap  ; do it again and return
+sBoxHighNibble:
+    swap ITEMP                 ; swap nibbles in IO register
+sBoxLowNibbleAndSwap:
+    mov ZL, ITEMP              ; load s-box input
+    cbr ZL, 0xf0               ; clear high nibble in s-box input
 
-        rcall unpack_sBox
+    rcall unpack_sBox
 
-        cbr ITEMP, 0xf        ; clear low nibble in IO register
-        or ITEMP, SBOX_OUTPUT ; save low nibble to IO register
-        brhs sBoxHighNibble   ; do the high nibble
-        swap ITEMP            ; swap nibbles
-        ret
+    cbr ITEMP, 0xf             ; clear low nibble in IO register
+    or ITEMP, SBOX_OUTPUT      ; save low nibble to IO register
+    swap ITEMP                 ; swap nibbles
+    ret
 \end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]
 \frametitle{S-Box Optimization}
 \begin{lstlisting}
-sBoxHighNibble:
-        clh
-        swap ITEMP            ; swap nibbles
-        rjmp sBoxLowNibble    ; do low nibble
 sBoxByte:
-        seh                   ; set H flag to re-do this block
-sBoxLowNibble:
-        mov ZL, ITEMP         ; load s-box input from IO register
-        cbr ZL, 0xf0          ; clear high nibble in s-box input
+    rcall sBoxLowNibbleAndSwap ; apply s-box to low nibble
+                               ; and swap nibbles
+    rjmp sBoxLowNibbleAndSwap  ; do it again and return
+sBoxHighNibble:
+    swap ITEMP                 ; swap nibbles in IO register
+sBoxLowNibbleAndSwap:
+    mov ZL, ITEMP              ; load s-box input
+    cbr ZL, 0xf0               ; clear high nibble in s-box input
 
 unpack_sBox:
-        asr ZL                ; halve input, take carry
-        lpm SBOX_OUTPUT, Z    ; get s-box output
-        brcs odd_unpack       ; branch depending on carry
+    asr ZL                     ; halve input, take carry
+    lpm SBOX_OUTPUT, Z         ; get s-box output
+    brcs odd_unpack            ; branch depending on carry
 even_unpack:
-        swap SBOX_OUTPUT      ; swap nibbles in s-box output
+    swap SBOX_OUTPUT           ; swap nibbles in s-box output
 odd_unpack:
-        cbr SBOX_OUTPUT, 0xf0 ; clear high nibble in s-box output
+    cbr SBOX_OUTPUT, 0xf0      ; clear high nibble in s-box output
 
-        cbr ITEMP, 0xf        ; clear low nibble in IO register
-        or ITEMP, SBOX_OUTPUT ; save low nibble to IO register
-        brhs sBoxHighNibble   ; do the high nibble
-        swap ITEMP            ; swap nibbles
+    cbr ITEMP, 0xf             ; clear low nibble in IO register
+    or ITEMP, SBOX_OUTPUT      ; save low nibble to IO register
+    swap ITEMP                 ; swap nibbles
+    ret
+\end{lstlisting}
+\end{frame}
+
+%\begin{frame}[fragile]
+%\frametitle{Size Over Time}
+%%\includegraphics[width=\textwidth]{size_over_time}
+%\tiny{
+%\advance\leftskip-4em
+%\begin{gnuplot}[terminal=latex]
+%set xdata time
+%set timefmt "%b-%d"
+%set xrange ["Feb-23":"Mar-4"]
+%set yrange [250:500]
+%set xlabel "Time"
+%set ylabel "Size"
+%set title "Size reduction of my PRESENT implementation"
+%set key off
+%set output "size_over_time_february.tex"
+%plot "size_over_time_february.txt" using 1:2 index 0 title "bytes" with points, \
+     %''               using 1:2:2 with labels left offset 0.8,0.2 notitle, \
+     %''               using 1:2:3 with labels left offset 3,0.2 notitle
+
+%\end{gnuplot}
+%\include{size_over_time_february}
+%}
+%\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Using SREG Flags}
+\begin{lstlisting}
+setup_redo_block:
+        clt                   ; clear T flag
+        rjmp redo_block       ; do the second part
+block:
+        set                   ; set T flag
+        ; fall through
+redo_block:
+        ; instructions here happen twice when called from block
+
+        brts setup_redo_block ; redo this block? (if T flag set)
         ret
 \end{lstlisting}
 \end{frame}
 
-\begin{frame}[fragile]
-\frametitle{Size Over Time}
-%\includegraphics[width=\textwidth]{size_over_time}
-\tiny{
-\advance\leftskip-4em
-\begin{gnuplot}[terminal=latex]
-set xdata time
-set timefmt "%b-%d"
-set xrange ["Feb-23":"Jul-1"]
-set yrange [250:500]
-set xlabel "Time"
-set ylabel "Size"
-set title "Size reduction of my PRESENT implementation"
-set key off
-set output "size_over_time.tex"
-plot "size_over_time.txt" using 1:2 index 0 title "bytes" with points, \
-     ''               using 1:2:2 with labels left offset 0.8,0.2 notitle, \
-     ''               using 1:2:3 with labels left offset 3,0.2 notitle
 
-\end{gnuplot}
-\include{size_over_time}
-}
-\end{frame}
+%\begin{frame}[fragile]
+%\frametitle{Size Over Time}
+%%\includegraphics[width=\textwidth]{size_over_time}
+%\tiny{
+%\advance\leftskip-4em
+%\begin{gnuplot}[terminal=latex]
+%set xdata time
+%set timefmt "%b-%d"
+%set xrange ["May-20":"Jul-1"]
+%set yrange [250:500]
+%set xlabel "Time"
+%set ylabel "Size"
+%set title "Size reduction of my PRESENT implementation"
+%set key off
+%set output "size_over_time_june.tex"
+%plot "size_over_time_june.txt" using 1:2 index 0 title "bytes" with points, \
+     %''               using 1:2:2 with labels left offset 0.8,0.2 notitle, \
+     %''               using 1:2:3 with labels left offset 3,0.2 notitle
+
+%\end{gnuplot}
+%\include{size_over_time_june}
+%}
+%\end{frame}
 
 \begin{frame}[fragile]
 \frametitle{Size Per Procedure}
