@@ -19,8 +19,8 @@ routines, and 16 bytes for s-box tables at addresses 0x100 and 0x200.
 * Size optimized version 2 - May 2013
 * Code size (total):           258 bytes + 16 bytes for both packed s-boxes
 * RAM words:                    18
-* Cycle count (encryption): 208986
-* Cycle count (decryption): 278242
+* Cycle count (encryption): 208955
+* Cycle count (decryption): 278180
 
 The speed-optimized version of the algorithm can be found at
 [my co-author's github browsable repository](
