@@ -100,6 +100,7 @@ To inspect the code:
 
     avr-objdump -mavr -D <hex file>
 
-Or if you have [radare2](http://radare.org/) you can pipe the banner into:
+Or if you have [radare2](http://radare.org/) you can pipe the banner directly
+into:
 
-    tr -d ' \n' | rasm2 -a avr -d -f -
+    tr -d ' \n' | rasm2 -aavr -d -f -
