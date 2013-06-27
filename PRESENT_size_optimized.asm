@@ -15,10 +15,10 @@
 
 ; SPECIFICATIONS
 ; Size optimized version 2 - May 2013
-; Code size (total):           258 bytes + 16 bytes for both packed s-boxes
+; Code size (total):           256 bytes + 16 bytes for both packed s-boxes
 ; RAM words:                    18
-; Cycle count (encryption): 208955
-; Cycle count (decryption): 278180
+; Cycle count (encryption): 190045
+; Cycle count (decryption): 253380
 
 ; USE
 ; Point X at 8 input bytes followed by 10/16 key bytes and call encrypt or
@@ -180,7 +180,7 @@ rotate_left_i:
 	rol KEY1
 	rol KEY0
 #else
-	; load key size
+	; point at last key byte
   #ifdef PRESENT_128
 	ldi YL, 16
   #else
@@ -190,8 +190,7 @@ rotate_left_i:
 	clc
 rotate_left_i_bit:
 	; rotate carry bit through each key register using indirect addressing
-	dec YL
-	ld ROTATED_BITS, Y
+	ld ROTATED_BITS, -Y
 	rol ROTATED_BITS
 	st Y, ROTATED_BITS
 	; cpse doesn't affect the C (carry) flag
