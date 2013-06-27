@@ -69,8 +69,8 @@ as a geeky sort of art inspired by the [RSA dolphin](
 http://e-privacy.winstonsmith.info/2007/2005/2002/munitions/documents/rsafin),
 here is the compiled AVR code (configured with relocatable s-boxes) in ASCII
 hexadecimal as a banner.
-(Created with [this script](https://gist.github.com/aczid/5703046) and
-manually adjusted for kerning.)
+(Created with [this script](https://gist.github.com/aczid/5703046), 
+then manually adjusted kerning.)
 
     s-boxes                                     decrypt (start+16)
     |                                           |
