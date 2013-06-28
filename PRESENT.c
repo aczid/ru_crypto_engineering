@@ -14,8 +14,8 @@ typedef struct {
 	unsigned char 	 	bytes[10];
 } key_t;
 
-#define test_bit(x,n)	x.bytes[(sizeof(x.bytes)-1)-(n/CHAR_BIT)] &  (1<<(n%CHAR_BIT))
-#define set_bit(x,n)	x.bytes[(sizeof(x.bytes)-1)-(n/CHAR_BIT)] |= (1<<(n%CHAR_BIT))
+#define test_bit(x,n)	x[(sizeof(x)-1)-(n/CHAR_BIT)] &  (1<<(n%CHAR_BIT))
+#define set_bit(x,n)	x[(sizeof(x)-1)-(n/CHAR_BIT)] |= (1<<(n%CHAR_BIT))
 
 const unsigned char sbox[16] = {
 	0xC, 0x5, 0x6, 0xB, 0x9, 0x0, 0xA, 0xD, 0x3, 0xE, 0xF, 0x8, 0x4, 0x7, 0x1, 0x2
@@ -34,8 +34,8 @@ void rotate_left_i(int i){
 	unsigned int bit;
 	memset(newkey.bytes, 0x0, 10);
 	for(bit = 0; bit < 80; bit++){
-		if(test_bit(key,bit)){
-			set_bit(newkey,(bit+i)%80);
+		if(test_bit(key.bytes,bit)){
+			set_bit(newkey.bytes,(bit+i)%80);
 		}
 	}
 	memcpy(key.bytes, newkey.bytes, 10);
@@ -61,7 +61,6 @@ void addRoundKey(void){
 void sBoxLayer(void){
 	unsigned int i;
 	for(i = 0; i < 8; i++){
-		/* sbox(high nibble) | sbox(low nibble) */
 		state.bytes[i] = (active_sbox[state.bytes[i] >> 4] << 4) | active_sbox[(state.bytes[i] & 0xf)];
 	}
 }
@@ -70,11 +69,9 @@ void pLayer(void){
 	block_t newstate;
 	unsigned int bit;
 	newstate.value = 0;
-
 	for(bit = 0; bit < 64; bit++){
-		if(test_bit(state,bit)){
-			/* Kostas figured out the pattern */
-			set_bit(newstate,((16 * (bit % 4)) + (bit / 4)));
+		if(test_bit(state.bytes,bit)){
+			set_bit(newstate.bytes,((16 * (bit % 4)) + (bit / 4)));
 		}
 	}
 	state.value = newstate.value;
