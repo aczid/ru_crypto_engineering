@@ -49,9 +49,7 @@ void schedule_key(void){
 	rotate_left_i(61);
 	
 	/* 2. [k79k78k77k76] = S[k79k78k77k76] */
-	/* sbox(high nibble) | low nibble */
-	key.bytes[0] = (active_sbox[key.bytes[0] >> 4] << 4) | (key.bytes[0] & 0xf);
-	/* Zhu/Gong eliminated the left shift by making their s-box produce upper nibbles */
+	key.bytes[0] = (sbox[key.bytes[0] >> 4] << 4) | (key.bytes[0] & 0xf);
 }
 
 void addRoundKey(void){
@@ -113,7 +111,7 @@ void decrypt(unsigned char *statebytes, unsigned char *keybytes){
 		sBoxLayer();
 
 	inverse_schedule_key:
-		key.bytes[0] = (active_sbox[key.bytes[0] >> 4] << 4) | (key.bytes[0] & 0xf);
+		key.bytes[0] = (inverse_sbox[key.bytes[0] >> 4] << 4) | (key.bytes[0] & 0xf);
 		rotate_left_i(19);
 		key.bytes[5] ^= round_counter << 2;
 	}
