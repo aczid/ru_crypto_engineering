@@ -7,15 +7,26 @@
 \usepackage{soul}
 \usepackage{framed}
 \usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{multirow}
 \usepackage{gnuplottex}
-\lstset{basicstyle=\scriptsize\sffamily}
+\usepackage{xcolor}
+\usepackage{caption}
+\lstset{basicstyle=\scriptsize\ttfamily}
+\renewcommand{\ttdefault}{pcr}
 %\lstset{language=Assembler}[avr8avra] % not standard
 \lstdefinestyle{customasm}{
-  morekeywords={adc,adiw,asr,brts,brcs,brhs,brne,cbr,clh,clr,clt,cp,cpi,dec,eor,ld,ldi,lpm,lsl,mov,or,rcall,ret,seh,set,st,subi,swap,rjmp,nop},
+  morekeywords={and,andi,adc,adiw,asr,brts,brcs,brhs,brne,cbr,clh,clr,clt,cp,cpi,clc,cpse,dec,eor,ld,ldi,lpm,lsl,mov,or,rcall,ret,rol,ror,seh,set,st,subi,swap,rjmp,nop},
   morecomment=[l][\color{blue}]{;}
 }
 \lstset{style=customasm}
 %\lstset{basicstyle=\tiny\sffamily}
+\newcolumntype{g}{>{\columncolor{green}}c}
+\newcolumntype{o}{>{\columncolor{orange}}c}
+\newcolumntype{b}{>{\centering\arraybackslash\columncolor{cyan}}c}
+\newcolumntype{R}{>{\columncolor{pink}}c}
+\newcolumntype{C}{>{\centering\arraybackslash}m{0.9em}}
+
 
 % A few hacks to get references via bibtex (easy reuse for paper)
 \usepackage{bibentry}
@@ -29,18 +40,20 @@ Kostas Papagiannopoulos \\
 Aram Verstegen
 }
 
-\date{\today}
+%\date{\today}
+\date{July 11, 2013}
 
 \begin{document}
 \frame{\titlepage}
 
+\section{Introduction}
 \begin{frame}[fragile]
 \frametitle{Who We Are}
 \includegraphics{ki}
 \begin{itemize}
-\item 2-year master programme in computer security
-\item Collaboration of 3 Universities
-\item Software, Hardware, Networks, Formal methods, Cryptography, Privacy, Law, Ethics, Auditing
+\item 2-year Master's programme in computer security
+\item Collaboration of 3 universities
+\item Software, Hardware, Networks, Formal methods, Cryptography, Privacy, Law, Ethics, Auditing, Physics
 \item \url{http://kerckhoffs-institute.org/}
 \end{itemize}
 \end{frame}
@@ -64,19 +77,91 @@ Aram Verstegen
 \end{itemize}
 \end{frame}
 
+%\begin{frame}[fragile]
+%\frametitle{Choosing}
+%\begin{itemize}
+%\item All 64-bit SPN ciphers with 64 or 80 bit keys
+%%\item None look impossible
+%\item Some based on matrix multiplication
+%\end{itemize}
+%\begin{quote}
+%``PRESENT looks just about perfect for the hardware and it's only 4
+%functions, 2 of which are tables and it's XOR based. It's my favorite
+%so far for sheer simplicity.'' - Aram
+%\end{quote}
+
+%\begin{quote}
+%``Yep, PRESENT seems straightforward we should definitely opt for it.
+%We also need a second choice, right? We could go for KATAN, it also looks ok.'' - Kostas
+%\end{quote}
+%We got our first choice.
+%\end{frame}
+
 \begin{frame}[fragile]
-\frametitle{ATtiny Platform}
-\begin{tabular}{c c c c}
-         & Flash ROM (KiloBytes) & SRAM (Bytes) & Clock speed \\
-ATtiny25 & 2 & 128 & 20 \\
-ATtiny45 & 4 & 256 & 20 \\
-ATtiny85 & 8 & 512 & 20 \\
-ATtiny1634 & 16 & 1024 & 12 \\
+\frametitle{PRESENT Cipher}
+\includegraphics[width=\textwidth]{cipher} \\
+\includegraphics[width=\textwidth]{spnet.png}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{ATtiny Family}
+\begin{tabular}{|c | c c c|}
+	\hline
+        Model & Flash (Bytes) & SRAM (Bytes) & Clock speed (MHz) \\
+	\hline
+ATtiny13 & 1024 & 64 & 20 \\
+	\hline
+ATtiny25 & 2048 & 128 & 20 \\
+	\hline
+\rowcolor{yellow}
+ATtiny45 & 4096 & 256 & 20 \\
+	\hline
+ATtiny85 & 8192 & 512 & 20 \\
+	\hline
+ATtiny1634 & 16384 & 1024 & 12 \\
+	\hline
 \end{tabular}
+
 \begin{itemize}
-\item Basic 90 AVR instructions
+\item Basic 90 (single word) AVR instructions
 \item 32 8-bit general purpose registers
+\item 16-bit address space
+\item 16-bit words
+\item Harvard architecture
 \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{ATtiny45 Address Space}
+\begin{footnotesize}
+\begin{tabular}{c c c l c}
+7 & 0 & Addr. & 16-bit & Use \\
+\hline
+\multicolumn{2}{c}{R0} & 0x00 & \\
+\multicolumn{2}{c}{R1} & 0x01 & \\
+\multicolumn{2}{c}{R2} & 0x02 & \\
+\multicolumn{2}{c}{..} & & \\
+\multicolumn{2}{c}{R13} & 0x0D & \\
+\multicolumn{2}{c}{R14} & 0x0E & \\
+\multicolumn{2}{c}{R15} & 0x0F & \\
+\hline
+\multicolumn{2}{c}{R16} & 0x10 & \\
+\multicolumn{2}{c}{R17} & 0x11 & \\
+\multicolumn{2}{c}{..} & & \\
+\multicolumn{2}{c}{R26} & 0x1A & X low & \multirow{2}{*}{SRAM} \\
+\multicolumn{2}{c}{R27} & 0x1B & X high & \\
+\hline
+\multicolumn{2}{c}{R28} & 0x1C & Y low & \multirow{2}{*}{SRAM + CPU registers} \\
+\multicolumn{2}{c}{R29} & 0x1D & Y high \\
+\hline
+\multicolumn{2}{c}{R30} & 0x1E & Z low & \multirow{2}{*}{SRAM + Flash} \\
+\multicolumn{2}{c}{R31} & 0x1F & Z high \\
+\hline
+\multicolumn{2}{c}{64 I/O registers} & 0x0020 - 0x005F & \\
+\hline
+\multicolumn{2}{c}{Internal SRAM} & 0x0060 - 0x00DF & \\
+\end{tabular}
+\end{footnotesize}
 \end{frame}
 
 \begin{frame}[fragile]
@@ -85,58 +170,74 @@ ATtiny1634 & 16 & 1024 & 12 \\
 \begin{tabular}{l l}
 Load register from immediate & \textbf{ldi} \textit{Rd}, \textit{42} \\
 Load register from SRAM pointer (X) & \textbf{ld} \textit{Rd}, \textit{X} \\
-Load register from ROM pointer (Z) & \textbf{lpm} \textit{Rd}, \textit{Z} \\
+Load register from Flash pointer (Z) & \textbf{lpm} \textit{Rd}, \textit{Z} \\
 XOR output with input & \textbf{eor} \textit{Ro}, \textit{Ri} \\
 Swap nibbles in byte & \textbf{swap} \textit{Rd} \\
-Rotate left (highest bit goes into carry flag) & \textbf{rol} \textit{Rd} \\
-Save to SRAM from register (and increment) & \textbf{st} \textit{X+}, \textit{Rd} \\
-Well-known mnemonics & \textbf{and}, \textbf{or}, \textbf{rcall}, \textbf{ret}, \\
-                     & \textbf{rjmp}, \textbf{push}, \textbf{pop}, \textbf{inc}, \\
-                     & \textbf{dec}, \textbf{add}, \textbf{sub} \\
+Rotate left with carry & \textbf{rol} \textit{Rd} \\
+Rotate left without carry & \textbf{lsl} \textit{Rd} \\
+Store to SRAM from register (and increment) & \textbf{st} \textit{X+}, \textit{Rd} \\
+\hline
+Procedure calls & \textbf{rcall}, \textbf{ret}, \textbf{rjmp} \\
+Stack access & \textbf{push}, \textbf{pop} \\
+Counting & \textbf{inc}, \textbf{dec} \\
+Adding & \textbf{add}, \textbf{sub} \\
+Binary logic & \textbf{and}, \textbf{or}, \textbf{eor}  \\
 \end{tabular}
 \end{footnotesize}
 
-The 32 general purpose registers are mapped at the start of memory and can be accessed through the \textit{Y} register.
+%The 32 general purpose registers are mapped at the start of memory and can be accessed through the \textit{Y} register.
 \end{frame}
 
-\begin{frame}[fragile]
-\frametitle{Choosing}
-\begin{itemize}
-\item All 64-bit SPN ciphers with 64 or 80 bit keys
-\item None look impossible
-\item Some based on matrix multiplication
-\end{itemize}
-\begin{quote}
-``PRESENT looks just about perfect for the hardware and it's only 4
-functions, 2 of which are tables and it's XOR based. It's my favorite
-so far for sheer simplicity.'' - Aram
-\end{quote}
-
-\begin{quote}
-``Yep, PRESENT seems straightforward we should definitely opt for it.
-We also need a second choice, right? We could go for KATAN, it also looks ok.'' - Kostas
-\end{quote}
-We got our first choice.
-\end{frame}
-
+%\begin{frame}[fragile]
+%\frametitle{Goals}
+%\begin{tabular}{c r r r}
+		%& Encryption & Decryption & Size \\
+	%AVR Crypto-lib & 105796 & 151624 & 1514 \\
+	%Eisenbarth & 10723 & 11239 & 936 \\
+	%& faster?& & smaller?\\
+%\end{tabular} \\
+%\end{frame}
 
 \begin{frame}[fragile]
-\frametitle{PRESENT Cipher}
-\includegraphics[width=\textwidth]{cipher}
+\frametitle{State of the Art}
+\vspace{-2em}
+\tiny{
+\advance\leftskip-4em
+\begin{gnuplot}[terminal=latex]
+set terminal latex
+set output "cycles_byte_before.tex"
+set xrange [0:16000]
+set yrange [0:1700]
+set xlabel "Cycles/byte"
+set ylabel "Size"
+set title "Speed vs Size"
+plot "cycles_byte_before.txt" notitle with points, \
+     ''               using 1:2:3 with labels left offset 1,0 notitle
+
+\end{gnuplot}
+\include{cycles_byte_before}
+}
 \end{frame}
 
 \begin{frame}[fragile]
 \frametitle{Strategy}
-\begin{tabular}{c c c }
+\renewcommand\arraystretch{2.5}
+\begin{tabular}{|c|c|c|}
+	\hline
 	& Speed-optimized & Size-optimized \\
-Substitution/permutation & Tabled & On-the-fly \\
+	\hline
+Substitution/permutation & Table lookups & On-the-fly computation \\
+	\hline
 Code flow & Inlined / unrolled & Re-used / looped \\
+	\hline
 Locality & All in registers & Use more SRAM \\
-Tricks & Algorithmic & Device-specific \\
-
+	\hline
+%Tricks & Algorithmic & Device-specific \\
 \end{tabular}
+\renewcommand\arraystretch{1}
 \end{frame}
 
+\section{Speed optimization}
 \begin{frame}[fragile]
 \frametitle{addRoundKey}
 \begin{lstlisting}
@@ -156,30 +257,47 @@ addRoundKey:
 
 \begin{frame}[fragile]
 \frametitle{4-bit S-Box}
-	\begin{tabular}{ | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | }
-	  \hline                        
-	     x & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & A & B & C & D & E & F \\
-	  \hline                        
-	  S[x] & C & 5 & 6 & B & 9 & 0 & A & D & 3 & E & F & 8 & 4 & 7 & 1 & 2 \\
-	  \hline  
-	\end{tabular}
-
-\begin{itemize}
-\item Original:
-  \begin{lstlisting}
-  .db 0x0C, 0x05, 0x06, 0x0B ...
-  \end{lstlisting}
-\item Compact:
-  \begin{lstlisting}
-  .db 0xC5, 0x6B, 0x90, 0xAD ...
-  \end{lstlisting}
+  \begin{tabular}{ | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | }
+    \hline                        
+       x & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & A & B & C & D & E & F \\
+    \hline                        
+    S[x] & C & 5 & 6 & B & 9 & 0 & A & D & 3 & E & F & 8 & 4 & 7 & 1 & 2 \\
+    \hline  
+  \end{tabular}
+\pause
+\begin{itemize}[<+->]
+%\item Original:
+  %\begin{lstlisting}
+  %.db 0x0C, 0x05, 0x06, 0x0B ...
+  %\end{lstlisting}
+%\item Compact:
+  %\begin{lstlisting}
+  %.db 0xC5, 0x6B, 0x90, 0xAD ...
+  %\end{lstlisting}
 \item Accessing the table 4 bits at a time incurs a penalty
-\item Cost to substitutes a byte: two clearings of nibbles, two lookups, two settings of nibbles, two swapping of nibbles
+%\item Cost to substitutes a byte: two clearings of nibbles, two lookups, two settings of nibbles, two swappings of nibbles
+
+  \begin{lstlisting}
+low_nibble:
+  mov ZL, INPUT     ; load input
+  andi ZL, 0xF      ; take low nibble as table index
+  lpm OUTPUT, Z     ; load table output
+  cbr INPUT, 0xF    ; clear low nibble
+  and INPUT, OUTPUT ; save low nibble to input
+  ret
+byte:
+  rcall low_nibble  ; substitute low nibble
+high_nibble:
+  swap INPUT        ; swap nibbles
+  rcall low_nibble  ; substitute low nibble
+  swap INPUT        ; swap nibbles back
+  ret
+  \end{lstlisting}
 \item We have an 8-bit architecture, so we want to access bytes!
 \end{itemize}
 \end{frame}
 
-\begin{frame}
+\begin{frame}[fragile]
 \frametitle{Squared S-Box}
 \begin{tabular}{| c | c  | c | c | c  | c  | c | c | c  | c | c | c |}
 \hline
@@ -198,12 +316,17 @@ addRoundKey:
  S[x] & 2C & 25 & 26 & 2B & \dots & 24 & 27 & 21 & 22   \\
 \hline
 \end{tabular}
-
-\begin{itemize}
-\item New S-Box is 256 bytes, $16\cdot16$ combinations of 4-bits
+\pause
+\begin{itemize}[<+->]
+\item New S-Box is 256 bytes, $16\cdot16$ combinations of two nibbles
 \item It substitutes 1 byte at a time
-\item No need to swap or discern high/low byte part
-\item Cost to substitute a byte: only 1 lookup
+\item No need to swap or discern high/low nibble
+%\item Cost to substitute a byte: only 1 lookup
+  \begin{lstlisting}
+  mov ZL, INPUT ; load table input
+  lpm OUTPUT, Z ; save table output
+  ret
+  \end{lstlisting}
 \end{itemize}
 \end{frame}
 
@@ -214,16 +337,17 @@ addRoundKey:
 \emph{Idea: Combine the SBox and PLayer in lookup tables} [Bo Zhu \& Zheng Gong]
 %\end{itemize}
 \includegraphics[width=\textwidth]{spnet.png}
-\begin{itemize}
+\pause
+\begin{itemize}[<+->]
 \item 1024 bytes of lookup tables, 32 lookups per round
-\item Works well on AVR compared to on-the-fly calculation
+\item Works well on AVR compared to on-the-fly computation
   \begin{itemize}
-    \item Reached \emph{8700cc} for encryption
+    \item Reached \emph{1091} cycles/byte for encryption ($\sim18$\% faster compared to 1341 cycles/byte)
   \end{itemize}
-\item Because of many lookups, consider larger SRAM
+\item Because of many lookups, consider larger SRAM (ATmega)
   \begin{itemize}
-    \item \textit{lpm} instruction: 3cc
-    \item \textit{ld} instruction: 2cc, could reduce ~2000cc more
+    \item \textit{lpm} instruction: 3 cycles
+    \item \textit{ld} instruction: 2 cycles, could reduce $\sim1000$ cycles more
   \end{itemize}
 \end{itemize}
 \end{frame}
@@ -231,40 +355,42 @@ addRoundKey:
 \begin{frame}[fragile]
 \frametitle{Lookup tables}
 \begin{minipage}[t]{0.48\textwidth}
-
-\begin{itemize}
-\item Table 1 at \textit{0x600}, Table 2 at \textit{0x800}
+\begin{itemize}[<+->]
+\item Table 1 at \textit{0x600}, \\ Table 2 at \textit{0x800}
 \item Lookup table 1
 \begin{lstlisting}
     ldi ZH, 0x06
     mov ZL, STATE0
     lpm OUTPUT0, Z
+    andi OUTPUT0, 0xC0
 \end{lstlisting}
 \item Lookup table 2
-\begin{lstlisting}
+\begin{lstlisting}     
     ldi ZH, 0x08
-    mov ZL, STATE1
+    mov ZL, STATE0
     lpm OUTPUT1, Z
+    andi OUTPUT1, 0x30 
+\end{lstlisting}
+\item Combine bits
+\begin{lstlisting}
+    or OUTPUT0, OUTPUT1
 \end{lstlisting}
 \end{itemize}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.48\textwidth}
-\begin{itemize}
+\begin{itemize}[<+->]
 \item \st{Lookup table 1, table 2, table 1, table 2}
 \item Lookup table 1, table 1, table 2, table 2
 \begin{lstlisting}
     ldi ZH, 0x06
     mov ZL, STATE0
     lpm OUTPUT0, Z
-    mov ZL, STATE2
-    lpm OUTPUT2, Z
+    andi OUTPUT0, 0xC0
 
-    ldi ZH, 0x08
-    mov ZL, STATE1
+    mov ZL, STATE4
     lpm OUTPUT1, Z
-    mov ZL, STATE3
-    lpm OUTPUT3, Z
+    andi OUTPUT1, 0xC0
 \end{lstlisting}
 \item Fewer changes in \textit{ZH}
 \end{itemize}
@@ -273,49 +399,70 @@ addRoundKey:
 
 \begin{frame}
 \frametitle{Key Update}
-\begin{enumerate}
+\begin{enumerate}[<+->]
 \item Rotate 80-bit key register 61 bits to the left
   \begin{itemize}
-  \item Rotate 19 bits to the right in stead
+  \item Rotate 19 bits to the right instead
   \item Use 2 \textit{mov} instructions to rotate $2\cdot8=16$ bits
   \item Use \textit{ror} only for the last 3 bits
   \end{itemize}
 \item S-Box the top 4 bits of 80-bit key register
   \begin{itemize}
-  \item Use a \textbf{byte} lookup table
+  \item use a \textbf{byte} lookup table \\
+  \begin{tabular}{|g o|b|b|b|b|b|b|b|b|b|}
+	  \multicolumn{2}{|c|}{8 bits} & \multicolumn{5}{c}{} \\
+	  \hline
+       substituted & unchanged & & & & & & & & & \\
+	  \hline
+  \end{tabular}
   \end{itemize}
 \item XOR key bits with round counter
   \begin{itemize}
-  \item XOR needs to span 2 registers
+  \item XOR needs to span 2 registers \\
+  %\begin{tabular}{|c|c|c|c|c|c|}
+  \begin{tabular}{|b|b|b|b|b|b|b|b|b|b|b|b|}
+	  \hline
+	  & & & & \multicolumn{2}{g}{KEY4} & \multicolumn{2}{|g|}{KEY5} & & & & \\
+  %- & \multicolumn{2}{g|}{Register 1} & \multicolumn{2}{g|}{Register 2} & - \\
+	  \hline
+	  \multicolumn{1}{c}{} & \multicolumn{1}{c}{} & \multicolumn{1}{c}{} & \multicolumn{1}{c}{} & \multicolumn{1}{c}{} & \multicolumn{2}{|R|}{XOR} & \multicolumn{1}{c}{} & \multicolumn{1}{c}{} & \multicolumn{1}{c}{} & \multicolumn{1}{c}{} & \multicolumn{1}{c}{} \\
+	  \cline{6-7}
+	  %\hline
+	  \multicolumn{1}{c}{} & \multicolumn{1}{c}{} & \multicolumn{1}{c}{} & \multicolumn{1}{c}{} & \multicolumn{1}{c}{} & \multicolumn{2}{|g|}{Round} & \multicolumn{1}{c}{} & \multicolumn{1}{c}{} & \multicolumn{1}{c}{} & \multicolumn{1}{c}{} & \multicolumn{1}{c}{} \\
+	  \cline{6-7}
+	  %\hline
+  \end{tabular}
+
   \item Do step 3 before step 1 then XOR spans only 1 register
   \end{itemize}
 \end{enumerate}
 \end{frame}
 
-\begin{frame}
-\frametitle{AVR Architecture}
-        \begin{itemize}
-        \item 16-bit opcodes
-        \item Harvard architecture
-        \item No bulk instructions
-        \item Some SRAM
-        \item SREG flags
-        \item SWAP instruction
-        \item CBR instruction
-        \item All kinds of branching instructions
-        \end{itemize}
-\end{frame}
+%\begin{frame}
+%\frametitle{AVR Architecture}
+        %\begin{itemize}
+        %\item 16-bit opcodes
+        %\item Harvard architecture
+        %\item No bulk instructions
+        %\item Some SRAM
+        %\item SREG flags
+        %\item SWAP instruction
+        %\item CBR instruction
+        %\item All kinds of branching instructions
+        %\end{itemize}
+%\end{frame}
 
-\begin{frame}
-\frametitle{Optimization Strategy}
-        \begin{itemize}
-        \item Be concise to start with
-        \item Look for repeating patterns
-        \item Refactor to reuse code wherever possible
-        \item Use the SRAM more
-        \item Employ a different I/O pattern
-        \end{itemize}
-\end{frame}
+\section{Size optimization}
+%\begin{frame}
+%\frametitle{Size-Optimization Strategy}
+        %\begin{itemize}
+        %\item Be concise to start with
+        %\item Look for repeating patterns
+        %\item Refactor to reuse code wherever possible
+        %\item Use the SRAM more
+        %\item Employ a different I/O pattern
+        %\end{itemize}
+%\end{frame}
 
 \begin{frame}[fragile]
 \frametitle{Serialization of the Algorithm}
@@ -336,7 +483,8 @@ addRoundKey:
 
 \begin{frame}[fragile]
 \frametitle{Serialization of the Algorithm}
-\begin{minipage}[t]{0.48\textwidth}
+\begin{columns}[t]
+\begin{column}[t]{0.48\textwidth}<1->
 \begin{lstlisting}
 ; half state ^= roundkey
 addRoundKey:
@@ -352,11 +500,10 @@ This helps with:
         \item doing I/O
         \item applying round keys
         \item applying S-Boxes
-        \item applying P-layer
+        \item applying P-Layer
 \end{itemize}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.48\textwidth}
+\end{column}
+\begin{column}[t]{0.48\textwidth}<2->
 But we need I/O:
 \begin{lstlisting}
 consecutive_input:
@@ -377,21 +524,22 @@ interleaved_output:
     dec X
     ret
 \end{lstlisting}
-And we need to rotate the key register
-\end{minipage}
+%And rotate the key register
+\end{column}
+\end{columns}
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Indirect Register Access}
+\frametitle{Indirect Register Addressing}
 \begin{lstlisting}
 ; state ^= roundkey (full state in SRAM)
 addRoundKey:
       clr YL               ; point Y at first key register
 addRoundKey_byte:
-      ld ITEMP, X          ; load input
+      ld INPUT, X          ; load input
       ld KEY_BYTE, Y+      ; load key, advance pointer
-      eor ITEMP, KEY_BYTE  ; XOR
-      st X+, ITEMP         ; store output, advance pointer
+      eor INPUT, KEY_BYTE  ; XOR
+      st X+, INPUT         ; store output, advance pointer
 
       cpi YL, 8            ; loop over 8 bytes
       brne addRoundKey_byte
@@ -402,24 +550,27 @@ addRoundKey_byte:
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Packing S-Boxes}
+\frametitle{Packed S-Boxes}
 	\footnotesize{
 	Before: \\
-	\begin{tabular}{ | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | }
+	%\begin{tabular}{ | C{2cm} | C{2cm} | C{2cm} | C{2cm} | C{2cm} | C{2cm} | C{2cm} | C{2cm} | C{2cm} | C{2cm} | C{2cm} | C{2cm} | C{2cm} | C{2cm} | C{2cm} | C{2cm} | }
+	\begin{tabular}{ | C | C | C | C | C | C | C | C | C | C | C | C | C | C | C | C | }
 	  \hline                        
 	  C & 5 & 6 & B & 9 & 0 & A & D & 3 & E & F & 8 & 4 & 7 & 1 & 2 \\
 	  \hline  
 	\end{tabular}
-	\\
+	\pause \\
 
 	After: \\
-	\begin{tabular}{ | c | c | c | c | c | c | c | c | }
+	\begin{tabular}{ | C | C | C | C | C | C | C | C | }
 	  \hline                        
 	  C5 & 6B & 90 & AD & 3E & F8 & 47 & 12 \\
 	  \hline  
 	\end{tabular}
 	}
-
+\pause
+\begin{overprint}
+\onslide<3>
 \begin{lstlisting}
 unpack_sBox:
     asr ZL                ; halve input, take carry
@@ -428,36 +579,10 @@ unpack_sBox:
 even_unpack:
     swap SBOX_OUTPUT      ; swap nibbles in s-box output
 odd_unpack:
-    cbr SBOX_OUTPUT, 0xf0 ; clear high nibble in s-box output
+    cbr SBOX_OUTPUT, 0xF0 ; clear high nibble in s-box output
     ret
 \end{lstlisting}
-\begin{verbatim}
-
-
-
-
-\end{verbatim}
-\end{frame}
-
-\begin{frame}[fragile]
-\frametitle{Packing S-Boxes and unpacking in constant time}
-	\footnotesize{
-	Before: \\
-	\begin{tabular}{ | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | c | }
-	  \hline                        
-	  C & 5 & 6 & B & 9 & 0 & A & D & 3 & E & F & 8 & 4 & 7 & 1 & 2 \\
-	  \hline  
-	\end{tabular}
-	\\
-
-	After: \\
-	\begin{tabular}{ | c | c | c | c | c | c | c | c | }
-	  \hline                        
-	  C5 & 6B & 90 & AD & 3E & F8 & 47 & 12 \\
-	  \hline  
-	\end{tabular}
-	}
-
+\onslide<4>
 \begin{lstlisting}
 unpack_sBox:
     asr ZL
@@ -471,88 +596,137 @@ odd_unpack:
     nop
 ; 4 cycles total
 unpack:
-    cbr SBOX_OUTPUT, 0xf0
+    cbr SBOX_OUTPUT, 0xF0
     ret
 \end{lstlisting}
+\end{overprint}
 \end{frame}
 
 \begin{frame}[fragile]
 \frametitle{S-Box Optimization}
+\begin{overprint}
+\onslide<1>
 \begin{lstlisting}
 sBoxByte:
     ; input (low nibble)
-    mov ZL, ITEMP         ; load s-box input
-    cbr ZL, 0xf0          ; clear high nibble in input
+    mov ZL, INPUT         ; load s-box input
+    cbr ZL, 0xF0          ; clear high nibble in input
     rcall unpack_sBox     ; get output in SBOX_OUTPUT
-
-    cbr ITEMP, 0xf        ; clear low nibble in output
-    or ITEMP, SBOX_OUTPUT ; save low nibble to output
-
+    cbr INPUT, 0xF        ; clear low nibble in output
+    or INPUT, SBOX_OUTPUT ; save low nibble to output
     ; fall through
 sBoxHighNibble:
-    mov ZL, ITEMP         ; load s-box input
-    cbr ZL, 0xf           ; clear low nibble in input
+    mov ZL, INPUT         ; load s-box input
+    cbr ZL, 0xF           ; clear low nibble in input
     swap ZL               ; move high nibble to low nibble
-
     rcall unpack_sBox     ; get output in SBOX_OUTPUT
     swap SBOX_OUTPUT      ; move low nibble to high nibble
-
-    cbr ITEMP, 0xf0       ; clear high nibble in output
-    or ITEMP, SBOX_OUTPUT ; save high nibble to output
-
+    cbr INPUT, 0xF0       ; clear high nibble in output
+    or INPUT, SBOX_OUTPUT ; save high nibble to output
     ret
 \end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]
-\frametitle{S-Box Optimization}
+\onslide<2>
 \begin{lstlisting}
 sBoxByte:
     rcall sBoxLowNibbleAndSwap ; apply s-box to low nibble
                                ; and swap nibbles
     rjmp sBoxLowNibbleAndSwap  ; do it again and return
 sBoxHighNibble:
-    swap ITEMP                 ; swap nibbles in IO register
+    swap INPUT                 ; swap nibbles in IO register
 sBoxLowNibbleAndSwap:
-    mov ZL, ITEMP              ; load s-box input
-    cbr ZL, 0xf0               ; clear high nibble in s-box input
-
+    mov ZL, INPUT              ; load s-box input
+    cbr ZL, 0xF0               ; clear high nibble in s-box input
     rcall unpack_sBox
-
-    cbr ITEMP, 0xf             ; clear low nibble in IO register
-    or ITEMP, SBOX_OUTPUT      ; save low nibble to IO register
-    swap ITEMP                 ; swap nibbles
+    cbr INPUT, 0xF             ; clear low nibble in IO register
+    or INPUT, SBOX_OUTPUT      ; save low nibble to IO register
+    swap INPUT                 ; swap nibbles
     ret
 \end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]
-\frametitle{S-Box Optimization}
+\onslide<3>
 \begin{lstlisting}
 sBoxByte:
     rcall sBoxLowNibbleAndSwap ; apply s-box to low nibble
                                ; and swap nibbles
     rjmp sBoxLowNibbleAndSwap  ; do it again and return
 sBoxHighNibble:
-    swap ITEMP                 ; swap nibbles in IO register
+    swap INPUT                 ; swap nibbles in IO register
 sBoxLowNibbleAndSwap:
-    mov ZL, ITEMP              ; load s-box input
-    cbr ZL, 0xf0               ; clear high nibble in s-box input
-
-unpack_sBox:
+    mov ZL, INPUT              ; load s-box input
+    cbr ZL, 0xF0               ; clear high nibble in s-box input
     asr ZL                     ; halve input, take carry
     lpm SBOX_OUTPUT, Z         ; get s-box output
     brcs odd_unpack            ; branch depending on carry
 even_unpack:
     swap SBOX_OUTPUT           ; swap nibbles in s-box output
 odd_unpack:
-    cbr SBOX_OUTPUT, 0xf0      ; clear high nibble in s-box output
-
-    cbr ITEMP, 0xf             ; clear low nibble in IO register
-    or ITEMP, SBOX_OUTPUT      ; save low nibble to IO register
-    swap ITEMP                 ; swap nibbles
+    cbr SBOX_OUTPUT, 0xF0      ; clear high nibble in s-box output
+    cbr INPUT, 0xF             ; clear low nibble in IO register
+    or INPUT, SBOX_OUTPUT      ; save low nibble to IO register
+    swap INPUT                 ; swap nibbles
     ret
 \end{lstlisting}
+\end{overprint}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{P-Layer Nibble}
+\begin{lstlisting}
+pLayerNibble:
+  ror INPUT   ; move bit into carry
+  ror OUTPUT0 ; move bit into output register
+  ror INPUT   ; etc
+  ror OUTPUT1
+  ror INPUT
+  ror OUTPUT2
+  ror INPUT
+  ror OUTPUT3
+  ret
+\end{lstlisting}
+\begin{itemize}
+\item Apply twice to consume an input byte
+\item After 4 input bytes, 4 output bytes (half block) are filled
+\item Interleave 2 half blocks
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{2 Step P-Layer}
+  \begin{table}
+  \begin{tabular}{  C  C  C  C  C  C  C  C  }
+    \hline                        
+    \multicolumn{1}{|b|}{} & \multicolumn{1}{|b|}{} & \multicolumn{1}{|b|}{} & \multicolumn{1}{|b|}{} &
+       \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{} \\ 
+    \hline  
+  \end{tabular}
+  \caption*{Half state input}
+  \end{table}
+
+  \begin{table}
+  \begin{tabular}{  C  C  C  C  C  C  C  C }
+    \hline                        
+       \multicolumn{1}{|g|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|g|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|g|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|g|}{} & \multicolumn{1}{|c|}{} \\
+    \hline  
+  \end{tabular}
+  \caption*{Half state output, interleaved}
+  \end{table}
+
+  \begin{table}
+  \begin{tabular}{  C  C  C  C  C  C  C  C }
+    \hline                        
+       \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|b|}{} & \multicolumn{1}{|b|}{} & \multicolumn{1}{|b|}{} & \multicolumn{1}{|b|}{} \\
+    \hline  
+  \end{tabular}
+  \caption*{Second half state input}
+  \end{table}
+
+  \begin{table}
+  \begin{tabular}{  C  C  C  C  C  C  C  C }
+    \hline                        
+       \multicolumn{1}{|c|}{} & \multicolumn{1}{|g|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|g|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|g|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|g|}{} \\
+    \hline  
+  \end{tabular}
+  \caption*{Second half state output, interleaved}
+  \end{table}
 \end{frame}
 
 %\begin{frame}[fragile]
@@ -580,7 +754,7 @@ odd_unpack:
 %\end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Using SREG Flags}
+\frametitle{Using SREG Flags and Stack}
 \begin{lstlisting}
 setup_redo_block:
         clt                   ; clear T flag
@@ -594,8 +768,60 @@ redo_block:
         brts setup_redo_block ; redo this block? (if T flag set)
         ret
 \end{lstlisting}
+\begin{enumerate}
+\item Input
+  \begin{itemize}
+    \item pLayerNibble and push 4 output bytes to stack
+    \item Do other half
+  \end{itemize}
+\item Output
+  \begin{itemize}
+    \item Point at last odd state byte
+    \item Pop from stack and save 4 output bytes
+    \item Point at last even state byte and do other half
+  \end{itemize}
+\end{enumerate}
 \end{frame}
 
+\begin{frame}[fragile]
+\frametitle{Key Register Rotation}
+\begin{overprint}
+\onslide<1>
+\begin{lstlisting}
+rotate_left_i:
+  lsl KEY9               ; take MSB as carry, clear LSB
+  rol KEY8               ; rotate MSB out, carry bit in
+  rol KEY7               ; etc
+  rol KEY6
+  rol KEY5
+  rol KEY4
+  rol KEY3
+  rol KEY2
+  rol KEY1
+  rol KEY0
+  adc KEY9, ZERO         ; add carry bit to last key byte
+  dec ITEMP              ; decrement counter
+  brne rotate_left_i     ; loop
+  ret
+\end{lstlisting}
+\onslide<2>
+\begin{lstlisting}
+rotate_left_i:
+  ldi YL, 10             ; point at last key byte
+  clc                    ; clear carry bit
+rotate_left_i_bit:
+  ld ROTATED_BITS, -Y    ; load key byte
+  rol ROTATED_BITS       ; rotate bits
+  st Y, ROTATED_BITS     ; save key byte
+  cpse YL, ZERO          ; compare, skip if equal
+  rjmp rotate_left_i_bit ; loop over all key bytes
+  adc KEY9, ZERO         ; add carry bit to last key byte
+  dec ITEMP              ; decrement counter
+  brne rotate_left_i     ; loop
+  ret
+\end{lstlisting}
+\end{overprint}
+\end{frame}
 
 %\begin{frame}[fragile]
 %\frametitle{Size Over Time}
@@ -621,26 +847,30 @@ redo_block:
 %}
 %\end{frame}
 
-\begin{frame}[fragile]
-\frametitle{Size Per Procedure}
-%\includegraphics[width=\textwidth]{procedures}
-\tiny{
-\advance\leftskip-4em
-\begin{gnuplot}[terminal=latex]
-set yrange [0:65]
-set xlabel "Procedure"
-set ylabel "Size"
-set title "Sizes per procedure"
-set key left box
-unset xtics
-set output "procedures.tex"
-plot 'procedures.txt' using 0:2:xtic(1) title "bytes" with boxes, \
-     ''          using 0:2:1 with labels offset 0,0.5 notitle
-\end{gnuplot}
-\include{procedures}
-}
-\end{frame}
+%\begin{frame}[fragile]
+%\frametitle{Size Per Procedure}
+%%\includegraphics[width=\textwidth]{procedures}
+%\vspace{-2em}
+%\tiny{
+%\advance\leftskip-4em
+%\begin{gnuplot}
+%set yrange [0:65]
+%lmargin at screen 0.0
+%rmargin at screen 1.0
+%set xlabel "Procedure"
+%set ylabel "Size"
+%set title "Size per procedure"
+%set key left box
+%unset xtics
+%set output "procedures.tex"
+%plot 'procedures.txt' using 0:2:xtic(1) title "bytes" with boxes, \
+     %''          using 0:2:1 with labels offset 0,0.5 notitle
+%\end{gnuplot}
+%\include{procedures}
+%}
+%\end{frame}
 
+\section{Results}
 \begin{frame}[fragile]
 \frametitle{Numbers}
 \begin{table}[h]
@@ -648,18 +878,21 @@ plot 'procedures.txt' using 0:2:xtic(1) title "bytes" with boxes, \
 \footnotesize
 	\begin{tabular}{ l r r r }
 		& Encryption & Decryption & Size \\
-	\textbf{Papagiannopoulos} & 8721 & - & 1794 \\
-	AVR Crypto-lib & 105796 & 151624 & 1514 \\
-	Eisenbarth & 10723 & 11239 & 936 \\
-	\textbf{Verstegen} & & & \\
-	\hspace{0.4em} Inlined rotation, unpacked S-Boxes (128-bit) &  64506 & 119626 & 292 \\
-	\hspace{0.4em} Inlined rotation (128-bit)                   &  67854 & 123346 & 290 \\
-	\hspace{0.4em} Inlined rotation, unpacked S-Boxes           &  52622 &  73952 & 280 \\
-	\hspace{0.4em} Inlined rotation                             &  55784 &  77300 & 278 \\
-	\hspace{0.4em} Unpacked S-Boxes                             & 186883 & 250032 & 274 \\
-	\hspace{0.4em} Unpacked S-Boxes (128-bit)                   & 278189 & 568010 & 274 \\
-	\hspace{0.4em} Default                                      & 190045 & 253380 & 272 \\
-	\hspace{0.4em} Default (128-bit)                            & 281537 & 571730 & 272 \\
+	AVR Crypto-lib & 13225 & 18953 & 1514 \\
+	Eisenbarth & 1341 & 1405 & 936 \\
+	\onslide<2-4>
+	\textbf{Speed-optimized} & 1091 & - & 1794 \\
+	\textbf{Size-optimized} & 23756 & 31673 & 272 \\
+	\onslide<3-4>
+	%\hspace{0.4em} Default                                      & 190045 & 253380 & 272 \\
+	\hspace{0.4em} Unpacked S-Boxes                             &  23361 &  31254 & 274 \\
+	\hspace{0.4em} Inlined rotation                             &   6973 &   9663 & 278 \\
+	\hspace{0.4em} Inlined rotation, unpacked S-Boxes           &   6578 &   6578 & 280 \\
+	\onslide<4>
+	\hspace{0.4em} 128-bit                                      &  35193 &  71467 & 272 \\
+	\hspace{0.4em} Unpacked S-Boxes (128-bit)                   &  34774 &  71002 & 274 \\
+	\hspace{0.4em} Inlined rotation (128-bit)                   &   8482 &  15419 & 290 \\
+	\hspace{0.4em} Inlined rotation, unpacked S-Boxes (128-bit) &   8064 &  14954 & 292 \\
 	\end{tabular}
 	\label{numbers}
 
@@ -668,12 +901,14 @@ plot 'procedures.txt' using 0:2:xtic(1) title "bytes" with boxes, \
 
 \begin{frame}[fragile]
 \frametitle{Relative Performance/Size}
+\vspace{-2em}
 \tiny{
 \advance\leftskip-4em
 \begin{gnuplot}[terminal=latex]
 set terminal latex
 set output "cycles_byte.tex"
-set yrange [200:1900]
+set xrange [0:27000]
+set yrange [0:1900]
 set xlabel "Cycles/byte"
 set ylabel "Size"
 set title "Efficiency vs Size"
@@ -686,18 +921,15 @@ plot "cycles_byte.txt" notitle with points, \
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Binary QR Code}
-\includegraphics[width=0.5\textwidth]{qr2}
-%\includegraphics[width=0.5\textwidth]{qr3}
-
-\textbf{Not} a URL - may crash QR apps
-\end{frame}
-
-\begin{frame}[fragile]
 \frametitle{ASCII Art}
+\begin{overprint}
+\onslide<1>
 \scriptsize{
 %\begin{snugshade}
     \begin{Verbatim}[commandchars=\\\{\}]
+
+
+
 C56B90AD   3EF84712   5EF8C12    DB4630  79A57D0  3AD0    F1F  7F0E070E1
 41D05DD05  CD047D080  2D16D00   82E81E1  06D0542  682E0   03D  04A9591F7
 33C0CAE08  894CA9598  81991F9   883CD13  FACF9D1  E8A95   A9F  7089504D0
@@ -714,12 +946,8 @@ F68        941   7966 4E08F91  8E93AA95  6A95D9F  71E   F4E89     419
     \end{Verbatim}
 %\end{snugshade}
 }
-\end{frame}
-
-\begin{frame}[fragile]
-\frametitle{ASCII Art}
+\onslide<2>
 \scriptsize{
-%\begin{snugshade}
     \begin{Verbatim}[commandchars=\\\{\}]
 s-boxes                                     decrypt (start+16)
 |                                           |
@@ -742,8 +970,8 @@ s-boxes                                     decrypt (start+16)
     S-Boxes, \textcolor{red}{decrypt}, \textcolor{orange}{rotate_left_i}, \textcolor{blue}{sBoxByte}, \textcolor{purple}{sBoxNibble}, \textcolor{brown}{pLayerNibble},
     \textcolor{cyan}{schedule_key}, \textcolor{red}{addRoundKey}, \textcolor{magenta}{sBoxLayer}, \textcolor{pink}{setup}, \textcolor{yellow}{pLayer}, \textcolor{green}{encrypt}.
     \end{Verbatim}
-%\end{snugshade}
 }
+\end{overprint}
 \end{frame}
 
 \begin{frame}[fragile]
@@ -755,5 +983,13 @@ s-boxes                                     decrypt (start+16)
 	\includegraphics[width=0.5\textwidth]{qr_url}
 	\includegraphics[width=0.5\textwidth]{qr_url2}
 \end{frame}
+
+%\begin{frame}[fragile]
+%\frametitle{Binary QR Code}
+%\includegraphics[width=0.5\textwidth]{qr2}
+%%\includegraphics[width=0.5\textwidth]{qr3}
+
+%This is the size-optimized PRESENT code - \textbf{not} a URL - may crash QR apps
+%\end{frame}
 
 \end{document}
