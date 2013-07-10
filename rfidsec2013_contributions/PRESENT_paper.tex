@@ -49,7 +49,7 @@ Modern society is constantly witnessing an extensive and large scale deployment 
 
 The majority of these ciphers was designed with hardware performance in mind, leaving most software implementations relatively inefficient. For instance, the AVR-Crypto-Lib~\cite{avr_crypto_lib} often resorts to C language implementations, resulting in 100.000 clock cycles for a single encryption with PRESENT.
 AVR microcontrollers are often encountered regarding the Internet of Things and ubiquitous computing, thus they are an interesting platform on which to enable and optimize lightweight ciphers.
-The University of Leuven has initiated a project to draft efficient assembly implementations of various lightweight ciphers on resource-constrained AVR devices to make fair comparisons about their relative efficiency.
+The University of Louvain has initiated a project to draft efficient assembly implementations of various lightweight ciphers on resource-constrained AVR devices to make fair comparisons about their relative efficiency.
 Resulting from this project is the state of the art in both speed and size: an implementation~\cite{eisenbarth2012compact} which achieves an encryption with PRESENT in 10723 clock cycles in 936 bytes.
 
 \textbf{Our contribution.} This paper describes the details of a speed-optimized~\cite{kostas_code} and a size-optimized~\cite{aram_code} implementation of the PRESENT cipher on the ATtiny45, attained with the aid of algorithmic improvements and efficient programming techniques.
@@ -400,9 +400,9 @@ We can call this code starting from step 2 to apply the S-box to only the high n
 
 
 \subsection{Permutation Layer}
-The code to apply the bit position permutation to the state in software borrows heavily from the AVR implementation of PRESENT drafted in Leuven by Eisenbarth et al.~\cite{eisenbarth2012compact}.
+The code to apply the bit position permutation to the state in software borrows heavily from the AVR implementation of PRESENT drafted in Louvain by Eisenbarth et al.~\cite{eisenbarth2012compact}.
 Since the permutation follows a 4-bit period in the input, their choice to use 4 bytes of I/O when rotating bits off of registers into corresponding new positions seems quite efficient.
-In the Leuven implementation one bit is rolled off from 4 state registers into one output register and this block is done twice, completing one output byte.
+In the Louvain implementation one bit is rolled off from 4 state registers into one output register and this block is done twice, completing one output byte.
 %It has made ingenious use of the side-effect that both the input and the output are being rotated, allowing the operation to be reversed depending on the offset at which the procedure is called.
 
 This implementation of the permutation layer requires availability of 4 bytes of temporary storage for half of the permuted state, which we save to the stack before applying the permutation to the other 4 bytes of the state.
