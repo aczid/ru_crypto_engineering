@@ -57,7 +57,7 @@ Our speed-optimized version improves the state of the art~\cite{eisenbarth2012co
 
 Algorithmic improvement:
 \begin{itemize}[nolistsep]
-  \item A merged SP layer, \emph{i.e.} combining the substitution and permutation layer of the cipher in order to construct lookup tables that remove the time-consuming permutations~\cite{gong_code,gong2009towards}. This improvement constitutes the core of the achieved speed improvement.
+  \item A merged SP layer, \emph{i.e.} combining the substitution and permutation layer of the cipher in order to construct lookup tables that remove the time-consuming permutations~\cite{gong_code,gong2009towards}. This optimization constitutes the core of the achieved speed improvement.
 \end{itemize}
 Programming improvements:
 \begin{itemize}[nolistsep]
@@ -131,7 +131,7 @@ The \emph{Y} register can also be used for indirect register addressing, the \em
 Instructions using these 3 pointer register pairs also allow post-increment and pre-decrement of the pointer.
 At all times, the 6 special registers can be utilized as general-purpose registers.
 
-The ATtiny instruction set consists of the basic 90 instructions, found in all AVR architectures. However, due to the limited size of its core, it does not support the extended instruction set which includes multiplication, in contrast with the ATmega architecture.\\
+The ATtiny instruction set consists of the basic 90 single-word instructions found in all AVR architectures. However, due to the limited size of its core, it does not support the extended instruction set which includes multiplication, in contrast with the ATmega architecture.\\
 \textbf{ATtiny configuration.} We perform all simulations on the ATtiny45, which has a maximum clock frequency of 20 MHz, 256 bytes of SRAM and 4 KB of flash storage.\\
 \textbf{Radix-$2^8$ representation.} The PRESENT cipher requires representing integers of size 64 and 80 bits. Thus, we split the number into 8-bit components, using radix-$2^8$ and an $m$-bit integer is represented as $n=\lceil{m/8}\rceil$ bytes $(x_0,x_1,\dots,x_{n-1})$ such that $x=\sum_{i=0}^n{x_i 2^{8*i}}$.
 
@@ -225,7 +225,7 @@ That means that the processing penalty to load a 256 byte table from flash stora
 Although the Squared S-Box lookup table solution is viable for the PRESENT cipher, we need a speed optimization for the most complex part of the PRESENT algorithm: the permutation layer.
 In contrast to hardware implementations, where it is a trivial rewiring of outputs, most software implementations require a large number of bit rotation and move operations.
 The AVR architecture is not capable of performing fast shifts and rotations (compared to for instance the ARM11 processors, which can do shifts and rotations for free), \emph{i.e.} an $n$-bit shift requires $n$ clock cycles, and thusly we have to look for alternatives.
-In this direction, work by Hutter \& Schwabe~\cite{hutternacl} on ATmega\footnote{Benchmarking was performed on ATmega2560.} suggested the usage of multiplications instead of rotations/shifts, however this is not viable on ATtiny due to the fact that they do not possess native multiplication instructions.
+In this direction, work by Hutter \& Schwabe~\cite{hutternacl} on ATmega\footnote{Benchmarking was performed on ATmega2560.} suggested the usage of multiplications instead of rotations/shifts, however this is not viable on ATtiny chips due to the fact that they do not possess native multiplication instructions.
 
 \textbf{Representation.} The fastest approach that we identified for the permutation layer is the idea developed by Zheng Gong and Bo Zhu~\cite{gong_code,gong2009towards}.
 Due to the adaptation of this novel approach in the AVR architecture, we are able to improve performance over the state of the art~\cite{eisenbarth2012compact}.
@@ -341,7 +341,7 @@ While these modifications make the algorithm operate more slowly, the reduction 
 Our version requires 128 AVR instructions (256 bytes of code) for both the encryption and decryption routines, plus two times 8 bytes for packed tables of S-Box values at memory addresses \texttt{0x100} and \texttt{0x200}.
 We believe this should be sufficiently small for the code to be included in an AVR machine with 1K of available Flash storage, while still allowing almost three quarters of the available area to be devoted to application-specific code.
 
-Unfortunately, every opcode in the AVR instruction set is 16-bits wide, so there is nothing to be gained from exchanging any instructions for equivalent smaller ones (such as for example \textit{add Rd, 1} being more concisely expressed as \textit{inc Rd} on x86 machines).
+Unfortunately, every opcode in the AVR instruction set is expressed using one or more 16-bits words, so while using only the single-word instructions of the ATtiny there is no further possibility to exchange any instructions for equivalent smaller ones (such as for example \textit{add Rd, 1} being more concisely expressed as \textit{inc Rd} on x86 machines).
 Furthermore the AVR employs a Harvard architecture, where there is a strict separation between data and code memory; this prevents us from dynamically computing new opcodes in memory to be executed later.
 Finally we note there are no `bulk' instructions which operate on several registers at once.
 
