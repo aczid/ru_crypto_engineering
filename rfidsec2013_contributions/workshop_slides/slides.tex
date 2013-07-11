@@ -347,7 +347,7 @@ high_nibble:
 \item Because of many lookups, consider larger SRAM (ATmega)
   \begin{itemize}
     \item \textit{lpm} instruction: 3 cycles
-    \item \textit{ld} instruction: 2 cycles, could reduce $\sim1000$ cycles more
+    \item \textit{ld} instruction: 2 cycles, could reduce $\sim125$ cycles/byte more
   \end{itemize}
 \end{itemize}
 \end{frame}
@@ -694,8 +694,8 @@ pLayerNibble:
   \begin{table}
   \begin{tabular}{  C  C  C  C  C  C  C  C  }
     \hline                        
-    \multicolumn{1}{|b|}{} & \multicolumn{1}{|b|}{} & \multicolumn{1}{|b|}{} & \multicolumn{1}{|b|}{} &
-       \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{} \\ 
+    \multicolumn{1}{|b}{} & \multicolumn{1}{|b}{} & \multicolumn{1}{|b}{} & \multicolumn{1}{|b}{} &
+       \multicolumn{1}{|c}{} & \multicolumn{1}{|c}{} & \multicolumn{1}{|c}{} & \multicolumn{1}{|c|}{} \\ 
     \hline  
   \end{tabular}
   \caption*{Half state input}
@@ -704,7 +704,7 @@ pLayerNibble:
   \begin{table}
   \begin{tabular}{  C  C  C  C  C  C  C  C }
     \hline                        
-       \multicolumn{1}{|g|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|g|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|g|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|g|}{} & \multicolumn{1}{|c|}{} \\
+       \multicolumn{1}{|g}{} & \multicolumn{1}{|c}{} & \multicolumn{1}{|g}{} & \multicolumn{1}{|c}{} & \multicolumn{1}{|g}{} & \multicolumn{1}{|c}{} & \multicolumn{1}{|g}{} & \multicolumn{1}{|c|}{} \\
     \hline  
   \end{tabular}
   \caption*{Half state output, interleaved}
@@ -713,7 +713,7 @@ pLayerNibble:
   \begin{table}
   \begin{tabular}{  C  C  C  C  C  C  C  C }
     \hline                        
-       \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|b|}{} & \multicolumn{1}{|b|}{} & \multicolumn{1}{|b|}{} & \multicolumn{1}{|b|}{} \\
+       \multicolumn{1}{|c}{} & \multicolumn{1}{|c}{} & \multicolumn{1}{|c}{} & \multicolumn{1}{|c}{} & \multicolumn{1}{|b}{} & \multicolumn{1}{|b}{} & \multicolumn{1}{|b}{} & \multicolumn{1}{|b|}{} \\
     \hline  
   \end{tabular}
   \caption*{Second half state input}
@@ -722,7 +722,7 @@ pLayerNibble:
   \begin{table}
   \begin{tabular}{  C  C  C  C  C  C  C  C }
     \hline                        
-       \multicolumn{1}{|c|}{} & \multicolumn{1}{|g|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|g|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|g|}{} & \multicolumn{1}{|c|}{} & \multicolumn{1}{|g|}{} \\
+       \multicolumn{1}{|c}{} & \multicolumn{1}{|g}{} & \multicolumn{1}{|c}{} & \multicolumn{1}{|g}{} & \multicolumn{1}{|c}{} & \multicolumn{1}{|g}{} & \multicolumn{1}{|c}{} & \multicolumn{1}{|g|}{} \\
     \hline  
   \end{tabular}
   \caption*{Second half state output, interleaved}
@@ -922,6 +922,7 @@ plot "cycles_byte.txt" notitle with points, \
 
 \begin{frame}[fragile]
 \frametitle{ASCII Art}
+\hspace{-2em}
 \begin{overprint}
 \onslide<1>
 \scriptsize{
@@ -976,7 +977,7 @@ s-boxes                                     decrypt (start+16)
 
 \begin{frame}[fragile]
 \frametitle{Questions?}
-	\footnotesize{
+	\scriptsize{
 	\url{https://github.com/aczid/ru_crypto_engineering/}
 	\url{https://github.com/kostaspap88/PRESENT_speed_implementation/}
 	}
