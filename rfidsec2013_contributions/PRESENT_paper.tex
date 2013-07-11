@@ -466,7 +466,7 @@ The inverse key scheduling procedure is only needed in the decryption routine, s
 \subsection{Limits Encountered}
 Although S-Box application and round key application always happen close to each other and have the same SRAM access pattern, the varying order in which they are applied in encryption/decryption rounds, or the omission of the S-Box application in the final step makes it impossible to combine the two steps into one procedure that makes PRESENT smaller.
 
-While it's possible to save a few more instructions for either the encryption or decryption code by iterating through the state in SRAM from wherever the X pointer is located rather than rewinding it to the start of the block in every round procedure of the algorithm, the varying order in which they are applied in the encryption/decryption rounds makes it impossible to do so for the general case in smaller code.
+While it is possible to save a few more instructions for either the encryption or decryption code by iterating through the state in SRAM from wherever the X pointer is located rather than rewinding it to the start of the block in every round procedure of the algorithm, the varying order in which they are applied in the encryption/decryption rounds makes it impossible to do so for the general case in smaller code.
 
 The choice to rewind to the start of the block places the SRAM pointer back to the same address as before encryption or decryption, which seems like a good default for real-life use.
 This also allows all round procedures to be callable from external applications, which seemed more desirable than having them rely on `hidden' state which affects their behaviour.
