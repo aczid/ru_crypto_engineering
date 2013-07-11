@@ -241,7 +241,7 @@ Using these observations, they crafted four 256-byte lookup tables (1024 bytes i
 The 1024 byte lookup tables eliminate the need for an independent permutation layer, providing us with the fastest available solution.
 On the downside, we have to perform one lookup for every two bits, resulting in 32 lookups for a 64-bit state (compared to the Squared S-Box that required only 8 lookups for a 64-bit state).
 Moreover, we need 1024 bytes to store the tables, thus it is not possible to transfer them to the SRAM on our test platform.
-The theorized 33\% speedup considered with using SRAM in stead of flash storage is only possible in an AVR microcontroller with at least 1024 bytes of internal\footnote{Additional external SRAM is not an option, since it is at least as slow as flash memory.} SRAM, for instance ATtiny1634.
+The theorized 33\% speedup considered with using SRAM instead of flash storage is only possible in an AVR microcontroller with at least 1024 bytes of internal\footnote{Additional external SRAM is not an option, since it is at least as slow as flash memory.} SRAM, for instance ATtiny1634.
 
 %\textbf{Speed/area tradeoff.} We conclude the discussion on the substitution/permutation techniques by presenting all the proposed solutions (original, squared or merged S-Box) in the form of a spectrum diagram. Depending on the requirements, resources or limitations induced, one may choose the most suitable representation, with the aid of the following spectrum diagram.
 %% TODO reviewer suggested we replace this with a table
