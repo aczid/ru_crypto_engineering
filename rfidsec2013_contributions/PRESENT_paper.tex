@@ -357,7 +357,7 @@ It also allows us to make use of fewer dedicated registers. %, which has enabled
 The only procedure where this approach was not successful is the permutation layer, for which we chose to reserve 4 output registers as we believe it allows us to apply the 4-bit period permutation in software with the most size-efficiency.
 %Using even fewer state bytes in registers might allow for greater size reductions in other areas of the code, but applying the permutation layer may turn out to be more troublesome in that case.
 
-By requiring only 4 dedicated registers to keep a partial block state, and 6 to keep the rest of the algorithms state, we were left with exactly 16 of the 32 general purpose registers available to keep the key register (as we rely on the 6 registers for X,Y,Z to navigate the SRAM, indirectly addressed registers and flash storage respectively.)
+By requiring only 4 dedicated registers to keep a partial block state, and 6 to keep the rest of the algorithms' state, we were left with exactly 16 of the 32 general purpose registers available to keep the key register (as we rely on the 6 registers for X,Y,Z to navigate the SRAM, indirectly addressed registers and flash storage respectively.)
 This means support for 128-bit keys was able to be added to the implementation at no extra cost.
 %We would of course welcome efforts from the community to disprove this assumption.
 
