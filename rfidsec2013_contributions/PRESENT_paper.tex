@@ -347,7 +347,7 @@ Finally we note there are no `bulk' instructions which operate on several regist
 
 However, we do have access to some instructions that are specific to the AVR architecture and are uniquely suited to making parts of the code more condensed by virtue of their expressiveness, such as the \textit{swap} and \textit{cbr} instructions.
 We also have all kinds of branching instructions at our disposal that branch based on values in the state register (SREG) which we can explicitly or implicitly modify.
-We can use the stack to make procedure calls or as temporary storage, and finally have the powerful option of adressing the CPU registers indirectly through the Y register.
+We can use the stack to make procedure calls or as temporary storage, and finally have the powerful option of adressing the CPU registers indirectly through the \textit{Y} pointer.
 
 \subsection{Serialization and SRAM Use}
 The greatest size optimization we have implemented is serialization of the algorithm, keeping most of the state in SRAM while we operate on only one byte of state wherever possible.
@@ -415,7 +415,7 @@ As you can see this takes 4 instructions, whereas a \textit{rcall}, \textit{ret}
 The 4 extra registers that became available through this approach allowed us to implement support for 128-bit keys while keeping the scheduled round keys entirely in CPU registers at no extra size cost.
 This construct does not affect the cycle count relative to the state or input.
 
-Rather than using dedicated code to invert the permutation layer, we use the PRESENT author's design of the bit permutation to undo it by applying it twice more (that is $P(P(P(i))) = i$ for each bit position $i$).
+Rather than using specialized code to invert this permutation when decrypting, we use the PRESENT author's design of the bit permutation to undo it by applying it twice more (that is $P(P(P(i))) = i$ for each bit position $i$).
 
 
 \begin{figure}[H]
@@ -446,7 +446,7 @@ Rather than using dedicated code to invert the permutation layer, we use the PRE
 
 \subsection{Indirect Register Access}
 \label{indirect}
-The AVR platform allows the CPU registers to be addressed \textit{indirectly}, meaning we can use a pointer (\textit{Y} register) in memory space to interact with them.
+The AVR platform allows the CPU registers to be addressed \textit{indirectly}, meaning we can use a pointer (\textit{Y}) in memory space to interact with them.
 We use the feature to load all 10 or 16 of the dedicated key registers in a loop, to iterate over them while applying the round key to the state in SRAM, and to rotate the key registers.
 This last optimization proved to be devastating to performance compared to inlined rotation of the registers, which is why we added an option to configure either approach.
 
