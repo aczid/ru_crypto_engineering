@@ -1,0 +1,134 @@
+\begin{thebibliography}{10}
+
+\bibitem{bogdanov2007present}
+Andrey Bogdanov, Lars Knudsen, Gregor Leander, Christof Paar, Axel Poschmann,
+  Matthew Robshaw, Yannick Seurin, and Charlotte Vikkelsoe.
+\newblock Present: An ultra-lightweight block cipher.
+\newblock {\em Cryptographic Hardware and Embedded Systems-CHES 2007}, pages
+  450--466, 2007.
+
+\bibitem{gong2012klein}
+Zheng Gong, Svetla Nikova, and Yee~Wei Law.
+\newblock {KLEIN: a New Family of Lightweight Block Ciphers}.
+\newblock In {\em RFID. Security and Privacy}, pages 1--18. Springer, 2012.
+
+\bibitem{guo2011led}
+Jian Guo, Thomas Peyrin, Axel Poschmann, and Matt Robshaw.
+\newblock {The LED Block Cipher}.
+\newblock In {\em Cryptographic Hardware and Embedded Systems--CHES 2011},
+  pages 326--341. Springer, 2011.
+
+\bibitem{avr_crypto_lib}
+The~GNU project.
+\newblock {AVR-Crypto-Lib}.
+\newblock \url{http://avrcryptolib.das-labor.org/}, 2013.
+\newblock [Online; accessed 6-April-2013].
+
+\bibitem{eisenbarth2012compact}
+Thomas Eisenbarth, Zheng Gong, Tim G{\"u}neysu, Stefan Heyse, Sebastiaan
+  Indesteege, St{\'e}phanie Kerckhof, Fran{\c{c}}ois Koeune, Tomislav Nad,
+  Thomas Plos, Francesco Regazzoni, et~al.
+\newblock Compact implementation and performance evaluation of block ciphers in
+  attiny devices.
+\newblock {\em Progress in Cryptology-AFRICACRYPT 2012}, pages 172--187, 2012.
+
+\bibitem{kostas_code}
+Kostantinos Papagiannopoulos.
+\newblock {Speed-optimized implementation of PRESENT in AVR assembly}.
+\newblock \url{https://github.com/kostaspap88/PRESENT_speed_implementation/},
+  2013.
+
+\bibitem{aram_code}
+Aram Verstegen.
+\newblock {Size-optimized implementation of PRESENT in AVR assembly}.
+\newblock \url{https://github.com/aczid/ru_crypto_engineering/}, 2013.
+
+\bibitem{gong_code}
+Zheng Gong and Bo~Zhu.
+\newblock {Software Implementation of Block Cipher PRESENT for 8-Bit
+  Platforms}.
+\newblock
+  \url{http://cis.sjtu.edu.cn/index.php/Software_Implementation_of_Block_Cipher_PRESENT_for_8-Bit_Platforms},
+  2013.
+\newblock [Online; accessed 19-February-2013; archived at
+  \url{{http://www.webcitation.org/1370831045860897}} ].
+
+\bibitem{gong2009towards}
+Zheng Gong, Pieter Hartel, Svetla Nikova, and Bo~Zhu.
+\newblock {Towards Secure and Practical MACs for Body Sensor Networks}.
+\newblock {\em Progress in Cryptology-INDOCRYPT 2009}, pages 182--198, 2009.
+
+\bibitem{anderson1998serpent}
+Ross Anderson, Eli Biham, and Lars Knudsen.
+\newblock {Serpent: A Proposal for the Advanced Encryption Standard}.
+\newblock {\em NIST AES Proposal}, 1998.
+
+\bibitem{present_iso}
+{Information technology - Security techniques - Lightweight cryptography - Part
+  2: Block ciphers}, {2011}.
+
+\bibitem{abed2012biclique}
+Farzaneh Abed, Christian Forler, Eik List, Stefan Lucks, and Jakob Wenzel.
+\newblock {Biclique Cryptanalysis of the PRESENT and LED Lightweight Ciphers}.
+\newblock Technical report, Cryptology ePrint Archive, Report 2012/591, 2012.
+
+\bibitem{collard2009statistical}
+Baudoin Collard and F-X Standaert.
+\newblock {A Statistical Saturation Attack Against the Block Cipher PRESENT}.
+\newblock In {\em Topics in Cryptology--CT-RSA 2009}, pages 195--210. Springer,
+  2009.
+
+\bibitem{nakahara2009linear}
+Jorge Nakahara~Jr, Pouyan Sepehrdad, Bingsheng Zhang, and Meiqin Wang.
+\newblock {Linear (hull) and Algebraic Cryptanalysis of the Block Cipher
+  PRESENT}.
+\newblock In {\em Cryptology and Network Security}, pages 58--75. Springer,
+  2009.
+
+\bibitem{bogdanov2011spongent}
+Andrey Bogdanov, Miroslav Kne{\v{z}}evi{\'c}, Gregor Leander, Deniz Toz, Kerem
+  Var{\i}c{\i}, and Ingrid Verbauwhede.
+\newblock Spongent: A lightweight hash function.
+\newblock {\em Cryptographic Hardware and Embedded Systems--CHES 2011}, pages
+  312--325, 2011.
+
+\bibitem{bogdanov2008hash}
+Andrey Bogdanov, Gregor Leander, Christof Paar, Axel Poschmann, Matt~JB
+  Robshaw, and Yannick Seurin.
+\newblock {Hash Functions and RFID Tags: Mind the Gap}.
+\newblock In {\em Cryptographic Hardware and Embedded Systems--CHES 2008},
+  pages 283--299. Springer, 2008.
+
+\bibitem{hirose2005provably}
+Shoichi Hirose.
+\newblock {Provably Secure Double-Block-Length Hash Functions in a Black-Box
+  Model}.
+\newblock In {\em Information Security and Cryptology--ICISC 2004}, pages
+  330--342. Springer, 2005.
+
+\bibitem{hirose2006some}
+Shoichi Hirose.
+\newblock {Some Plausible Constructions of Double-Block-Length Hash Functions}.
+\newblock In {\em FSE}, pages 210--225. Springer, 2006.
+
+\bibitem{gomathisankaran2009maya}
+Mahadevan Gomathisankaran and Ruby~B Lee.
+\newblock Maya: A novel block encryption function.
+\newblock In {\em Proceedings of International Workshop on Coding and
+  Cryptography}, volume~33, page~54, 2009.
+
+\bibitem{leander2010small}
+Gregor Leander.
+\newblock {Small Scale Variants of the Block Cipher PRESENT}.
+\newblock {\em IACR ePrint Report}, 143, 2010.
+
+\bibitem{hutternacl}
+Michael Hutter and Peter Schwabe.
+\newblock {NaCl} on 8-bit {AVR} microcontrollers.
+
+\bibitem{bitsliced_des}
+Eli Biham.
+\newblock {A Fast New DES Implementation in Software}.
+\newblock {\em Technion}, Technical Report CS0891, 1997.
+
+\end{thebibliography}

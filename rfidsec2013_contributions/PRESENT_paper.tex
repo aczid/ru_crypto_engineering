@@ -1,4 +1,4 @@
-\documentclass[11pt]{llncs2e} % change this around if you don't have lncs style installed
+\documentclass[11pt]{llncs} % change this around if you don't have lncs style installed
 %\documentclass[11pt]{article}
 \usepackage{enumitem}
 \usepackage{listings}
@@ -42,7 +42,7 @@
 
 \begin{abstract}
 This paper presents high-speed and low-size assembly implementations of the 80-bit version of the PRESENT cipher for the (Tiny)AVR family of microcontrollers. We report new speed and size records for our implementations, with the speed-optimized version achieving a full encryption in 8721 clock cycles and the size-optimized version compressing the cipher down to 272 bytes; the previous state of the art for (Tiny)AVR achieved 10723 clock cycles for encryption with a size of 936 bytes. Along with the two implementation extrema (speed \& size optimized versions), we offer insight into techniques and representations that show the speed/area tradeoffs and provide intermediate solutions for various configurations.\\
-\textbf{Key words}: PRESENT, AVR, ATtiny, Assembly, Software Implementation
+\textbf{Key words}: PRESENT, AVR, ATtiny, Assembly software implementation
 \end{abstract}
 \section{Introduction}
 Modern society is constantly witnessing an extensive and large scale deployment of tiny computing devices. Information processing and wireless communication are being thoroughly integrated into everyday objects and activities, developing a large distributed mobile infrastructure and ushering in the era of ubiquitous computing. RFID tags attached to products, cardiac pacemakers, fire-detecting sensor nodes and the like need to operate \emph{securely} under particularly \emph{restricted conditions}, namely low battery life, small processing power and bandwidth-demanding ad-hoc network protocols. To achieve sustainable security in this new landscape, researchers have developed new cryptographic primitives and techniques, namely lightweight cryptographic ciphers such as PRESENT~\cite{bogdanov2007present}, Klein~\cite{gong2012klein}, LED~\cite{guo2011led} and others.
@@ -52,7 +52,7 @@ AVR microcontrollers are often encountered regarding the Internet of Things and 
 The University of Louvain has initiated a project to draft efficient assembly implementations of various lightweight ciphers on resource-constrained AVR devices to make fair comparisons about their relative efficiency.
 Resulting from this project is the state of the art in both speed and size: an implementation~\cite{eisenbarth2012compact} which achieves an encryption with PRESENT in 10723 clock cycles in 936 bytes.
 
-\textbf{Our contribution.} This paper describes the details of a speed-optimized~\cite{kostas_code} and a size-optimized~\cite{aram_code} implementation of the PRESENT cipher on the ATtiny45, attained with the aid of algorithmic improvements and efficient programming techniques.
+\textbf{Our contribution.} This paper describes the details of a speed optimized~\cite{kostas_code} and a size-optimized~\cite{aram_code} implementation of the PRESENT cipher on the ATtiny45, attained with the aid of algorithmic improvements and efficient programming techniques.
 Our speed-optimized version improves the state of the art~\cite{eisenbarth2012compact} by an 18\% reduction in clock cycles, while the size-optimized version is 70\% smaller.
 
 Algorithmic improvement:
@@ -84,7 +84,7 @@ As of 2012, PRESENT (among other ciphers) was adopted by ISO as a standard for a
 PRESENT uses exclusive-or as its round key operation, a 4-bit substitution layer, a 4-bit period bit position permutation network in 31 rounds and a final round key operation.
 Key scheduling is a combination of bit rotation, S-Box application and exclusive-or with the round counter.
 %We chose PRESENT as a cipher to work on within a project to write and optimize AVR crypto code %because we deemed it extremely well-suited for a simple microcontroller, and felt it was within our %grasp to implement and optimize correctly within the allotted time.
-Constructs found in PRESENT are also encountered in SPONGENT~\cite{bogdanov2011spongent}, in hash function constructs based on block ciphers as proposed by Hirose~\cite{bogdanov2008hash,hirose2005provably,hirose2006some} (H-PRESENT) and in the similar Maya~\cite{gomathisankaran2009maya} or generalized SMALLPRESENT~\cite{leander2010small}, so the optimizations presented here can also be of interest with respect to the implementations of these ciphers. In our approach, we have implemented PRESENT for the recommended 80-bit key size in AVR assembly in two versions, optimized for maximal speed and minimal size.
+Constructs found in PRESENT are also encountered in SPONGENT~\cite{bogdanov2011spongent}, in hash function constructs based on block ciphers as proposed by Hirose~\cite{bogdanov2008hash,hirose2005provably,hirose2006some} (H-PRESENT) and in the similar Maya~\cite{gomathisankaran2009maya} or generalized SMALLPRESENT~\cite{leander2010small}. Thus the optimizations presented here can also be of interest with respect to the implementations of these ciphers. In our approach, we have implemented PRESENT for the recommended 80-bit key size in AVR assembly in two versions, optimized for maximal speed and minimal size.
 Support for 128-bit keys was also added to the size-optimized implementation as the required extra registers became available through optimizations, but we will focus on the implementation of the variant with 80-bit keys.
 
 \subsection{PRESENT Algorithm}
@@ -125,7 +125,7 @@ Atmel offers a wide range of 8-bit microcontrollers, including high performance 
 
 Our focus is on the resource-constrained ATtiny architecture, which typically features less than 1 kilobyte of static RAM (SRAM) and flash storage ranging from 1 to 8 kilobytes. The architecture uses 32 general-purpose registers, \textit{R0}-\textit{R31}.
 
-Several registers have special characteristics, namely registers \textit{R0} through \textit{R15} can not be accessed by instructions that provide an immediate value as an operand, \emph{i.e.} you can only perform memory access from these registers.
+Several registers have special characteristics, namely registers ~\textit{R0} through~\textit{R15} can not be accessed by instructions that provide an immediate value as an operand, \emph{i.e.} you can only perform memory access from these registers.
 In addition, register pairs \textit{R27:R26} (denoted as \emph{X}), \textit{R29:R28} (denoted as\emph{Y}) , and \textit{R31:R30} (denoted as \emph{Z}) can access the SRAM.
 The \emph{Y} register can also be used for indirect register addressing, the \emph{Z} register can also access the flash storage and be used for indirect jumps and calls.
 Instructions using these 3 pointer register pairs also allow post-increment and pre-decrement of the pointer.
@@ -330,7 +330,8 @@ The algorithm specifies that the key bits 15, 16, 17, 18, 19 must be XORed with 
 As a result parts of the round counter need to be XORed with different parts of two separate registers, namely the counter needs to be XORed with both \textit{R1} and \textit{R2}.
 Similarly to Eisenbarth~\cite{eisenbarth2012compact}, we perform the XOR operation before the key rotation, thus the bits that are operated on are bits 34,35,36,37,38 which span a single register (under the previous representation they are located in \textit{R4}). This restructuring of the algorithm, \emph{i.e.} performing the XOR operation before the key rotation, does not affect the outcome or security of the algorithm. 
 
-
+\subsubsection{Latency \emph{vs.} Throughput}
+The speed-optimized version presented, focuses on reducing the cost of a \emph{single} encryption. Thus, it can also be viewed as a \emph{low-latency} implementation of PRESENT. Should we loosen up on the latency requirement, we can achieve increased throughput. Future work aims to perform multiple encryptions at a time, by using the \emph{bitslicing} technique~\cite{bitsliced_des}, which largely reduces the cost of permutations.
 % NOTE: This is not a valid/verified section yet - we only present thoughts on the possibility of bitslicing. %To be reconsidered.\\
 %Bitslicing has been performed before for PRESENT ~\cite{bitslice}.In order to perform bitslicing in %AVR, there is need for a large amount of SRAM, e.g. for a fully-blown bitslicing, we need 8*64=512 %bytes of SRAM. With this approach we perform 64 encryptions in bitsliced form and we no longer %need the permutation layer. On the downside, there will traffic between registers and SRAM and also, %we cannot use lookup tables for the substitution layer and thus, we have to implement the S-Box with %boolean functions that operate on each state bit.
 
@@ -416,8 +417,6 @@ The 4 extra registers that became available through this approach allowed us to 
 This construct does not affect the cycle count relative to the state or input.
 
 Rather than using specialized code to invert this permutation when decrypting, we use the PRESENT author's design of the bit permutation to undo it by applying it twice more (that is $P(P(P(i))) = i$ for each bit position $i$).
-
-
 \begin{figure}[H]
 \centering
 	\begin{lstlisting}
@@ -459,31 +458,28 @@ The use of indirect register access allows us to iterate through the key bytes i
 
 %Because we required a procedure to rotate the key register for key scheduling anyway, that code can be reused to align the first key register with byte this loaded byte.
 When scheduling keys, we still apply the exclusive-or to part of the key register in the ideal position (i.e. where the bytes of the key register line up with the round counter register), as explained in Section~\ref{key_xor}.
-This leads to smaller code than rotating once and shifting bits of the round counter back and forth.
 
 The inverse key scheduling procedure is only needed in the decryption routine, so we were able to inline it into the decryption round.
 
 \subsection{Limits Encountered}
 Although S-Box application and round key application always happen close to each other and have the same SRAM access pattern, the varying order in which they are applied in encryption/decryption rounds, or the omission of the S-Box application in the final step makes it impossible to combine the two steps into one procedure that makes PRESENT smaller.
 
-While it is possible to save a few more instructions for either the encryption or decryption code by iterating through the state in SRAM from wherever the X pointer is located rather than rewinding it to the start of the block in every round procedure of the algorithm, the varying order in which they are applied in the encryption/decryption rounds makes it impossible to do so for the general case in smaller code.
+It is possible to save a few instructions by iterating through the state in SRAM from wherever the X pointer is located rather than rewinding it to the start of the block in every round procedure of the algorithm. Still, the varying order in which they are applied in the encryption/decryption rounds makes it impossible to do so for the general case in smaller code.
 
-The choice to rewind to the start of the block places the SRAM pointer back to the same address as before encryption or decryption, which seems like a good default for real-life use.
-This also allows all round procedures to be callable from external applications, which seemed more desirable than having them rely on `hidden' state which affects their behaviour.
+The choice to rewind to the start of the block places the SRAM pointer back to the same address as before encryption or decryption, which seems like a good default for real-life use, also allows all round procedures to be callable from external applications, which seemed more desirable than having them rely on `hidden' state which affects their behaviour.
 
 \subsection{Using the Code for Specific Applications}
 While the attained size of our implementation of PRESENT should suffice for use in real-world applications, most of the procedure calls can be inlined when only encryption or decryption is required in the application.
 If only encryption is required, the inverse S-Box and  S-Box unpacking code can be omitted as well.
-This is highlighted in the source code using comments and is configurable using \textit{define} statements.
 
 %The S-Boxes can be configured to be located at addresses not aligned to 256-bytes at a cost of 3 more instructions (6 bytes), to allow all the code to fit in a consecutive block of flash storage.
 
 As mentioned in \ref{indirect}, the key register rotation procedure can be configured to either use indirect register addressing, or be inlined at a cost of 4/16 extra bytes depending on configured key size.
 
 \section{Conclusion}
-We've compared our results to the existing AVR implementation by Eisenbarth et al~\cite{eisenbarth2012compact} and the GNU AVR-Crypto-Lib~\cite{avr_crypto_lib} (which was written in standard C and is only provided as a baseline reference).
-We are pleased to announce we were able to reduce the code size by 70\% and gain 18\% speed increase. (Table~\ref{numbers}.)
-We note that having access to a larger SRAM could allow the lookup tables for the speed-optimized version to incur a lower overhead, and reduce an estimated 992 cycles per encryption (12\%). 
+We've compared our results to the existing AVR implementation by Eisenbarth et al~\cite{eisenbarth2012compact} and the GNU AVR-Crypto-Lib (as a standard C reference)~\cite{avr_crypto_lib}.
+We are pleased to announce we were able to reduce the code size by 70\% and gain 18\% speed increase. (Table~\ref{numbers})
+Having access to a larger SRAM could allow the lookup tables for the speed-optimized version to incur a lower overhead, and reduce an estimated 992 cycles per encryption (12\%). 
 Overall, we managed to push the limits of the PRESENT implementation and establish a wide spectrum of techniques to enable speed and size efficiency.
 \newcommand{\specialcell}[2][c]{%
   \begin{tabular}[#1]{@{}c@{}}#2\end{tabular}}
@@ -502,7 +498,7 @@ Overall, we managed to push the limits of the PRESENT implementation and establi
 	%\label{numbers}
 %\end{table}
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \footnotesize
 	\begin{tabular}{ l r r r }
