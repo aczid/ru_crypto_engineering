@@ -27,8 +27,9 @@ The speed-optimized AVR assembly version of the algorithm can be found at
 [my co-author's github browsable repository](
 https://github.com/kostaspap88/PRESENT_speed_implementation/).
 
-The current version requires 256 code bytes for the encryption and decryption
-routines, and 16 bytes for s-box tables at addresses 0x100 and 0x200.
+The current version in its default configuration requires 256 code bytes for
+the encryption and decryption routines, and two 8-byte s-box lookup
+tables at addresses 0x100 and 0x200.
 
 * Size optimized version 2 - May 2013
 * Code size (total):           256 bytes + 16 bytes for both packed s-boxes
@@ -49,12 +50,13 @@ respectively.
 
 128-bit keys
 ------------
-Support for 128-bit keys can be enabled by uncommenting the **PRESENT_128**
-define statement at no extra cost.
+Support for (stronger) 128-bit keys can be enabled by uncommenting the
+**PRESENT_128** define statement at no extra cost.
 
 Key zeroisation
 ---------------
-Zeroisation of the key in SRAM can be enabled by uncommenting the **ZERO_KEY**
+As a countermeasure (but not any actual guarantee) against data remanence in
+SRAM, zeroisation of the key can be enabled by uncommenting the **ZERO_KEY**
 define statement at a cost of 2 extra bytes.
 
 Speed optimizations
@@ -64,13 +66,15 @@ Much (almost 4x) better performance can be enabled by uncommenting the
 on key size).
 
 To get a tiny bit more performance at the expense of 2 bytes the
-**PACKED_SBOXES** define statement can be commented out to use 16-byte s-box
-tables and omit the 14-byte unpacking code.
+**PACKED_SBOXES** define statement can be commented out to use two 16-byte s-box
+lookup tables and omit the 14-byte unpacking code.
 
 Portability to other AVR devices
 --------------------------------
-At a cost of 6 extra bytes the s-box tables can be located at addresses not
-aligned to 256 bytes when the **RELOCATABLE_SBOXES** define statement is
+By default the lookup tables for s-boxes are located at addresses 0x100 and
+0x200, requiring program memory of over 512 bytes in practice.
+At a cost of 6 extra bytes the s-box lookup tables can be located at addresses
+not aligned to 256 bytes when the **RELOCATABLE_SBOXES** define statement is
 uncommented, provided the tables do not span a 256-byte address boundary.
 This allows the encryption and decryption code + packed s-box tables to fit in
 278 consecutive bytes of flash.
@@ -137,8 +141,6 @@ optimized for the **ATtiny45** device.
 
 We have observed constant-time behaviour in our simulations, but we make no
 claims about the security of the implementation against further cryptanalysis.
-While we offer the option to zeroise the key in SRAM while reading, this is not
-meant as any guarantee against data remanence.
 We merely assert our implementations are correct with respect to the references
 used.
 
