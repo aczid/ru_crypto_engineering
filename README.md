@@ -8,11 +8,13 @@ computer security.
 
 PRESENT
 =======
-We implemented the PRESENT cipher in C and AVR assembly based on the original
-paper, the C version by Zhu/Gong and the Louvain AVR implementation.
+We implemented the
+[PRESENT cipher](http://en.wikipedia.org/wiki/PRESENT_%28cipher%29)
+in C and AVR assembly based on the original paper, the C version by Zhu/Gong
+and the Louvain AVR implementation.
 
 This AVR assembly version was optimized for small code size at the expense of
-speed.
+speed on the ATtiny45.
 The current version requires 256 code bytes for the encryption and decryption
 routines, and 16 bytes for s-box tables at addresses 0x100 and 0x200.
 
