@@ -78,7 +78,7 @@ This allows the encryption and decryption code + packed s-box tables to fit in
 It is not advised to use the packed s-boxes configuration on devices other than
 the ATtiny.
 The timing quantization of unpacking code is device-specific and may misbehave
-due to different instruction timing; in such cases it's therefore best to
+due to different instruction timing; in such cases it's probably best to
 disable the packed s-boxes entirely.
 
 Authors
