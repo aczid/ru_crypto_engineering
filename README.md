@@ -79,11 +79,11 @@ uncommented, provided the tables do not span a 256-byte address boundary.
 This allows the encryption and decryption code + packed s-box tables to fit in
 278 consecutive bytes of flash.
 
-It is not advised to use the packed s-boxes configuration on devices other than
-the ATtiny.
+It is not advised to use the configuration with packed s-boxes on devices other
+than the ATtiny.
 The timing quantization of unpacking code is device-specific and may misbehave
 due to different instruction timing; in such cases it may be best to disable
-the packed s-boxes entirely.
+the packed s-boxes feature entirely.
 
 Authors
 =======
