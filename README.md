@@ -17,7 +17,8 @@ and
 [the Louvain AVR implementation](http://perso.uclouvain.be/fstandae/lightweight_ciphers/).
 
 This AVR assembly version was optimized for small code size at the expense of
-speed on the ATtiny45.
+speed on the [Atmel ATtiny45 microcontroller](
+http://www.atmel.com/devices/attiny45.aspx).
 The current version requires 256 code bytes for the encryption and decryption
 routines, and 16 bytes for s-box tables at addresses 0x100 and 0x200.
 
@@ -49,7 +50,7 @@ At a cost of 6 extra bytes the s-box tables can be located at addresses not
 aligned to 256 bytes when the **RELOCATABLE_SBOXES** define statement is
 uncommented, provided the tables do not span a 256-byte address boundary.
 This allows the encryption and decryption code + packed s-box tables to fit in
-278 **consecutive** bytes of flash.
+278 consecutive bytes of flash.
 
 To get a tiny bit more performance at the expense of 2 bytes the
 **PACKED_SBOXES** define statement can be commented out to use 16-byte s-box
@@ -113,13 +114,18 @@ Disclaimer
 ==========
 This is experimental software, created for research purposes, specifically
 optimized for the **ATtiny45** device.
+
 We have observed constant-time behaviour in our simulations, but we make no
 claims about the security of the implementation against further cryptanalysis.
 While we offer the option to zeroise the key in SRAM while reading, this is not
 meant as any guarantee against data remanence.
+We merely assert our implementations are correct with respect to the references
+used.
 
-(This is meant as an open invitation to anybody to break our implementation, and
-suggest improvements.)
+We **DO NOT** recommend this software to be used in development of secure
+applications until further notice.
+In fact, **we hereby invite anybody to break our implementations and/or suggest
+improvements**.
 
 License
 =======
