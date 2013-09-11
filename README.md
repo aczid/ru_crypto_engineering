@@ -6,18 +6,6 @@ This is the code repository for our assignments in
 [Kerckhoffs Institute](http://www.kerckhoffs-institute.org/) master's program in
 computer security.
 
-Disclaimer
-==========
-This is experimental software, created for research purposes, specifically
-optimized for the **ATtiny45** device.
-We have observed constant-time behaviour in our simulations, but we make no
-claims about the security of the implementation against further cryptanalysis.
-While we offer the option to zeroise the key in SRAM while reading, this is not
-meant as any guarantee against data remanence.
-
-(This is meant as an open invitation to anybody to break our implementation, and
-suggest improvements.)
-
 PRESENT
 =======
 We implemented the PRESENT cipher in C and AVR assembly based on the original
@@ -115,3 +103,16 @@ Or if you have [radare2](http://radare.org/) you can pipe the banner directly
 into:
 
     tr -d ' \n' | rasm2 -aavr -d -f -
+
+Disclaimer
+==========
+This is experimental software, created for research purposes, specifically
+optimized for the **ATtiny45** device.
+We have observed constant-time behaviour in our simulations, but we make no
+claims about the security of the implementation against further cryptanalysis.
+While we offer the option to zeroise the key in SRAM while reading, this is not
+meant as any guarantee against data remanence.
+
+(This is meant as an open invitation to anybody to break our implementation, and
+suggest improvements.)
+
