@@ -38,32 +38,49 @@ routines, and 16 bytes for s-box tables at addresses 0x100 and 0x200.
 
 Settings
 ========
+
+Encryption/decryption only
+--------------------------
 For specific applications that require only encryption or decryption, the code
 size can be further reduced.
 The code for either procedure can be easily omitted by commenting out the
-**ENCRYPTION** or **DECRYPTION** define statement.
+**ENCRYPTION** or **DECRYPTION** define statement to save 26 or 68 bytes
+respectively.
 
+128-bit keys
+------------
 Support for 128-bit keys can be enabled by uncommenting the **PRESENT_128**
 define statement at no extra cost.
 
+Key zeroisation
+---------------
+Zeroisation of the key in SRAM can be enabled by uncommenting the **ZERO_KEY**
+define statement at a cost of 2 extra bytes.
+
+Speed optimizations
+-------------------
 Much (about 4x) better performance can be enabled by uncommenting the
 **FAST_ROTATE** define statement at a cost of 4/16 extra bytes (depending
 on key size).
+
+To get a tiny bit more performance at the expense of 2 bytes the
+**PACKED_SBOXES** define statement can be commented out to use 16-byte s-box
+tables and omit the 14-byte unpacking code.
+NB: The timing quantization of unpacking code is experimental and
+device-specific; in most cases it's probably best to disable the packed
+s-boxes entirely.
+
+Portability to other devices
+----------------------------
+To reiterate, it is not advised to use the **PACKED_SBOXES** configuration.
+Specifically, on devices other than the ATtiny45 the **QUANTIZE_TIMING**
+portion of the code may misbehave due to different instruction timing.
 
 At a cost of 6 extra bytes the s-box tables can be located at addresses not
 aligned to 256 bytes when the **RELOCATABLE_SBOXES** define statement is
 uncommented, provided the tables do not span a 256-byte address boundary.
 This allows the encryption and decryption code + packed s-box tables to fit in
 278 consecutive bytes of flash.
-
-To get a tiny bit more performance at the expense of 2 bytes the
-**PACKED_SBOXES** define statement can be commented out to use 16-byte s-box
-tables and omit the 14-byte unpacking code.
-NB: The timing quantization of unpacking was tested on our ATtiny45 simulator,
-for different devices it's probably best to disable the packed s-boxes entirely.
-
-Zeroisation of the key in SRAM can be enabled by uncommenting the **ZERO_KEY**
-define statement at a cost of 2 extra bytes.
 
 Authors
 =======
@@ -126,10 +143,16 @@ meant as any guarantee against data remanence.
 We merely assert our implementations are correct with respect to the references
 used.
 
-We **DO NOT** recommend this software to be used in development of secure
-applications until further notice.
-In fact, **we hereby invite anybody to break our implementations and/or suggest
-improvements**.
+We **DO NOT** recommend this software to be used in development of applications
+until further notice.
+We do not feel confident in guaranteeing the security of this software to any
+extent so as to be suitable for use in real-world applications of any kind.
+
+Please consider yourself warned if you do choose to do so, because 
+**we invite anybody to break our implementations and/or suggest improvements.**
+
+Obviously we can't stop you from using the software and we would most likely be
+interested to hear of any such use.
 
 License
 =======
