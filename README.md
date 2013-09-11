@@ -67,8 +67,8 @@ To get a tiny bit more performance at the expense of 2 bytes the
 **PACKED_SBOXES** define statement can be commented out to use 16-byte s-box
 tables and omit the 14-byte unpacking code.
 
-Portability to other devices
-----------------------------
+Portability to other AVR devices
+--------------------------------
 At a cost of 6 extra bytes the s-box tables can be located at addresses not
 aligned to 256 bytes when the **RELOCATABLE_SBOXES** define statement is
 uncommented, provided the tables do not span a 256-byte address boundary.
