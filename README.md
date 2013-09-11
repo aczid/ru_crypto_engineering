@@ -16,13 +16,13 @@ in C and AVR assembly based on
 and
 [the Louvain AVR implementation](http://perso.uclouvain.be/fstandae/lightweight_ciphers/).
 We drafted two AVR assembly implementations, one for maximal speed and one for
-minimal size.
-The C version was drafted to better understand/illustrate/analyze the cipher's
-behaviour before we began.
+minimal size, both targeting the [Atmel ATtiny45 microcontroller](
+http://www.atmel.com/devices/attiny45.aspx).
+The C version was drafted to better understand/analyze/illustrate the cipher's
+behaviour.
 
 This AVR assembly version was optimized for small code size at the expense of
-speed on the [Atmel ATtiny45 microcontroller](
-http://www.atmel.com/devices/attiny45.aspx).
+speed.
 The speed-optimized AVR assembly version of the algorithm can be found at
 [my co-author's github browsable repository](
 https://github.com/kostaspap88/PRESENT_speed_implementation/).
