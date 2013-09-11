@@ -59,22 +59,21 @@ define statement at a cost of 2 extra bytes.
 
 Speed optimizations
 -------------------
-Much (about 4x) better performance can be enabled by uncommenting the
+Much (almost 4x) better performance can be enabled by uncommenting the
 **FAST_ROTATE** define statement at a cost of 4/16 extra bytes (depending
 on key size).
 
 To get a tiny bit more performance at the expense of 2 bytes the
 **PACKED_SBOXES** define statement can be commented out to use 16-byte s-box
 tables and omit the 14-byte unpacking code.
-NB: The timing quantization of unpacking code is experimental and
-device-specific; in most cases it's probably best to disable the packed
-s-boxes entirely.
 
 Portability to other devices
 ----------------------------
-To reiterate, it is not advised to use the **PACKED_SBOXES** configuration.
-Specifically, on devices other than the ATtiny45 the **QUANTIZE_TIMING**
-portion of the code may misbehave due to different instruction timing.
+It is not advised to use the packed s-boxes configuration on devices other than
+the ATtiny.
+Specifically, the timing quantization of unpacking code is device-specific and
+may misbehave due to different instruction timing; in such cases it's therefore 
+best to disable the packed s-boxes entirely.
 
 At a cost of 6 extra bytes the s-box tables can be located at addresses not
 aligned to 256 bytes when the **RELOCATABLE_SBOXES** define statement is
