@@ -140,7 +140,7 @@ This is experimental software, created for research purposes, specifically
 optimized for the **ATtiny45** device.
 
 We have observed constant-time behaviour in our simulations, but we make no
-claims about the security of the implementations against further cryptanalysis.
+further claims about the security of the implementations against cryptanalysis.
 We merely assert our implementations are correct with respect to the references
 used.
 
