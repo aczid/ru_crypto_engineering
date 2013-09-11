@@ -15,10 +15,18 @@ in C and AVR assembly based on
 [the C version by Zhu/Gong](http://cis.sjtu.edu.cn/index.php/Software_Implementation_of_Block_Cipher_PRESENT_for_8-Bit_Platforms)
 and
 [the Louvain AVR implementation](http://perso.uclouvain.be/fstandae/lightweight_ciphers/).
+We drafted two AVR assembly implementations, one for maximal speed and one for
+minimal size.
+The C version was drafted to better understand/illustrate/analyze the cipher's
+behaviour before we began.
 
 This AVR assembly version was optimized for small code size at the expense of
 speed on the [Atmel ATtiny45 microcontroller](
 http://www.atmel.com/devices/attiny45.aspx).
+The speed-optimized AVR assembly version of the algorithm can be found at
+[my co-author's github browsable repository](
+https://github.com/kostaspap88/PRESENT_speed_implementation/).
+
 The current version requires 256 code bytes for the encryption and decryption
 routines, and 16 bytes for s-box tables at addresses 0x100 and 0x200.
 
@@ -27,10 +35,6 @@ routines, and 16 bytes for s-box tables at addresses 0x100 and 0x200.
 * RAM words:                    18
 * Cycle count (encryption): 190045
 * Cycle count (decryption): 253380
-
-The speed-optimized version of the algorithm can be found at
-[my co-author's github browsable repository](
-https://github.com/kostaspap88/PRESENT_speed_implementation/).
 
 Settings
 ========
