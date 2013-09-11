@@ -6,10 +6,22 @@ This is the code repository for our assignments in
 [Kerckhoffs Institute](http://www.kerckhoffs-institute.org/) master's program in
 computer security.
 
+DISCLAIMER
+==========
+This is experimental software, created for research purposes, specifically
+optimized for the **ATtiny45** device.
+We have observed constant-time behaviour in our simulations, but we make no
+claims about the security of the implementation against further cryptanalysis.
+While we offer the option to zeroise the key in SRAM while reading, this is not
+meant as any guarantee against data remanence.
+
+(This is meant as an open invitation to anybody to break our implementation, and
+suggest improvements.)
+
 PRESENT
 =======
 We implemented the PRESENT cipher in C and AVR assembly based on the original
-paper, the C version by Zhu/Gong and the Leuven AVR implementation.
+paper, the C version by Zhu/Gong and the Louvain AVR implementation.
 
 This AVR assembly version was optimized for small code size at the expense of
 speed.
@@ -44,15 +56,13 @@ At a cost of 6 extra bytes the s-box tables can be located at addresses not
 aligned to 256 bytes when the **RELOCATABLE_SBOXES** define statement is
 uncommented, provided the tables do not span a 256-byte address boundary.
 This allows the encryption and decryption code + packed s-box tables to fit in
-278 consecutive bytes of flash.
+278 **consecutive** bytes of flash.
 
 To get a tiny bit more performance at the expense of 2 bytes the
 **PACKED_SBOXES** define statement can be commented out to use 16-byte s-box
 tables and omit the 14-byte unpacking code.
-
-Although it is unadvised, there is the option of not quantizing the timing of
-packed s-box application by commenting out the **QUANTIZE_TIMING** define
-statement to save 6 bytes.
+NB: The timing quantization of unpacking was tested on our ATtiny45 simulator,
+for different devices it's probably best to disable the packed s-boxes entirely.
 
 Zeroisation of the key in SRAM can be enabled by uncommenting the **ZERO_KEY**
 define statement at a cost of 2 extra bytes.
