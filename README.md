@@ -50,7 +50,7 @@ respectively.
 
 128-bit keys
 ------------
-Support for stronger 128-bit keys can be enabled by uncommenting the
+Support for stronger, 128-bit keys can be enabled by uncommenting the
 **PRESENT_128** define statement at no extra cost.
 
 Key zeroisation
