@@ -151,9 +151,6 @@ extent so as to be suitable for use in real-world applications of any kind.
 Please consider yourself warned if you do choose to do so, because 
 **we invite anybody to break our implementations and/or suggest improvements.**
 
-Obviously we can't stop you from using the software and we would most likely be
-interested to hear of any such use.
-
 License
 =======
 
