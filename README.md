@@ -28,11 +28,11 @@ The speed-optimized AVR assembly version of the algorithm can be found at
 https://github.com/kostaspap88/PRESENT_speed_implementation/).
 
 The current version in its default configuration requires 256 code bytes for
-the encryption and decryption routines, and two 8-byte s-box lookup
-tables at addresses 0x100 and 0x200.
+the encryption and decryption routines, and two 8-byte lookup tables for s-box
+values at addresses 0x100 and 0x200.
 
 * Size optimized version 2 - May 2013
-* Code size (total):           256 bytes + 16 bytes for both packed s-boxes
+* Code size (total):           256 bytes + 16 bytes for both packed s-box tables
 * RAM words:                    18
 * Cycle count (encryption): 190045
 * Cycle count (decryption): 253380
@@ -79,11 +79,11 @@ uncommented, provided the tables do not span a 256-byte address boundary.
 This allows the encryption and decryption code + packed s-box tables to fit in
 278 consecutive bytes of flash.
 
-It is not advised to use the configuration with packed s-boxes on devices other
-than the ATtiny.
+It is not advised to use the configuration with packed s-box tables on devices
+other than the ATtiny.
 The timing quantization of unpacking code is device-specific and may misbehave
 due to different instruction timing; in such cases it may be best to disable
-the packed s-boxes feature entirely.
+the packed s-box tables feature entirely.
 
 Authors
 =======
@@ -95,7 +95,7 @@ ASCII art
 To give a visual representation of the compactness of the implementation, and
 as a geeky sort of art inspired by the [RSA dolphin](
 http://e-privacy.winstonsmith.info/2007/2005/2002/munitions/documents/rsafin),
-here is the compiled AVR code (configured with relocatable s-boxes) in ASCII
+here is the compiled AVR code (configured with relocatable s-box tables) in ASCII
 hexadecimal as a banner.
 (Created with [this script](https://gist.github.com/aczid/5703046), 
 then manually adjusted kerning.)
