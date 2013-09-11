@@ -6,7 +6,7 @@ This is the code repository for our assignments in
 [Kerckhoffs Institute](http://www.kerckhoffs-institute.org/) master's program in
 computer security.
 
-DISCLAIMER
+Disclaimer
 ==========
 This is experimental software, created for research purposes, specifically
 optimized for the **ATtiny45** device.
