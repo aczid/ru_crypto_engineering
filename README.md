@@ -146,8 +146,8 @@ We **DO NOT** recommend this software to be used in development of applications
 until further notice.
 We do not feel confident in guaranteeing the security of this software to any
 extent so as to be suitable for use in real-world applications of any kind.
-
-Please consider yourself warned if you do choose to do so, because 
+Please consider yourself warned if you do choose to do so.
+Finally,
 **we invite anybody to break our implementations and/or suggest improvements.**
 
 License
