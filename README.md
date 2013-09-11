@@ -10,7 +10,8 @@ PRESENT
 =======
 We implemented the
 [PRESENT cipher](http://en.wikipedia.org/wiki/PRESENT_%28cipher%29)
-in C and AVR assembly based on the original paper,
+in C and AVR assembly based on
+[the original paper](http://homes.esat.kuleuven.be/~abogdano/papers/present_ches07.pdf),
 [the C version by Zhu/Gong](http://cis.sjtu.edu.cn/index.php/Software_Implementation_of_Block_Cipher_PRESENT_for_8-Bit_Platforms)
 and
 [the Louvain AVR implementation](http://perso.uclouvain.be/fstandae/lightweight_ciphers/).
