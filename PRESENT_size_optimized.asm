@@ -434,23 +434,15 @@ encrypt:
 		rcall addRoundKey
 
 		; apply s-box layer
-	#ifndef DECRYPTION
-		sBoxLayer_macro
-	#else
-		rcall sBoxLayer
-	#endif
-
 		; apply p-layer
-	#ifndef DECRYPTION
-		pLayer_macro
-	#else
-		rcall pLayer
-	#endif
-
 		; schedule next key
 	#ifndef DECRYPTION
+		sBoxLayer_macro
+		pLayer_macro
 		schedule_key_macro
 	#else
+		rcall sBoxLayer
+		rcall pLayer
 		rcall schedule_key
 	#endif
 
