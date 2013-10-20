@@ -225,7 +225,7 @@ rotate_left_i_bit:
 #else
 	adc KEY9, ZERO
 #endif
-	; loop over ITEMP bytes
+	; loop over ITEMP bits
 	dec ITEMP
 	brne rotate_left_i
 	ret
