@@ -95,8 +95,8 @@ ASCII art
 To give a visual representation of the compactness of the implementation, and
 as a geeky sort of art inspired by the [RSA dolphin](
 http://e-privacy.winstonsmith.info/2007/2005/2002/munitions/documents/rsafin),
-here is the compiled AVR code (configured with relocatable s-box tables) in ASCII
-hexadecimal as a banner.
+here is the assembled AVR code (configured with relocatable s-box tables) in
+ASCII hexadecimal as a banner.
 (Created with [this script](https://gist.github.com/aczid/5703046), 
 then manually adjusted kerning.)
 
